@@ -34,9 +34,12 @@ extension PoolStore {
         let accounts = state.details
             .filter { $0.provider == provider && !$0.isHealthOnly && $0.status != .disabledByUser }
             .map(\.canTakeWork)
-        // A proxy that stopped answering dims the item, even while Claude still reads directly.
-        let lastReadAt = isProxyUnreachable ? nil : [proxyReadAt, state.usageAPIReadAt[provider]].compactMap { $0 }.max()
-        return MenuBarPool(summary: summary, shortWindow: ProviderDisplay.shortWindow(provider), accounts: accounts, lastReadAt: lastReadAt, now: now)
+        return MenuBarPool(summary: summary, shortWindow: ProviderDisplay.shortWindow(provider), accounts: accounts, lastReadAt: lastReadAt(for: provider), now: now)
+    }
+
+    /// A proxy that stopped answering dims the item, even while Claude still reads directly.
+    func lastReadAt(for provider: String) -> Date? {
+        isProxyUnreachable ? nil : [proxyReadAt, state.usageAPIReadAt[provider]].compactMap { $0 }.max()
     }
 }
 

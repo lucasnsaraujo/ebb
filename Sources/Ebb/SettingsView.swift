@@ -93,8 +93,66 @@ struct GeneralSettings: View {
                         }
                     }
             }
+            CommandLineToolSection()
         }
         .formStyle(.grouped)
+    }
+}
+
+/// Links the `ebb` command from the app bundle onto the PATH.
+private struct CommandLineToolSection: View {
+    private static let installer = CommandLineTool(tool: Bundle.main.bundleURL.appending(path: "Contents/Helpers/\(CommandLineTool.name)"))
+
+    @State private var link = Self.installer.installedLink
+    @State private var failure: String?
+
+    private var isBundled: Bool {
+        FileManager.default.isExecutableFile(atPath: Self.installer.tool.path)
+    }
+
+    var body: some View {
+        Section {
+            LabeledContent("Status") {
+                if let failure {
+                    Text(failure).foregroundStyle(.red)
+                } else {
+                    Text(link.map { "Installed at \(abbreviated($0.path))" } ?? "Not installed")
+                        .textSelection(.enabled)
+                }
+            }
+            HStack {
+                Spacer()
+                Button(link == nil ? "Install Command Line Tool" : "Reinstall Command Line Tool", action: install)
+                    .disabled(!isBundled)
+            }
+        } header: {
+            Text("Command Line Tool")
+        } footer: {
+            Text(footer)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var footer: String {
+        var text = "Prints the pools in Terminal and in Claude Code's status line, from numbers Ebb already has. Installs into /usr/local/bin if you can write to it, otherwise ~/.local/bin, so no admin password is needed."
+        if let link, link.deletingLastPathComponent().path.hasSuffix("/.local/bin") {
+            text += " If your shell can't find ebb, add ~/.local/bin to your PATH."
+        }
+        return text
+    }
+
+    private func install() {
+        do {
+            link = try Self.installer.install()
+            failure = nil
+        } catch CommandLineTool.InstallError.occupied(let url) {
+            failure = "\(abbreviated(url.path)) is another program"
+        } catch CommandLineTool.InstallError.noWritableFolder {
+            failure = "No folder on your PATH Ebb can write to"
+        } catch {
+            failure = "Couldn't install: \(error.localizedDescription)"
+        }
     }
 }
 

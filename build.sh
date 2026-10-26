@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Builds Ebb in release mode and installs it to ~/Applications.
+# Builds Ebb and its ebb command in release mode and installs them to ~/Applications.
 # Relaunches the app in the background if it was running.
 set -euo pipefail
 cd "${0:A:h}"
@@ -10,11 +10,13 @@ version="0.1.0"
 install_path="$HOME/Applications/$app_name.app"
 
 swift build -c release
-binary="$(swift build -c release --show-bin-path)/$executable"
+bin_path="$(swift build -c release --show-bin-path)"
 
 stage="$(mktemp -d)/$app_name.app"
-mkdir -p "$stage/Contents/MacOS" "$stage/Contents/Resources"
-cp "$binary" "$stage/Contents/MacOS/$executable"
+mkdir -p "$stage/Contents/MacOS" "$stage/Contents/Resources" "$stage/Contents/Helpers"
+cp "$bin_path/$executable" "$stage/Contents/MacOS/$executable"
+# Helpers/, not MacOS/: on a case-insensitive disk "ebb" and "Ebb" are the same name.
+cp "$bin_path/EbbCLI" "$stage/Contents/Helpers/ebb"
 
 # The Icon Composer icon needs Xcode's actool; without it, the prebuilt .icns stands in.
 if xcrun --find actool >/dev/null 2>&1; then
@@ -63,6 +65,7 @@ cat > "$stage/Contents/Info.plist" <<PLIST
 </dict>
 </plist>
 PLIST
+codesign --force --sign - --timestamp=none "$stage/Contents/Helpers/ebb"
 codesign --force --sign - --timestamp=none "$stage"
 
 # Matches the installed copy by path, so other builds named Ebb keep running.

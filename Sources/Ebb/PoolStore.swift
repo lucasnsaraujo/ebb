@@ -98,6 +98,8 @@ final class PoolStore {
     @ObservationIgnored private var endedSubscriptions: Set<String> = []
     @ObservationIgnored private var callInactiveStreaks: [String: Int] = [:]
     @ObservationIgnored private var writtenCaches: [String: Data] = [:]
+    /// The pools as last saved for the `ebb` command.
+    @ObservationIgnored private var savedStatus: PoolStatus?
     /// Kept across launches, so a relaunch never sends two requests back to back.
     @ObservationIgnored private var lastProviderRequest = UserDefaults.standard.object(forKey: "lastProviderRequest") as? Date {
         didSet { UserDefaults.standard.set(lastProviderRequest, forKey: "lastProviderRequest") }
@@ -111,11 +113,14 @@ final class PoolStore {
 
     /// Set for fixed numbers that never change: `--snapshot` renders.
     @ObservationIgnored private let isFixed: Bool
+    /// Off for offline and snapshot runs, so only the running app writes what the `ebb` command reads.
+    @ObservationIgnored private let savesStatus: Bool
 
     /// `isOffline` shows cached numbers only; used for screenshots and UI work.
-    init(connection: ProxyConnection, isOffline: Bool = false) {
+    init(connection: ProxyConnection, isOffline: Bool = false, savesStatus: Bool = true) {
         self.connection = connection
         self.isOffline = isOffline
+        self.savesStatus = savesStatus && !isOffline
         isFixed = false
         if let data = try? Data(contentsOf: EbbPaths.demandFile) { ledger = DemandLedger.load(from: data) }
         reloadAccounts()
@@ -128,6 +133,7 @@ final class PoolStore {
         self.connection = connection
         isOffline = false
         isFixed = true
+        savesStatus = false
         self.state = state
         self.proxyReadAt = proxyReadAt
     }
@@ -598,6 +604,21 @@ final class PoolStore {
             })
         )
         if next != state { state = next }
+        if savesStatus { saveStatus(at: now) }
+    }
+
+    /// Saves the pools for readers outside the app: when they change, and every few minutes so their age tells.
+    private func saveStatus(at now: Date) {
+        let choice = UserDefaults.standard.string(forKey: ProviderDisplay.menuBarProviderKey) ?? ""
+        let readAt = Dictionary(uniqueKeysWithValues: state.providers.compactMap { provider in lastReadAt(for: provider).map { (provider, $0) } })
+        let status = PoolStatus(summaries: state.summaries, providers: state.providers, readAt: readAt, menuBarProvider: menuBarProvider(choice: choice), updatedAt: now)
+        guard status.needsWrite(after: savedStatus) else { return }
+        do {
+            try status.write()
+            savedStatus = status
+        } catch {
+            NSLog("Ebb: saving the pool status failed: \(error.localizedDescription)")
+        }
     }
 
     /// Feeds every counted login's latest reading to the ledger, by plan weight.

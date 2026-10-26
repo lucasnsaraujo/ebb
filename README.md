@@ -22,12 +22,24 @@ Ebb needs the proxy's management key for everything but Claude. Enter it once in
 
 This README is a placeholder. Full docs come with the first release.
 
+## Command line
+
+Settings → General → Install Command Line Tool puts an `ebb` command on your PATH. `ebb status` prints every pool, `ebb status --json` prints the same in a [documented schema](docs/cli.md#json-schema), and `ebb statusline` prints one line such as `5h 88% · W 45%`. Use that line in your shell prompt or in Claude Code's status line:
+
+```json
+{
+  "statusLine": { "type": "command", "command": "ebb statusline", "refreshInterval": 60 }
+}
+```
+
+The command reads the numbers the app already saved and never touches the network. See [docs/cli.md](docs/cli.md).
+
 ## Build
 
 Requires macOS 26 or later and Xcode 26 or later.
 
 ```sh
-./build.sh      # builds and installs ~/Applications/Ebb.app
+./build.sh      # builds and installs ~/Applications/Ebb.app, with the ebb command inside
 swift test      # runs the unit tests
 ```
 

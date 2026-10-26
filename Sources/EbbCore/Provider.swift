@@ -31,7 +31,7 @@ extension Provider {
 }
 
 /// The pool's shorter window. Devin meters by day; the rest by five hours.
-public enum ShortWindow: Sendable, Equatable {
+public enum ShortWindow: String, Sendable, Equatable, Codable {
     case fiveHours, day
 
     /// Resets further out than this don't belong in the "comes back soon" line.

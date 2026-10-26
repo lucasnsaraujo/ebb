@@ -45,7 +45,7 @@ final class AppModel {
             return
         }
         if LaunchOptions.snapshotDirectory != nil {
-            store = LaunchOptions.isLive ? PoolStore(connection: connection) : Snapshot.claudeOnly(connection: connection)
+            store = LaunchOptions.isLive ? PoolStore(connection: connection, savesStatus: false) : Snapshot.claudeOnly(connection: connection)
             return
         }
         store = PoolStore(connection: connection, isOffline: LaunchOptions.isOffline)

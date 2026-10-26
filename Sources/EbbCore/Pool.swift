@@ -12,7 +12,7 @@ public struct AccountUsage: Sendable, Equatable {
 }
 
 /// Capacity that comes back to a window at `date`, in pool percentage points.
-public struct Restoration: Sendable, Equatable {
+public struct Restoration: Sendable, Equatable, Codable {
     public var date: Date
     public var gain: Double
 
