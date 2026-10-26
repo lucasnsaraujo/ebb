@@ -1,0 +1,1 @@
+[{"kind": "session", "group": "session", "percent": 18, "severity": "normal", "resets_at": "2026-10-26T20:10:00.831009+00:00", "scope": null, "is_active": true}, {"kind": "weekly_scoped", "group": "weekly", "percent": 0, "severity": "normal", "resets_at": "2026-10-29T13:00:00+00:00", "scope": {"model": {"id": null, "display_name": "Fable"}, "surface": null}, "is_active": false}]

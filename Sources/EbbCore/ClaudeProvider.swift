@@ -1,0 +1,79 @@
+import Foundation
+
+/// Claude subscriptions, through the OAuth endpoints Claude Code itself uses.
+/// Reading usage or the profile spends no quota.
+public struct ClaudeProvider: Provider {
+    private static let usageEndpoint = URL(string: "https://api.anthropic.com/api/oauth/usage")!
+    private static let profileEndpoint = URL(string: "https://api.anthropic.com/api/oauth/profile")!
+    private static let signalPrefix = "anthropic-ratelimit-unified-"
+
+    public init() {}
+
+    public var proxyName: String { "claude" }
+
+    public func usageRequest(accessToken: String) -> URLRequest {
+        request(Self.usageEndpoint, accessToken: accessToken)
+    }
+
+    public func planRequest(accessToken: String) -> URLRequest {
+        request(Self.profileEndpoint, accessToken: accessToken)
+    }
+
+    /// The `limits` array of `GET /api/oauth/usage`.
+    public func parseUsage(_ data: Data) -> [UsageLimit]? {
+        guard let body = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let rawLimits = body["limits"] as? [Any],
+              let limitsData = try? JSONSerialization.data(withJSONObject: rawLimits)
+        else { return nil }
+        return try? UsageLimit.decodeList(from: limitsData)
+    }
+
+    /// `organization.rate_limit_tier` and `organization.subscription_status` of `GET /api/oauth/profile`.
+    public func parsePlan(_ data: Data) -> PlanProfile? {
+        guard let body = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let organization = body["organization"] as? [String: Any],
+              organization.keys.contains("subscription_status"),
+              organization.keys.contains("rate_limit_tier")
+        else { return nil }
+        let tier = organization["rate_limit_tier"] as? String
+        return PlanProfile(plan: Self.plan(rateLimitTier: tier, subscriptionStatus: organization["subscription_status"] as? String), tier: tier)
+    }
+
+    /// "default_claude_max_20x" weighs 20, "default_claude_max_5x" 5, a paid tier without a
+    /// multiplier (Pro) 1. Anything but an active subscription is inactive.
+    public static func plan(rateLimitTier: String?, subscriptionStatus: String?) -> Plan {
+        guard subscriptionStatus == "active" else { return .inactive }
+        guard let tier = rateLimitTier?.lowercased(), !tier.isEmpty, !tier.contains("free") else { return .unknown }
+        if let match = tier.firstMatch(of: /_(\d+)x$/), let multiplier = Double(match.1), multiplier > 0 {
+            return .paid(weight: multiplier)
+        }
+        return .paid(weight: 1)
+    }
+
+    /// `Anthropic-Ratelimit-Unified-5h-*` and `-7d-*`. `nil` without a 5-hour utilization, the one
+    /// window every plan has. `7d` is the general weekly window; `7d_oi` and per-model caps are ignored.
+    public func limits(fromSignals signals: [String: Any]) -> [UsageLimit]? {
+        let values = Dictionary(signals.compactMap { key, value -> (String, String)? in
+            let text = (value as? String) ?? (value as? NSNumber)?.stringValue
+            return text.map { (key.lowercased(), $0) }
+        }) { first, _ in first }
+
+        func window(_ name: String, kind: UsageLimit.Kind) -> UsageLimit? {
+            guard let utilization = values[Self.signalPrefix + name + "-utilization"].flatMap(Double.init) else { return nil }
+            let reset = values[Self.signalPrefix + name + "-reset"].flatMap(TimeInterval.init).map(Date.init(timeIntervalSince1970:))
+            let percent = (utilization * 100 * 100).rounded() / 100
+            return UsageLimit(kind: kind, usedPercent: percent, resetsAt: reset)
+        }
+
+        guard let session = window("5h", kind: .session) else { return nil }
+        return [session] + [window("7d", kind: .weeklyAll)].compactMap { $0 }
+    }
+
+    private func request(_ url: URL, accessToken: String) -> URLRequest {
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
+        request.setValue("Ebb", forHTTPHeaderField: "User-Agent")
+        return request
+    }
+}

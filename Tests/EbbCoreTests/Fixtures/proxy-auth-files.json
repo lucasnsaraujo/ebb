@@ -1,0 +1,61 @@
+{
+  "files": [
+    {
+      "name": "claude-4c515511-max@example.com.json",
+      "email": "max@example.com",
+      "provider": "claude",
+      "type": "claude",
+      "disabled": false,
+      "status": "active",
+      "weight": 80,
+      "quota": {
+        "observed_at": "2026-10-26T16:51:17.589504-03:00",
+        "signals": {
+          "Anthropic-Ratelimit-Unified-5h-Reset": "1793056200",
+          "Anthropic-Ratelimit-Unified-5h-Status": "allowed",
+          "Anthropic-Ratelimit-Unified-5h-Utilization": "0.11",
+          "Anthropic-Ratelimit-Unified-7d-Reset": "1793149200",
+          "Anthropic-Ratelimit-Unified-7d-Status": "allowed_warning",
+          "Anthropic-Ratelimit-Unified-7d-Utilization": "0.95",
+          "Anthropic-Ratelimit-Unified-7d_oi-Reset": "1793149200",
+          "Anthropic-Ratelimit-Unified-7d_oi-Utilization": "0.0",
+          "Anthropic-Ratelimit-Unified-Reset": "1793149200"
+        }
+      }
+    },
+    {
+      "name": "claude-f11cea8c-team@example.com.json",
+      "email": "team@example.com",
+      "provider": "claude",
+      "type": "claude",
+      "disabled": false,
+      "status": "active",
+      "weight": 475,
+      "quota": {
+        "observed_at": "2026-10-26T16:51:49.194793-03:00",
+        "signals": {
+          "Anthropic-Ratelimit-Unified-5h-Reset": "1793059800",
+          "Anthropic-Ratelimit-Unified-5h-Status": "allowed",
+          "Anthropic-Ratelimit-Unified-5h-Utilization": "0.06",
+          "Anthropic-Ratelimit-Unified-Reset": "1793059800"
+        }
+      }
+    },
+    {
+      "name": "claude-0000-idle@example.com.json",
+      "email": "idle@example.com",
+      "provider": "claude",
+      "type": "claude",
+      "disabled": true,
+      "status": "disabled"
+    },
+    {
+      "name": "codex-someone.json",
+      "email": "someone@example.com",
+      "provider": "codex",
+      "type": "codex",
+      "disabled": false
+    }
+  ],
+  "observed_at": "2026-10-26T19:51:51.190673Z"
+}

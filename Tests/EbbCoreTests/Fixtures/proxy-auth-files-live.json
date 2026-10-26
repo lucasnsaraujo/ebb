@@ -1,0 +1,347 @@
+{
+ "files": [
+  {
+   "name": "claude-00000000-user0@example.com.json",
+   "id": "claude-00000000-user0@example.com.json",
+   "label": "user0@example.com",
+   "account": "user0@example.com",
+   "email": "user0@example.com",
+   "provider": "claude",
+   "type": "claude",
+   "account_type": "oauth",
+   "disabled": false,
+   "status": "active",
+   "status_message": "",
+   "unavailable": false,
+   "runtime_only": false,
+   "weight": 80,
+   "quota": {
+    "observed_at": "2026-10-26T16:51:17.589504-03:00",
+    "signals": {
+     "Anthropic-Ratelimit-Unified-5h-Reset": "1793056200",
+     "Anthropic-Ratelimit-Unified-5h-Status": "allowed",
+     "Anthropic-Ratelimit-Unified-5h-Utilization": "0.11",
+     "Anthropic-Ratelimit-Unified-7d-Reset": "1793149200",
+     "Anthropic-Ratelimit-Unified-7d-Status": "allowed_warning",
+     "Anthropic-Ratelimit-Unified-7d-Surpassed-Threshold": "0.75",
+     "Anthropic-Ratelimit-Unified-7d-Utilization": "0.95",
+     "Anthropic-Ratelimit-Unified-Fallback-Percentage": "0.5",
+     "Anthropic-Ratelimit-Unified-Overage-Disabled-Reason": "org_level_disabled",
+     "Anthropic-Ratelimit-Unified-Overage-Status": "rejected",
+     "Anthropic-Ratelimit-Unified-Representative-Claim": "seven_day",
+     "Anthropic-Ratelimit-Unified-Reset": "1793149200",
+     "Anthropic-Ratelimit-Unified-Status": "allowed_warning",
+     "Anthropic-Ratelimit-Unified-Upgrade-Paths": "overage"
+    }
+   },
+   "model_quotas": {
+    "claude-fable-5-1": {
+     "observed_at": "2026-10-26T11:59:29.314925-03:00",
+     "signals": {
+      "Anthropic-Ratelimit-Unified-5h-Reset": "1793038200",
+      "Anthropic-Ratelimit-Unified-5h-Status": "allowed",
+      "Anthropic-Ratelimit-Unified-5h-Utilization": "0.03",
+      "Anthropic-Ratelimit-Unified-7d-Reset": "1793149200",
+      "Anthropic-Ratelimit-Unified-7d-Status": "allowed_warning",
+      "Anthropic-Ratelimit-Unified-7d-Surpassed-Threshold": "0.75",
+      "Anthropic-Ratelimit-Unified-7d-Utilization": "0.92",
+      "Anthropic-Ratelimit-Unified-7d_oi-Reset": "1793149200",
+      "Anthropic-Ratelimit-Unified-7d_oi-Status": "allowed",
+      "Anthropic-Ratelimit-Unified-7d_oi-Utilization": "0.0",
+      "Anthropic-Ratelimit-Unified-Fallback-Percentage": "0.5",
+      "Anthropic-Ratelimit-Unified-Overage-Disabled-Reason": "org_level_disabled",
+      "Anthropic-Ratelimit-Unified-Overage-Status": "rejected",
+      "Anthropic-Ratelimit-Unified-Representative-Claim": "seven_day",
+      "Anthropic-Ratelimit-Unified-Reset": "1793149200",
+      "Anthropic-Ratelimit-Unified-Status": "allowed_warning",
+      "Anthropic-Ratelimit-Unified-Upgrade-Paths": "overage"
+     }
+    },
+    "claude-haiku-5-5": {
+     "observed_at": "2026-10-26T16:51:17.589504-03:00",
+     "signals": {
+      "Anthropic-Ratelimit-Unified-5h-Reset": "1793056200",
+      "Anthropic-Ratelimit-Unified-5h-Status": "allowed",
+      "Anthropic-Ratelimit-Unified-5h-Utilization": "0.11",
+      "Anthropic-Ratelimit-Unified-7d-Reset": "1793149200",
+      "Anthropic-Ratelimit-Unified-7d-Status": "allowed_warning",
+      "Anthropic-Ratelimit-Unified-7d-Surpassed-Threshold": "0.75",
+      "Anthropic-Ratelimit-Unified-7d-Utilization": "0.95",
+      "Anthropic-Ratelimit-Unified-Fallback-Percentage": "0.5",
+      "Anthropic-Ratelimit-Unified-Overage-Disabled-Reason": "org_level_disabled",
+      "Anthropic-Ratelimit-Unified-Overage-Status": "rejected",
+      "Anthropic-Ratelimit-Unified-Representative-Claim": "seven_day",
+      "Anthropic-Ratelimit-Unified-Reset": "1793149200",
+      "Anthropic-Ratelimit-Unified-Status": "allowed_warning",
+      "Anthropic-Ratelimit-Unified-Upgrade-Paths": "overage"
+     }
+    },
+    "claude-opus-5-5": {
+     "observed_at": "2026-10-26T16:50:06.033643-03:00",
+     "signals": {
+      "Anthropic-Ratelimit-Unified-5h-Reset": "1793056200",
+      "Anthropic-Ratelimit-Unified-5h-Status": "allowed",
+      "Anthropic-Ratelimit-Unified-5h-Utilization": "0.11",
+      "Anthropic-Ratelimit-Unified-7d-Reset": "1793149200",
+      "Anthropic-Ratelimit-Unified-7d-Status": "allowed_warning",
+      "Anthropic-Ratelimit-Unified-7d-Surpassed-Threshold": "0.75",
+      "Anthropic-Ratelimit-Unified-7d-Utilization": "0.95",
+      "Anthropic-Ratelimit-Unified-Fallback-Percentage": "0.5",
+      "Anthropic-Ratelimit-Unified-Overage-Disabled-Reason": "org_level_disabled",
+      "Anthropic-Ratelimit-Unified-Overage-Status": "rejected",
+      "Anthropic-Ratelimit-Unified-Representative-Claim": "seven_day",
+      "Anthropic-Ratelimit-Unified-Reset": "1793149200",
+      "Anthropic-Ratelimit-Unified-Status": "allowed_warning",
+      "Anthropic-Ratelimit-Unified-Upgrade-Paths": "overage"
+     }
+    },
+    "claude-sonnet-5-5": {
+     "observed_at": "2026-10-26T16:06:53.415822-03:00",
+     "signals": {
+      "Anthropic-Ratelimit-Unified-5h-Reset": "1793056200",
+      "Anthropic-Ratelimit-Unified-5h-Status": "allowed",
+      "Anthropic-Ratelimit-Unified-5h-Utilization": "0.06",
+      "Anthropic-Ratelimit-Unified-7d-Reset": "1793149200",
+      "Anthropic-Ratelimit-Unified-7d-Status": "allowed_warning",
+      "Anthropic-Ratelimit-Unified-7d-Surpassed-Threshold": "0.75",
+      "Anthropic-Ratelimit-Unified-7d-Utilization": "0.95",
+      "Anthropic-Ratelimit-Unified-Fallback-Percentage": "0.5",
+      "Anthropic-Ratelimit-Unified-Overage-Disabled-Reason": "org_level_disabled",
+      "Anthropic-Ratelimit-Unified-Overage-Status": "rejected",
+      "Anthropic-Ratelimit-Unified-Representative-Claim": "seven_day",
+      "Anthropic-Ratelimit-Unified-Reset": "1793149200",
+      "Anthropic-Ratelimit-Unified-Status": "allowed_warning",
+      "Anthropic-Ratelimit-Unified-Upgrade-Paths": "overage"
+     }
+    }
+   },
+   "auth_index": "0000000000000000"
+  },
+  {
+   "name": "claude-00000001-user1@example.com.json",
+   "id": "claude-00000001-user1@example.com.json",
+   "label": "user1@example.com",
+   "account": "user1@example.com",
+   "email": "user1@example.com",
+   "provider": "claude",
+   "type": "claude",
+   "account_type": "oauth",
+   "disabled": false,
+   "status": "active",
+   "status_message": "",
+   "unavailable": false,
+   "runtime_only": false,
+   "weight": 475,
+   "quota": {
+    "observed_at": "2026-10-26T16:55:15.754138-03:00",
+    "signals": {
+     "Anthropic-Ratelimit-Unified-5h-Reset": "1793059800",
+     "Anthropic-Ratelimit-Unified-5h-Status": "allowed",
+     "Anthropic-Ratelimit-Unified-5h-Utilization": "0.08",
+     "Anthropic-Ratelimit-Unified-Fallback-Percentage": "0.5",
+     "Anthropic-Ratelimit-Unified-Overage-Disabled-Reason": "org_level_disabled",
+     "Anthropic-Ratelimit-Unified-Overage-Status": "rejected",
+     "Anthropic-Ratelimit-Unified-Representative-Claim": "five_hour",
+     "Anthropic-Ratelimit-Unified-Reset": "1793059800",
+     "Anthropic-Ratelimit-Unified-Status": "allowed"
+    }
+   },
+   "model_quotas": {
+    "claude-haiku-5-5": {
+     "observed_at": "2026-10-26T16:51:19.335038-03:00",
+     "signals": {
+      "Anthropic-Ratelimit-Unified-5h-Reset": "1793059800",
+      "Anthropic-Ratelimit-Unified-5h-Status": "allowed",
+      "Anthropic-Ratelimit-Unified-5h-Utilization": "0.06",
+      "Anthropic-Ratelimit-Unified-Fallback-Percentage": "0.5",
+      "Anthropic-Ratelimit-Unified-Overage-Disabled-Reason": "org_level_disabled",
+      "Anthropic-Ratelimit-Unified-Overage-Status": "rejected",
+      "Anthropic-Ratelimit-Unified-Representative-Claim": "five_hour",
+      "Anthropic-Ratelimit-Unified-Reset": "1793059800",
+      "Anthropic-Ratelimit-Unified-Status": "allowed"
+     }
+    },
+    "claude-opus-5-5": {
+     "observed_at": "2026-10-26T16:55:15.754138-03:00",
+     "signals": {
+      "Anthropic-Ratelimit-Unified-5h-Reset": "1793059800",
+      "Anthropic-Ratelimit-Unified-5h-Status": "allowed",
+      "Anthropic-Ratelimit-Unified-5h-Utilization": "0.08",
+      "Anthropic-Ratelimit-Unified-Fallback-Percentage": "0.5",
+      "Anthropic-Ratelimit-Unified-Overage-Disabled-Reason": "org_level_disabled",
+      "Anthropic-Ratelimit-Unified-Overage-Status": "rejected",
+      "Anthropic-Ratelimit-Unified-Representative-Claim": "five_hour",
+      "Anthropic-Ratelimit-Unified-Reset": "1793059800",
+      "Anthropic-Ratelimit-Unified-Status": "allowed"
+     }
+    },
+    "claude-sonnet-5-5": {
+     "observed_at": "2026-10-26T16:24:35.693934-03:00",
+     "signals": {
+      "Anthropic-Ratelimit-Unified-5h-Reset": "1793059800",
+      "Anthropic-Ratelimit-Unified-5h-Status": "allowed",
+      "Anthropic-Ratelimit-Unified-5h-Utilization": "0.04",
+      "Anthropic-Ratelimit-Unified-Fallback-Percentage": "0.5",
+      "Anthropic-Ratelimit-Unified-Overage-Disabled-Reason": "org_level_disabled",
+      "Anthropic-Ratelimit-Unified-Overage-Status": "rejected",
+      "Anthropic-Ratelimit-Unified-Representative-Claim": "five_hour",
+      "Anthropic-Ratelimit-Unified-Reset": "1793059800",
+      "Anthropic-Ratelimit-Unified-Status": "allowed"
+     }
+    }
+   },
+   "auth_index": "0000000000000001"
+  },
+  {
+   "name": "claude-00000002-user2@example.com.json",
+   "id": "claude-00000002-user2@example.com.json",
+   "label": "user2@example.com",
+   "account": "user2@example.com",
+   "email": "user2@example.com",
+   "provider": "claude",
+   "type": "claude",
+   "account_type": "oauth",
+   "disabled": false,
+   "status": "active",
+   "status_message": "",
+   "unavailable": false,
+   "runtime_only": false,
+   "weight": 465,
+   "quota": {
+    "observed_at": "2026-10-26T17:13:00.341631-03:00",
+    "signals": {
+     "Anthropic-Ratelimit-Unified-5h-Reset": "1793058600",
+     "Anthropic-Ratelimit-Unified-5h-Status": "allowed",
+     "Anthropic-Ratelimit-Unified-5h-Utilization": "0.09",
+     "Anthropic-Ratelimit-Unified-Fallback-Percentage": "0.5",
+     "Anthropic-Ratelimit-Unified-Overage-Disabled-Reason": "org_level_disabled",
+     "Anthropic-Ratelimit-Unified-Overage-Status": "rejected",
+     "Anthropic-Ratelimit-Unified-Representative-Claim": "five_hour",
+     "Anthropic-Ratelimit-Unified-Reset": "1793058600",
+     "Anthropic-Ratelimit-Unified-Status": "allowed"
+    }
+   },
+   "model_quotas": {
+    "claude-haiku-5-5": {
+     "observed_at": "2026-10-26T16:51:20.014916-03:00",
+     "signals": {
+      "Anthropic-Ratelimit-Unified-5h-Reset": "1793058600",
+      "Anthropic-Ratelimit-Unified-5h-Status": "allowed",
+      "Anthropic-Ratelimit-Unified-5h-Utilization": "0.07",
+      "Anthropic-Ratelimit-Unified-Fallback-Percentage": "0.5",
+      "Anthropic-Ratelimit-Unified-Overage-Disabled-Reason": "org_level_disabled",
+      "Anthropic-Ratelimit-Unified-Overage-Status": "rejected",
+      "Anthropic-Ratelimit-Unified-Representative-Claim": "five_hour",
+      "Anthropic-Ratelimit-Unified-Reset": "1793058600",
+      "Anthropic-Ratelimit-Unified-Status": "allowed"
+     }
+    },
+    "claude-opus-5-5": {
+     "observed_at": "2026-10-26T17:13:00.341631-03:00",
+     "signals": {
+      "Anthropic-Ratelimit-Unified-5h-Reset": "1793058600",
+      "Anthropic-Ratelimit-Unified-5h-Status": "allowed",
+      "Anthropic-Ratelimit-Unified-5h-Utilization": "0.09",
+      "Anthropic-Ratelimit-Unified-Fallback-Percentage": "0.5",
+      "Anthropic-Ratelimit-Unified-Overage-Disabled-Reason": "org_level_disabled",
+      "Anthropic-Ratelimit-Unified-Overage-Status": "rejected",
+      "Anthropic-Ratelimit-Unified-Representative-Claim": "five_hour",
+      "Anthropic-Ratelimit-Unified-Reset": "1793058600",
+      "Anthropic-Ratelimit-Unified-Status": "allowed"
+     }
+    },
+    "claude-sonnet-5-5": {
+     "observed_at": "2026-10-26T16:37:24.928258-03:00",
+     "signals": {
+      "Anthropic-Ratelimit-Unified-5h-Reset": "1793058600",
+      "Anthropic-Ratelimit-Unified-5h-Status": "allowed",
+      "Anthropic-Ratelimit-Unified-5h-Utilization": "0.05",
+      "Anthropic-Ratelimit-Unified-Fallback-Percentage": "0.5",
+      "Anthropic-Ratelimit-Unified-Overage-Disabled-Reason": "org_level_disabled",
+      "Anthropic-Ratelimit-Unified-Overage-Status": "rejected",
+      "Anthropic-Ratelimit-Unified-Representative-Claim": "five_hour",
+      "Anthropic-Ratelimit-Unified-Reset": "1793058600",
+      "Anthropic-Ratelimit-Unified-Status": "allowed"
+     }
+    }
+   },
+   "auth_index": "0000000000000002"
+  },
+  {
+   "name": "claude-00000003-user3@example.com.json",
+   "id": "claude-00000003-user3@example.com.json",
+   "label": "user3@example.com",
+   "account": "user3@example.com",
+   "email": "user3@example.com",
+   "provider": "claude",
+   "type": "claude",
+   "account_type": "oauth",
+   "disabled": false,
+   "status": "active",
+   "status_message": "",
+   "unavailable": false,
+   "runtime_only": false,
+   "weight": 390,
+   "quota": {
+    "observed_at": "2026-10-26T17:13:11.699289-03:00",
+    "signals": {
+     "Anthropic-Ratelimit-Unified-5h-Reset": "1793063400",
+     "Anthropic-Ratelimit-Unified-5h-Status": "allowed",
+     "Anthropic-Ratelimit-Unified-5h-Utilization": "0.01",
+     "Anthropic-Ratelimit-Unified-Fallback-Percentage": "0.5",
+     "Anthropic-Ratelimit-Unified-Overage-Disabled-Reason": "org_level_disabled",
+     "Anthropic-Ratelimit-Unified-Overage-Status": "rejected",
+     "Anthropic-Ratelimit-Unified-Representative-Claim": "five_hour",
+     "Anthropic-Ratelimit-Unified-Reset": "1793063400",
+     "Anthropic-Ratelimit-Unified-Status": "allowed"
+    }
+   },
+   "model_quotas": {
+    "claude-haiku-5-5": {
+     "observed_at": "2026-10-26T16:51:18.813529-03:00",
+     "signals": {
+      "Anthropic-Ratelimit-Unified-5h-Reset": "1793045400",
+      "Anthropic-Ratelimit-Unified-5h-Status": "allowed",
+      "Anthropic-Ratelimit-Unified-5h-Utilization": "0.22",
+      "Anthropic-Ratelimit-Unified-Fallback-Percentage": "0.5",
+      "Anthropic-Ratelimit-Unified-Overage-Disabled-Reason": "org_level_disabled",
+      "Anthropic-Ratelimit-Unified-Overage-Status": "rejected",
+      "Anthropic-Ratelimit-Unified-Representative-Claim": "five_hour",
+      "Anthropic-Ratelimit-Unified-Reset": "1793045400",
+      "Anthropic-Ratelimit-Unified-Status": "allowed"
+     }
+    },
+    "claude-opus-5-5": {
+     "observed_at": "2026-10-26T17:13:11.699289-03:00",
+     "signals": {
+      "Anthropic-Ratelimit-Unified-5h-Reset": "1793063400",
+      "Anthropic-Ratelimit-Unified-5h-Status": "allowed",
+      "Anthropic-Ratelimit-Unified-5h-Utilization": "0.01",
+      "Anthropic-Ratelimit-Unified-Fallback-Percentage": "0.5",
+      "Anthropic-Ratelimit-Unified-Overage-Disabled-Reason": "org_level_disabled",
+      "Anthropic-Ratelimit-Unified-Overage-Status": "rejected",
+      "Anthropic-Ratelimit-Unified-Representative-Claim": "five_hour",
+      "Anthropic-Ratelimit-Unified-Reset": "1793063400",
+      "Anthropic-Ratelimit-Unified-Status": "allowed"
+     }
+    },
+    "claude-sonnet-5-5": {
+     "observed_at": "2026-10-26T16:05:40.537362-03:00",
+     "signals": {
+      "Anthropic-Ratelimit-Unified-5h-Reset": "1793045400",
+      "Anthropic-Ratelimit-Unified-5h-Status": "allowed",
+      "Anthropic-Ratelimit-Unified-5h-Utilization": "0.15",
+      "Anthropic-Ratelimit-Unified-Fallback-Percentage": "0.5",
+      "Anthropic-Ratelimit-Unified-Overage-Disabled-Reason": "org_level_disabled",
+      "Anthropic-Ratelimit-Unified-Overage-Status": "rejected",
+      "Anthropic-Ratelimit-Unified-Representative-Claim": "five_hour",
+      "Anthropic-Ratelimit-Unified-Reset": "1793045400",
+      "Anthropic-Ratelimit-Unified-Status": "allowed"
+     }
+    }
+   },
+   "auth_index": "0000000000000003"
+  }
+ ],
+ "observed_at": "2026-10-26T20:13:11.845204Z"
+}
