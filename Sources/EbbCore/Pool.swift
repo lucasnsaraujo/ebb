@@ -33,6 +33,8 @@ public struct WindowSummary: Sendable, Equatable {
     public var freePercent: Double
     /// Upcoming resets of this window, soonest first.
     public var resets: [Restoration]
+    /// The part of `freePercent` that can't be used up: accounts with no cap on this window.
+    public var uncappedPercent = 0.0
 }
 
 public struct PoolSummary: Sendable, Equatable {
@@ -41,6 +43,10 @@ public struct PoolSummary: Sendable, Equatable {
     public var weekly: WindowSummary
     /// True when some account has no usable reading and is left out of the totals.
     public var isPartial: Bool
+    /// Summed plan weight of the accounts read: weighted demand divided by it gives pool points.
+    public var totalWeight = 0.0
+    /// Share of the accounts that could be read, 0–1.
+    public var readableShare = 1.0
 }
 
 public enum Pool {
@@ -58,22 +64,26 @@ public enum Pool {
 
         func window(_ kind: UsageLimit.Kind, horizon: TimeInterval?) -> WindowSummary {
             var free = 0.0
+            var uncapped = 0.0
             var resets: [Restoration] = []
             for account in readable {
                 let limit = account.limits.first { $0.kind == kind }
                 let used = limit?.used(at: now) ?? 0
                 free += account.weight * (100 - used)
+                if limit == nil, kind == .weeklyAll { uncapped += account.weight * 100 }
                 if let date = limit?.resetsAt, date > now, used > 0, horizon.map({ date.timeIntervalSince(now) <= $0 }) ?? true {
                     resets.append(Restoration(date: date, gain: account.weight * used / totalWeight))
                 }
             }
-            return WindowSummary(freePercent: free / totalWeight, resets: merge(resets))
+            return WindowSummary(freePercent: free / totalWeight, resets: merge(resets), uncappedPercent: uncapped / totalWeight)
         }
 
         return PoolSummary(
             session: window(.session, horizon: sessionHorizon),
             weekly: window(.weeklyAll, horizon: nil),
-            isPartial: accounts.contains(nil)
+            isPartial: accounts.contains(nil),
+            totalWeight: totalWeight,
+            readableShare: Double(readable.count) / Double(accounts.count)
         )
     }
 

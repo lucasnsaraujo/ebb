@@ -13,6 +13,24 @@ struct PoolState: Equatable {
     var defaultProvider: String?
     /// The newest usage-API reading per provider, among logins that rely on one.
     var usageAPIReadAt: [String: Date] = [:]
+    var forecasts: [String: PoolForecast] = [:]
+}
+
+/// When each window of a pool runs out at the current pace; `nil` while there's too little to go on.
+struct PoolForecast: Equatable {
+    var session: Pace.Forecast?
+    var weekly: Pace.Forecast?
+
+    init(session: Pace.Forecast? = nil, weekly: Pace.Forecast? = nil) {
+        self.session = session
+        self.weekly = weekly
+    }
+
+    init(ledger: DemandLedger, pool summary: PoolSummary, provider: String, now: Date) {
+        let horizon = Providers.named(provider)?.shortWindow.horizon ?? Pool.sessionHorizon
+        session = Pace.session(ledger, pool: provider, summary: summary, horizon: horizon, now: now)
+        weekly = Pace.weekly(ledger, pool: provider, summary: summary, now: now)
+    }
 }
 
 /// Keeps the pools fresh while the menu bar item is visible.
@@ -86,6 +104,10 @@ final class PoolStore {
     }
     @ObservationIgnored private var isPollingProxy = false
     @ObservationIgnored private var loops: [Task<Void, Never>] = []
+    @ObservationIgnored private var ledger = DemandLedger()
+    @ObservationIgnored private var ledgerSavedAt = Date.now
+    /// Written at most this often while polling, and when Ebb hides or quits.
+    static let ledgerSaveInterval: TimeInterval = 5 * 60
 
     /// Set for fixed numbers that never change: `--snapshot` renders.
     @ObservationIgnored private let isFixed: Bool
@@ -95,6 +117,7 @@ final class PoolStore {
         self.connection = connection
         self.isOffline = isOffline
         isFixed = false
+        if let data = try? Data(contentsOf: EbbPaths.demandFile) { ledger = DemandLedger.load(from: data) }
         reloadAccounts()
         loadCaches()
         recompute()
@@ -130,6 +153,7 @@ final class PoolStore {
     func setActive(_ isActive: Bool) {
         loops.forEach { $0.cancel() }
         loops = []
+        if !isActive { saveLedger() }
         recompute()
         guard isActive, !isOffline, !isFixed else { return }
         loops = [
@@ -193,8 +217,18 @@ final class PoolStore {
         }
         reloadAccounts()
         writeSignalCaches()
+        ledger.heartbeat(at: .now)
         recompute()
+        if Date.now.timeIntervalSince(ledgerSavedAt) >= Self.ledgerSaveInterval { saveLedger() }
         if syncsWeights { await syncProxyWeights() }
+    }
+
+    /// Never from a snapshot or demo, which must leave the user's files alone.
+    func saveLedger() {
+        guard !isFixed, !isOffline, LaunchOptions.snapshotDirectory == nil else { return }
+        ledgerSavedAt = .now
+        try? FileManager.default.createDirectory(at: EbbPaths.applicationSupport, withIntermediateDirectories: true)
+        try? ledger.encoded().write(to: EbbPaths.demandFile, options: .atomic)
     }
 
     /// Steers new threads toward free capacity: weight = plan size × free percent.
@@ -551,14 +585,48 @@ final class PoolStore {
             usageAPIReadAt[file.provider] = max(usageAPIReadAt[file.provider] ?? .distantPast, choice.reading.date)
         }
 
+        let summaries = ProviderPools.summarize(logins, at: now)
+        if !isOffline { recordDemand(at: now) }
         let next = PoolState(
-            summaries: ProviderPools.summarize(logins, at: now),
+            summaries: summaries,
             details: makeDetails(at: now),
             providers: Providers.all.map(\.proxyName).filter(pooled.contains),
             defaultProvider: ProviderPools.defaultProvider(ProviderPools.pooledWeight(logins)),
-            usageAPIReadAt: usageAPIReadAt
+            usageAPIReadAt: usageAPIReadAt,
+            forecasts: Dictionary(uniqueKeysWithValues: summaries.map { provider, summary in
+                (provider, PoolForecast(ledger: ledger, pool: summary, provider: provider, now: now))
+            })
         )
         if next != state { state = next }
+    }
+
+    /// Feeds every counted login's latest reading to the ledger, by plan weight.
+    private func recordDemand(at now: Date) {
+        var members: [String: [(id: String, weight: Double, reading: DatedLimits)]] = [:]
+        let claude = ClaudeProvider().proxyName
+        for account in accounts.values where !isDisabled(account) {
+            guard let plan = claudePlan(account.email), plan.weight > 0, let choice = readingSource(for: account, at: now) else { continue }
+            members[claude, default: []].append((account.email, plan.weight, choice.reading))
+        }
+        for file in otherFiles where !file.isDisabled && file.hasUsageWindows {
+            let weight = plan(for: file).weight
+            guard weight > 0, let choice = ReadingChoice.choose(signals: file.quota, usage: callReadings[file.name], now: now) else { continue }
+            members[file.provider, default: []].append((file.name, weight, choice.reading))
+        }
+        for provider in Providers.all.map(\.proxyName) {
+            let group = members[provider] ?? []
+            ledger.keepAccounts(Set(group.map(\.id)), in: provider)
+            let shortWindow = Providers.named(provider)?.shortWindow.horizon ?? Pool.sessionHorizon
+            for member in group {
+                for (kind, limitKind, window) in [(DemandLedger.Kind.session, UsageLimit.Kind.session, shortWindow), (.weekly, .weeklyAll, 7 * 24 * 60 * 60)] {
+                    ledger.record(
+                        member.reading.limits.first { $0.kind == limitKind },
+                        readAt: member.reading.date, pool: provider, kind: kind,
+                        account: member.id, weight: member.weight, window: window
+                    )
+                }
+            }
+        }
     }
 
     private func makeDetails(at now: Date) -> [AccountDetail] {

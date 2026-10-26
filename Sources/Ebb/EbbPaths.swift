@@ -8,6 +8,8 @@ enum EbbPaths {
     static let applicationSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         .appending(path: "Ebb")
     static let managementKeyFile = applicationSupport.appending(path: "management-key")
+    /// The demand ledger behind the pace forecasts.
+    static let demandFile = applicationSupport.appending(path: "demand.json")
     static let configDirectory = home.appending(path: ".config/ebb")
     static let modeFile = configDirectory.appending(path: "mode")
     static let retiredAccounts = RetiredAccounts(file: configDirectory.appending(path: "retired.json"))

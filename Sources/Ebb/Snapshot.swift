@@ -10,18 +10,38 @@ enum Snapshot {
     static func write(store: PoolStore, connection: ProxyConnection, visibility: Visibility, to directory: URL, prefix: String) {
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         for scheme in [ColorScheme.dark, .light] {
+            let appearance = scheme == .dark ? "dark" : "light"
             for isExpanded in [false, true] {
                 let panel = PoolPanel(store: store, visibility: visibility, connection: connection, showsAccounts: isExpanded)
-                let name = "\(prefix)-\(scheme == .dark ? "dark" : "light")-\(isExpanded ? "expanded" : "collapsed").png"
+                let name = "\(prefix)-\(appearance)-\(isExpanded ? "expanded" : "collapsed").png"
                 if let data = png(of: panel, scheme: scheme) {
                     try? data.write(to: directory.appending(path: name))
+                }
+            }
+            for (window, card) in hoverCards(store: store) {
+                if let data = png(of: card, scheme: scheme) {
+                    try? data.write(to: directory.appending(path: "\(prefix)-\(appearance)-hover-\(window).png"))
                 }
             }
         }
     }
 
+    /// The hover card of each window that has one, as the panel would show it.
+    private static func hoverCards(store: PoolStore, now: Date = .now) -> [(String, GainBreakdown)] {
+        let choice = UserDefaults.standard.string(forKey: ProviderDisplay.panelProviderKey) ?? ""
+        let provider = store.state.providers.contains(choice) ? choice : store.menuBarProvider(choice: "")
+        guard let provider, let summary = store.state.summaries[provider] else { return [] }
+        let short = ProviderDisplay.shortWindow(provider)
+        let forecast = store.state.forecasts[provider]
+        let cards = [
+            ("session", GainBreakdown(window: .session, short: short, line: GainLine.session(summary.session.resets), forecast: forecast?.session, now: now)),
+            ("weekly", GainBreakdown(window: .weekly, short: short, line: GainLine.weekly(summary.weekly.resets), forecast: forecast?.weekly, now: now)),
+        ]
+        return cards.filter { $0.1.line != nil || $0.1.forecast != nil }
+    }
+
     /// Draws at 2x on the window background, with every animation finished.
-    private static func png(of panel: PoolPanel, scheme: ColorScheme) -> Data? {
+    private static func png(of panel: some View, scheme: ColorScheme) -> Data? {
         let root = panel
             .background(Color(nsColor: .windowBackgroundColor))
             .environment(\.colorScheme, scheme)

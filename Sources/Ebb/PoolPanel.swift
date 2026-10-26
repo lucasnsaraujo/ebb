@@ -35,7 +35,7 @@ struct PoolPanel: View {
             header
                 .padding(.bottom, 12)
             if let summary {
-                WindowPair(summary: summary, short: ProviderDisplay.shortWindow(provider))
+                WindowPair(summary: summary, forecast: provider.flatMap { store.state.forecasts[$0] }, short: ProviderDisplay.shortWindow(provider))
                     .contentShape(.rect)
                     .onTapGesture(perform: toggleAccounts)
             } else {
@@ -210,6 +210,7 @@ enum Motion {
 
 private struct WindowPair: View {
     let summary: PoolSummary
+    let forecast: PoolForecast?
     let short: ShortWindow
 
     var body: some View {
@@ -221,6 +222,7 @@ private struct WindowPair: View {
                     short: short,
                     freePercent: summary.session.freePercent,
                     line: GainLine.session(summary.session.resets.filter { $0.date > now }),
+                    forecast: forecast?.session,
                     now: now
                 )
                 WindowColumn(
@@ -228,6 +230,7 @@ private struct WindowPair: View {
                     short: short,
                     freePercent: summary.weekly.freePercent,
                     line: GainLine.weekly(summary.weekly.resets.filter { $0.date > now }),
+                    forecast: forecast?.weekly,
                     now: now
                 )
             }
@@ -240,6 +243,7 @@ private struct WindowColumn: View {
     let short: ShortWindow
     let freePercent: Double
     let line: GainLine?
+    let forecast: Pace.Forecast?
     let now: Date
 
     var body: some View {
@@ -261,7 +265,7 @@ private struct WindowColumn: View {
             Meter(free: freePercent, comingBack: Double(line?.points ?? 0), tint: level.warningTint ?? .primary)
                 .frame(height: 6)
                 .padding(.top, 5)
-            GainLabel(window: window, short: short, line: line, now: now)
+            GainLabel(window: window, short: short, line: line, forecast: forecast, now: now)
                 .padding(.top, 7)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -294,35 +298,50 @@ private struct Meter: View {
     }
 }
 
-/// "+5% in next 4 h" or "+54% · Tue 22:00"; hovering shows the resets behind it.
+/// "+5% in next 4 h" or "+54% · Tue 22:00"; hovering shows the resets behind it and the pace.
+/// A predicted run-out takes the line's place, since it's the thing worth seeing unhovered;
+/// what comes back stays in the meter and the hover card.
 private struct GainLabel: View {
     let window: PoolWindow
     let short: ShortWindow
     let line: GainLine?
+    let forecast: Pace.Forecast?
     let now: Date
+
+    /// Under this, a 5-hour run-out is tinted.
+    private static let urgentRunOut: TimeInterval = 30 * 60
 
     @State private var isHovering = false
     @State private var showsBreakdown = false
     @State private var pendingOpen: Task<Void, Never>?
 
+    private var runOut: String? {
+        forecast.flatMap { PaceText.inline($0, window: window, now: now) }
+    }
+
+    private var isUrgent: Bool {
+        guard window == .session, case let .runsOut(within) = forecast?.outlook else { return false }
+        return within.lowerBound < Self.urgentRunOut
+    }
+
     var body: some View {
-        if let line {
-            Text(text(for: line))
+        if let text = runOut ?? line.map(text(for:)) {
+            Text(text)
                 .font(.callout)
                 .monospacedDigit()
-                .foregroundStyle(.secondary)
+                .foregroundStyle(isUrgent ? AnyShapeStyle(.orange) : AnyShapeStyle(.secondary))
                 .underline(isHovering, pattern: .dot, color: .secondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 .contentShape(.rect)
                 .onHover(perform: hover)
                 .popover(isPresented: $showsBreakdown, arrowEdge: .bottom) {
-                    GainBreakdown(window: window, short: short, line: line, now: now)
+                    GainBreakdown(window: window, short: short, line: line, forecast: forecast, now: now)
                 }
                 .onAppear {
                     if LaunchOptions.demo == .hover, window == .session { openSoon() }
                 }
-                .accessibilityHint(breakdownSummary(line))
+                .accessibilityHint(accessibilitySummary)
         } else {
             // Keeps both columns the same height.
             Text(verbatim: " ").font(.callout).hidden()
@@ -336,8 +355,10 @@ private struct GainLabel: View {
         }
     }
 
-    private func breakdownSummary(_ line: GainLine) -> String {
-        (line.items + line.later).map { "+\($0.points)% \(TimeText.later($0.date, now: now))" }.joined(separator: ", ")
+    private var accessibilitySummary: String {
+        let resets = line.map { ($0.items + $0.later).map { "+\($0.points)% \(TimeText.later($0.date, now: now))" } } ?? []
+        let pace = forecast.map { [PaceText.sentence($0, window: window, short: short, now: now)] } ?? []
+        return (resets + pace).joined(separator: ", ")
     }
 
     private func hover(_ hovering: Bool) {
@@ -359,29 +380,46 @@ private struct GainLabel: View {
     }
 }
 
-private struct GainBreakdown: View {
+/// The resets behind the gain line, then the pace sentence and what it rests on.
+struct GainBreakdown: View {
     let window: PoolWindow
     let short: ShortWindow
-    let line: GainLine
+    let line: GainLine?
+    let forecast: Pace.Forecast?
     let now: Date
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text("\(window.title(short)) resets")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .padding(.bottom, 1)
-            ForEach(line.items + line.later, id: \.date) { item in
-                HStack(spacing: 18) {
-                    Text("+\(item.points)%")
-                        .fontWeight(.medium)
-                    Spacer(minLength: 0)
-                    Text(window == .session ? TimeText.soon(item.date, now: now) : TimeText.later(item.date, now: now))
-                        .foregroundStyle(.secondary)
+            if let line {
+                Text("\(window.title(short)) resets")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .padding(.bottom, 1)
+                ForEach(line.items + line.later, id: \.date) { item in
+                    HStack(spacing: 18) {
+                        Text("+\(item.points)%")
+                            .fontWeight(.medium)
+                        Spacer(minLength: 0)
+                        Text(window == .session ? TimeText.soon(item.date, now: now) : TimeText.later(item.date, now: now))
+                            .foregroundStyle(.secondary)
+                    }
+                    .monospacedDigit()
                 }
-                .monospacedDigit()
+            }
+            if let forecast {
+                Text("Pace")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .padding(.top, line == nil ? 0 : 6)
+                    .padding(.bottom, 1)
+                Text(PaceText.sentence(forecast, window: window, short: short, now: now))
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(PaceText.basis(forecast, window: window))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
+        .frame(maxWidth: 220, alignment: .leading)
         .font(.callout)
         .padding(.horizontal, 12)
         .padding(.vertical, 10)

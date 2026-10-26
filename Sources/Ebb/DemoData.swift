@@ -30,6 +30,19 @@ enum DemoData {
         Login(provider: "gemini", email: "Gemini key", status: .health(.ok)),
     ]
 
+    /// A Claude 5-hour pool that runs out before its big reset, and a Codex week that runs out
+    /// on Thursday-ish; the other windows last, so their pace shows only on hover.
+    private static let forecasts = [
+        "claude": PoolForecast(
+            session: Pace.Forecast(outlook: .runsOut(within: (110 * 60)...(110 * 60)), basis: 40 * 60),
+            weekly: nil
+        ),
+        "codex": PoolForecast(
+            session: Pace.Forecast(outlook: .lasts, basis: 35 * 60),
+            weekly: Pace.Forecast(outlook: .runsOut(within: (3.6 * 86400)...(3.6 * 86400)), basis: 5 * 86400)
+        ),
+    ]
+
     static func store(connection: ProxyConnection, now: Date = .now) -> PoolStore {
         var providerLogins: [ProviderLogin] = []
         var details: [AccountDetail] = []
@@ -72,7 +85,8 @@ enum DemoData {
             summaries: ProviderPools.summarize(providerLogins, at: now),
             details: details.sorted { $0.label < $1.label },
             providers: Providers.all.map(\.proxyName).filter(pooled.contains),
-            defaultProvider: ProviderPools.defaultProvider(ProviderPools.pooledWeight(providerLogins))
+            defaultProvider: ProviderPools.defaultProvider(ProviderPools.pooledWeight(providerLogins)),
+            forecasts: forecasts
         )
         return PoolStore(connection: connection, state: state, proxyReadAt: now - 150)
     }

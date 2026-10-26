@@ -138,6 +138,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         registerLoginItemOnce()
     }
 
+    func applicationWillTerminate(_ notification: Notification) {
+        AppModel.shared.store.saveLedger()
+    }
+
     /// Registers once, so turning it off in System Settings sticks.
     private func registerLoginItemOnce() {
         guard Bundle.main.bundleURL.pathExtension == "app",
