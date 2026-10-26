@@ -1,6 +1,6 @@
 #!/bin/zsh
 # Builds Ebb in release mode and installs it to ~/Applications.
-# Relaunches the app if it was running.
+# Relaunches the app in the background if it was running.
 set -euo pipefail
 cd "${0:A:h}"
 
@@ -80,5 +80,5 @@ mv "$stage" "$install_path"
 echo "Installed $install_path"
 
 if $was_running; then
-    open "$install_path"
+    open -g "$install_path"
 fi
