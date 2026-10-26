@@ -86,19 +86,6 @@ private func expectClose(_ value: Double?, _ expected: Double, sourceLocation: S
         // (20·5 + 5·100 · 3) / 35
         expectClose(summary.weekly.freePercent, 1600.0 / 35)
     }
-
-    @Test func menuBarAlwaysShowsTheFiveHourWindowEvenWhenWeeklyIsLower() throws {
-        let summary = try #require(Pool.summarize(try todaysAccounts(), at: now))
-        // 5-hour 3180/35 ≈ 90.9, weekly ≈ 45.7: still the 5-hour number, no badge.
-        #expect(MenuBarReading(summary) == MenuBarReading(sessionPercent: 91, isWeeklyLow: false))
-    }
-
-    @Test func menuBarBadgesTheLogoOnlyBelowTenPercentWeekly() throws {
-        let low = try #require(Pool.summarize([AccountUsage(weight: 5, limits: [session(20), weekly(91)])], at: now))
-        #expect(MenuBarReading(low) == MenuBarReading(sessionPercent: 80, isWeeklyLow: true))
-        let edge = try #require(Pool.summarize([AccountUsage(weight: 5, limits: [session(20), weekly(90)])], at: now))
-        #expect(MenuBarReading(edge).isWeeklyLow == false)
-    }
 }
 
 private func todaysAccounts() throws -> [AccountUsage] {

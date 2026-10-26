@@ -44,9 +44,11 @@ struct PoolPanel: View {
             AccountsDisclosure(isExpanded: showsAccounts, action: toggleAccounts)
                 .padding(.top, 12)
             if showsAccounts {
+                let healthOnly = store.state.details.filter(\.isHealthOnly)
                 AccountsSection(
                     details: store.state.details.filter { $0.provider == provider && !$0.isHealthOnly },
-                    healthOnly: store.state.details.filter(\.isHealthOnly),
+                    healthOnly: healthOnly,
+                    showsProviders: store.state.providers.count > 1 || !healthOnly.isEmpty,
                     short: ProviderDisplay.shortWindow(provider),
                     isOffline: store.isOffline,
                     hasManagementKey: connection.endpoint != nil,
@@ -93,7 +95,8 @@ struct PoolPanel: View {
     private var header: some View {
         HStack(spacing: 6) {
             HStack(spacing: 6) {
-                ProviderMark(provider: provider)
+                EbbMark()
+                    .frame(width: 14, height: 14)
                 Text("Ebb")
                     .font(.headline)
             }
@@ -428,6 +431,8 @@ private struct AccountsSection: View {
     let details: [AccountDetail]
     /// Logins of providers without usage windows, listed under the pool's own.
     let healthOnly: [AccountDetail]
+    /// With logins from more than one provider, each row carries its provider's logo.
+    let showsProviders: Bool
     let short: ShortWindow
     let isOffline: Bool
     let hasManagementKey: Bool
@@ -464,7 +469,7 @@ private struct AccountsSection: View {
     private var rows: some View {
         VStack(alignment: .leading, spacing: 7) {
             ForEach(Array(details.enumerated()), id: \.element.id) { index, detail in
-                AccountRow(detail: detail, short: short, index: index + 1)
+                AccountRow(detail: detail, short: short, showsProvider: showsProviders, index: index + 1)
             }
             if !healthOnly.isEmpty {
                 Text("Health only")
@@ -474,7 +479,7 @@ private struct AccountsSection: View {
                     .help("These providers report no usage windows, so they never count toward a pool.")
                     .cascadeIn(index: details.count + 1)
                 ForEach(Array(healthOnly.enumerated()), id: \.element.id) { index, detail in
-                    AccountRow(detail: detail, short: short, index: details.count + index + 1)
+                    AccountRow(detail: detail, short: short, showsProvider: showsProviders, index: details.count + index + 1)
                 }
             }
         }
@@ -504,12 +509,17 @@ private struct AccountsSection: View {
 private struct AccountRow: View {
     let detail: AccountDetail
     let short: ShortWindow
+    let showsProvider: Bool
     let index: Int
 
     var body: some View {
         HStack(spacing: AccountColumns.spacing) {
             StatusDot(status: detail.status, readAt: detail.readAt, message: detail.healthMessage)
             HStack(spacing: 5) {
+                if showsProvider {
+                    ProviderLogo(provider: detail.provider)
+                        .foregroundStyle(.secondary)
+                }
                 Text(detail.label)
                     .lineLimit(1)
                     .truncationMode(.tail)

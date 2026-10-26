@@ -14,12 +14,13 @@ struct SettingsView: View {
     let connection: ProxyConnection
     let visibility: Visibility
     let store: PoolStore
+    let menuBarSettings: MenuBarSettings
 
     @AppStorage(SettingsTab.storageKey) private var tab = SettingsTab.general.rawValue
 
     var body: some View {
         TabView(selection: $tab) {
-            GeneralSettings(visibility: visibility, store: store)
+            GeneralSettings(visibility: visibility, store: store, menuBarSettings: menuBarSettings)
                 .tabItem { Label("General", systemImage: "gearshape") }
                 .tag(SettingsTab.general.rawValue)
             ConnectionSettings(connection: connection)
@@ -42,9 +43,10 @@ struct SettingsView: View {
 
 // MARK: - General
 
-private struct GeneralSettings: View {
+struct GeneralSettings: View {
     let visibility: Visibility
     let store: PoolStore
+    @Bindable var menuBarSettings: MenuBarSettings
 
     @AppStorage(ProviderDisplay.menuBarProviderKey) private var menuBarChoice = ""
     @State private var launchesAtLogin = SMAppService.mainApp.status == .enabled
@@ -69,6 +71,17 @@ private struct GeneralSettings: View {
                         }
                     }
                 }
+                MenuBarStylePicker(
+                    selection: $menuBarSettings.style,
+                    limit: menuBarSettings.limit,
+                    pool: store.menuBarPool(for: store.menuBarProvider(choice: menuBarChoice), now: .now)
+                )
+                Picker("Limit", selection: $menuBarSettings.limit) {
+                    ForEach(MenuBarLimit.allCases) { limit in
+                        Text(limit.title).tag(limit)
+                    }
+                }
+                .disabled(menuBarSettings.style.showsBothWindows)
             }
             Section("Startup") {
                 Toggle("Launch at login", isOn: $launchesAtLogin)
@@ -361,7 +374,7 @@ private struct AboutSettings: View {
                 }
                 LabeledContent("License", value: "MIT")
             } footer: {
-                Text("Ebb is not affiliated with Anthropic, OpenAI, Cognition, Google, Moonshot AI or Meta. The Claude mark belongs to Anthropic.")
+                Text("Ebb is not affiliated with Anthropic, OpenAI, Cognition, Google, Moonshot AI or Meta. Provider names and logos are trademarks of their owners.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

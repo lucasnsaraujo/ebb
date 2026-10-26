@@ -76,4 +76,14 @@ enum DemoData {
         )
         return PoolStore(connection: connection, state: state, proxyReadAt: now - 150)
     }
+
+    /// `--demo low`: a nearly empty pool, to show the menu bar's warning colours.
+    static func lowMenuBarPool(now: Date) -> MenuBarPool {
+        MenuBarPool(
+            session: WindowReading(window: .session, percent: 5, refillsAt: now + 38 * 60),
+            weekly: WindowReading(window: .weekly, percent: 8, refillsAt: now + 2 * 86400),
+            accounts: [true, false, false, false],
+            lastReadAt: now
+        )
+    }
 }

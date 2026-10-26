@@ -9,7 +9,7 @@ struct PoolLevel {
         percent = Int(freePercent.rounded())
     }
 
-    /// `nil` while there is plenty left, so the menu bar stays monochrome.
+    /// `nil` while there is plenty left, so the panel stays monochrome.
     var warningTint: Color? {
         switch percent {
         case ..<10: .red

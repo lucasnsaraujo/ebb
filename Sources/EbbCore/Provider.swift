@@ -41,6 +41,21 @@ public enum ShortWindow: Sendable, Equatable {
         case .day: 24 * 60 * 60
         }
     }
+
+    public var title: String {
+        switch self {
+        case .fiveHours: "5-hour"
+        case .day: "Daily"
+        }
+    }
+
+    /// The account columns' header and the menu bar's prefix.
+    public var abbreviation: String {
+        switch self {
+        case .fiveHours: "5h"
+        case .day: "1d"
+        }
+    }
 }
 
 public enum Providers {

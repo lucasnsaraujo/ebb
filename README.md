@@ -29,8 +29,8 @@ Requires macOS 26 or later and Xcode 26 or later.
 swift test      # runs the unit tests
 ```
 
-`Ebb --demo` shows fake accounts of every provider with no network, for screenshots and testing. `Ebb --snapshot <dir>` renders the panel offscreen to PNGs and quits; add `--demo` for the fake accounts.
+`Ebb --demo` shows fake accounts of every provider with no network, for screenshots and testing. `Ebb --snapshot <dir>` renders the panel, every menu bar style and Settings → General offscreen to PNGs and quits; add `--demo` for the fake accounts.
 
 ## License
 
-MIT. Ebb is not affiliated with Anthropic, OpenAI, Cognition, Google, Moonshot AI or Meta. The Claude mark belongs to Anthropic.
+MIT. Ebb is not affiliated with Anthropic, OpenAI, Cognition, Google, Moonshot AI or Meta. Provider names and logos are trademarks of their owners; see [THIRD_PARTY.md](THIRD_PARTY.md).

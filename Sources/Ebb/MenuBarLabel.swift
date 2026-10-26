@@ -1,47 +1,49 @@
 import EbbCore
 import SwiftUI
 
-/// The provider's mark plus its short window's free share, like the Battery item: "5h 89%".
-/// The mark gets an orange dot when the weekly window is nearly gone.
+/// The menu bar item: the Tideline mark plus the pool in the style chosen in Settings,
+/// by default `5h 88%`. Drawn as one image; see `MenuBarImage`.
 struct MenuBarLabel: View {
-    let summary: PoolSummary?
-    /// `nil` or Claude shows the Claude mark.
-    var provider: String?
+    let store: PoolStore
+    let settings: MenuBarSettings
+    /// The pool on show; `nil` while no provider has a login.
+    let provider: String?
 
-    private static let mark = ClaudeMark.templateImage(pointSize: 15)
-    private static let badgedMark = ClaudeMark.badgedImage(pointSize: 15)
+    @State private var now = Date.now
 
     var body: some View {
-        let short = ProviderDisplay.shortWindow(provider)
-        if let reading = LaunchOptions.demo == .low ? MenuBarReading(sessionPercent: 8, isWeeklyLow: true) : summary.map(MenuBarReading.init) {
-            let level = PoolLevel(Double(reading.sessionPercent))
-            HStack(spacing: 4) {
-                mark(isBadged: reading.isWeeklyLow)
-                Text("\(short.abbreviation) \(level.percent)%")
-                    .foregroundStyle(level.warningTint ?? .primary)
-            }
-            .accessibilityLabel("Ebb, \(providerName)\(short.title) \(level.percent) percent free\(reading.isWeeklyLow ? ", weekly nearly used up" : "")")
-        } else {
-            mark(isBadged: false)
-                .accessibilityLabel("Ebb, no reading")
-        }
-    }
-
-    private var providerName: String {
-        ProviderDisplay.isClaude(provider) ? "" : "\(ProviderDisplay.title(provider ?? "")), "
-    }
-
-    @ViewBuilder
-    private func mark(isBadged: Bool) -> some View {
-        if ProviderDisplay.isClaude(provider) {
-            Image(nsImage: isBadged ? Self.badgedMark : Self.mark)
-        } else {
-            Image(systemName: ProviderDisplay.symbol(provider ?? ""))
-                .overlay(alignment: .topTrailing) {
-                    if isBadged {
-                        Circle().fill(.orange).frame(width: 5, height: 5).offset(x: 2, y: -2)
-                    }
+        let pool = LaunchOptions.demo == .low ? DemoData.lowMenuBarPool(now: now) : store.menuBarPool(for: provider, now: now)
+        let item = MenuBarItem(style: settings.style, limit: settings.limit, pool: pool, now: now)
+        Image(nsImage: MenuBarImage.cached(item))
+            .accessibilityLabel(item.accessibilityLabel)
+            // Refill times count down and readings go stale even when nothing new arrives.
+            // Not a TimelineView: a menu bar label redraws at once when asked, so it would spin.
+            .task {
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .seconds(60))
+                    now = .now
                 }
-        }
+            }
+    }
+}
+
+extension PoolStore {
+    /// One provider's pool as the menu bar draws it, or `nil` without a reading.
+    func menuBarPool(for provider: String?, now: Date) -> MenuBarPool? {
+        guard let provider, let summary = state.summaries[provider] else { return nil }
+        let accounts = state.details
+            .filter { $0.provider == provider && !$0.isHealthOnly && $0.status != .disabledByUser }
+            .map(\.canTakeWork)
+        // A proxy that stopped answering dims the item, even while Claude still reads directly.
+        let lastReadAt = isProxyUnreachable ? nil : [proxyReadAt, state.usageAPIReadAt[provider]].compactMap { $0 }.max()
+        return MenuBarPool(summary: summary, shortWindow: ProviderDisplay.shortWindow(provider), accounts: accounts, lastReadAt: lastReadAt, now: now)
+    }
+}
+
+extension AccountDetail {
+    /// Counted in the pool with room left in both windows: a filled dot in the Ring.
+    var canTakeWork: Bool {
+        guard status == .active || status == .stale, let sessionFree, sessionFree.rounded() > 0 else { return false }
+        return (weeklyFree ?? 100).rounded() > 0
     }
 }

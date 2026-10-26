@@ -13,8 +13,18 @@ swift build -c release
 binary="$(swift build -c release --show-bin-path)/$executable"
 
 stage="$(mktemp -d)/$app_name.app"
-mkdir -p "$stage/Contents/MacOS"
+mkdir -p "$stage/Contents/MacOS" "$stage/Contents/Resources"
 cp "$binary" "$stage/Contents/MacOS/$executable"
+
+# The Icon Composer icon needs Xcode's actool; without it, the prebuilt .icns stands in.
+if xcrun --find actool >/dev/null 2>&1; then
+    xcrun actool Resources/Ebb.icon --compile "$stage/Contents/Resources" \
+        --platform macosx --minimum-deployment-target 26.0 --app-icon Ebb \
+        --output-partial-info-plist "$(mktemp)" >/dev/null
+else
+    echo "actool not found; using Resources/Ebb.icns"
+    cp Resources/Ebb.icns "$stage/Contents/Resources/Ebb.icns"
+fi
 build_number="$(git rev-list --count HEAD 2>/dev/null || echo 1)"
 cat > "$stage/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -29,6 +39,10 @@ cat > "$stage/Contents/Info.plist" <<PLIST
     <string>$app_name</string>
     <key>CFBundleExecutable</key>
     <string>$executable</string>
+    <key>CFBundleIconFile</key>
+    <string>Ebb</string>
+    <key>CFBundleIconName</key>
+    <string>Ebb</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -51,11 +65,13 @@ cat > "$stage/Contents/Info.plist" <<PLIST
 PLIST
 codesign --force --sign - --timestamp=none "$stage"
 
+# Matches the installed copy by path, so other builds named Ebb keep running.
+installed_binary="$install_path/Contents/MacOS/$executable"
 was_running=false
-if pgrep -xq "$executable"; then
+if pgrep -fq "^$installed_binary"; then
     was_running=true
-    pkill -x "$executable"
-    while pgrep -xq "$executable"; do sleep 0.2; done
+    pkill -f "^$installed_binary"
+    while pgrep -fq "^$installed_binary"; do sleep 0.2; done
 fi
 
 mkdir -p "$HOME/Applications"

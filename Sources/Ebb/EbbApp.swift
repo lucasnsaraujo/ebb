@@ -17,13 +17,13 @@ struct EbbApp: App {
         MenuBarExtra(isInserted: Binding(get: { model.visibility.isVisible && LaunchOptions.snapshotDirectory == nil }, set: { _ in })) {
             PoolPanel(store: model.store, visibility: model.visibility, connection: model.connection)
         } label: {
-            MenuBarLabel(summary: menuBarProvider.flatMap { model.store.state.summaries[$0] }, provider: menuBarProvider)
+            MenuBarLabel(store: model.store, settings: model.menuBarSettings, provider: menuBarProvider)
                 .modifier(FirstRunSetup(connection: model.connection))
         }
         .menuBarExtraStyle(.window)
 
         Settings {
-            SettingsView(connection: model.connection, visibility: model.visibility, store: model.store)
+            SettingsView(connection: model.connection, visibility: model.visibility, store: model.store, menuBarSettings: model.menuBarSettings)
         }
     }
 }
@@ -36,6 +36,7 @@ final class AppModel {
     let connection = ProxyConnection()
     let store: PoolStore
     let visibility = Visibility()
+    let menuBarSettings = MenuBarSettings()
 
     private init() {
         if LaunchOptions.isDemo {
@@ -87,7 +88,7 @@ enum LaunchOptions {
     enum Demo: String {
         case accounts, hover, disclosure, low
     }
-    /// Renders the panel offscreen into this folder and quits: `--snapshot <dir>`.
+    /// Renders the panel, the menu bar styles and Settings → General offscreen into this folder and quits: `--snapshot <dir>`.
     static let snapshotDirectory: URL? = value(after: "--snapshot").map { URL(fileURLWithPath: $0) }
     /// With `--snapshot`, renders what the running proxy reports instead of fixed numbers: `--live`.
     static let isLive = CommandLine.arguments.contains("--live")
@@ -129,6 +130,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             } else {
                 Snapshot.write(store: model.store, connection: model.connection, visibility: model.visibility, to: directory, prefix: "claude")
             }
+            Snapshot.writeMenuBar(to: directory)
+            Snapshot.writeSettings(model: model, to: directory)
             exit(0)
         }
         if let appearance = LaunchOptions.appearance { NSApp.appearance = NSAppearance(named: appearance) }

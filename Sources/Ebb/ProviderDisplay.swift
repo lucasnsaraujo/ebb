@@ -2,8 +2,7 @@ import AppKit
 import EbbCore
 import SwiftUI
 
-/// How a provider is named and marked in the UI. Claude keeps its own mark; the rest get a
-/// lettered SF Symbol, since their logos aren't Ebb's to ship.
+/// How a provider is named in the UI. Its mark is `ProviderLogo`.
 enum ProviderDisplay {
     static let menuBarProviderKey = "menuBarProvider"
     static let panelProviderKey = "panelProvider"
@@ -20,48 +19,62 @@ enum ProviderDisplay {
     static func shortWindow(_ provider: String?) -> ShortWindow {
         provider.flatMap(Providers.named)?.shortWindow ?? .fiveHours
     }
-
-    static func symbol(_ provider: String) -> String {
-        let letter = title(provider).lowercased().first.map(String.init) ?? "questionmark"
-        return letter.first?.isLetter == true ? "\(letter).square.fill" : "square.fill"
-    }
-
-    static func isClaude(_ provider: String?) -> Bool {
-        provider == nil || provider == ClaudeProvider().proxyName
-    }
 }
 
-extension ShortWindow {
-    var title: String {
-        switch self {
-        case .fiveHours: "5-hour"
-        case .day: "Daily"
-        }
-    }
+/// A provider's logo from Simple Icons, or a two-letter tile where there's none, drawn in one
+/// colour at the size of an SF Symbol in the row's text.
+struct ProviderLogo: View {
+    let provider: String
 
-    /// The account columns' header and the menu bar's prefix.
-    var abbreviation: String {
-        switch self {
-        case .fiveHours: "5h"
-        case .day: "1d"
-        }
-    }
-}
-
-/// The panel header's mark for the pool on show.
-struct ProviderMark: View {
-    let provider: String?
+    private static let size: CGFloat = 13
+    private static let letterFont = Font(NSFont.compactRounded(size: 7, weight: 600))
 
     var body: some View {
-        if ProviderDisplay.isClaude(provider) {
-            ClaudeMark()
-                .fill(Color(red: 0.85, green: 0.47, blue: 0.34))
-                .frame(width: 14, height: 14)
-        } else if let provider {
-            Image(systemName: ProviderDisplay.symbol(provider))
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
-                .frame(width: 14, height: 14)
+        Group {
+            switch ProviderMark.forProvider(named: provider) ?? .letters(ProviderMark.letters(forName: ProviderDisplay.title(provider))) {
+            case let .logo(icon):
+                // Logos run to the edge of their box; a point less matches a symbol's optical size.
+                SimpleIconShape(icon: icon)
+                    .padding(0.5)
+            case let .letters(code):
+                // The design record's tile (radius 4.25 on 16 pt), with letters a little larger
+                // than its 7.8 pt so two of them stay legible at row size.
+                RoundedRectangle(cornerRadius: 4.25 * Self.size / 16, style: .continuous)
+                    .inset(by: 0.5)
+                    .overlay {
+                        Text(code)
+                            .font(Self.letterFont)
+                            .tracking(-0.15)
+                            .blendMode(.destinationOut)
+                    }
+                    .compositingGroup()
+            }
         }
+        .frame(width: Self.size, height: Self.size)
+        .help(ProviderDisplay.title(provider))
+        .accessibilityLabel(ProviderDisplay.title(provider))
+    }
+}
+
+/// A Simple Icons path, fitted into the frame and centred.
+private struct SimpleIconShape: Shape {
+    /// Parsed once, by slug.
+    private static let paths = Dictionary(uniqueKeysWithValues: SimpleIcon.all.map { icon in
+        (icon.slug, SVGPath.cgPath(icon.pathData).map { Path($0) } ?? Path())
+    })
+
+    let path: Path
+
+    init(icon: SimpleIcon) {
+        path = Self.paths[icon.slug] ?? Path()
+    }
+
+    func path(in rect: CGRect) -> Path {
+        let scale = min(rect.width, rect.height) / SimpleIcon.viewBox
+        let bounds = path.boundingRect
+        return path.applying(
+            CGAffineTransform(translationX: rect.midX - bounds.midX * scale, y: rect.midY - bounds.midY * scale)
+                .scaledBy(x: scale, y: scale)
+        )
     }
 }

@@ -43,25 +43,6 @@ public struct PoolSummary: Sendable, Equatable {
     public var isPartial: Bool
 }
 
-/// What the menu bar item shows: always the 5-hour window, plus a warning
-/// badge when the weekly window is nearly gone, so a weekly lock-out isn't a surprise.
-public struct MenuBarReading: Sendable, Equatable {
-    public static let weeklyWarningBelow = 10.0
-
-    public var sessionPercent: Int
-    public var isWeeklyLow: Bool
-
-    public init(sessionPercent: Int, isWeeklyLow: Bool) {
-        self.sessionPercent = sessionPercent
-        self.isWeeklyLow = isWeeklyLow
-    }
-
-    public init(_ summary: PoolSummary) {
-        sessionPercent = Int(summary.session.freePercent.rounded())
-        isWeeklyLow = summary.weekly.freePercent < Self.weeklyWarningBelow
-    }
-}
-
 public enum Pool {
     /// Resets this close together read as one event.
     public static let mergeWindow: TimeInterval = 5 * 60

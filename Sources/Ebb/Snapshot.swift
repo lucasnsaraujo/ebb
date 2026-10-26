@@ -3,7 +3,8 @@ import EbbCore
 import SwiftUI
 
 /// `--snapshot <dir>`: renders the panel offscreen to PNGs, dark and light, collapsed and
-/// expanded, then quits. The window it draws in is never put on screen.
+/// expanded, plus every menu bar style and Settings → General, then quits. The windows it
+/// draws in are never put on screen.
 @MainActor
 enum Snapshot {
     static func write(store: PoolStore, connection: ProxyConnection, visibility: Visibility, to directory: URL, prefix: String) {
@@ -25,8 +26,12 @@ enum Snapshot {
             .background(Color(nsColor: .windowBackgroundColor))
             .environment(\.colorScheme, scheme)
             .transaction { $0.disablesAnimations = true }
+        return png(of: root, width: 300, scheme: scheme)
+    }
+
+    private static func png(of root: some View, width: CGFloat, scheme: ColorScheme) -> Data? {
         let host = NSHostingView(rootView: root)
-        let window = NSWindow(contentRect: NSRect(x: -10_000, y: -10_000, width: 300, height: 600), styleMask: .borderless, backing: .buffered, defer: false)
+        let window = NSWindow(contentRect: NSRect(x: -10_000, y: -10_000, width: width, height: 600), styleMask: .borderless, backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
         window.appearance = NSAppearance(named: scheme == .dark ? .darkAqua : .aqua)
         window.contentView = host
@@ -43,6 +48,92 @@ enum Snapshot {
         rep.size = bounds.size
         host.cacheDisplay(in: bounds, to: rep)
         window.close()
+        return rep.representation(using: .png, properties: [:])
+    }
+
+    /// Settings → General, dark and light, at the Settings window's width.
+    static func writeSettings(model: AppModel, to directory: URL) {
+        for scheme in [ColorScheme.dark, .light] {
+            let view = GeneralSettings(visibility: model.visibility, store: model.store, menuBarSettings: model.menuBarSettings)
+                .frame(width: 480)
+                .fixedSize(horizontal: false, vertical: true)
+                .background(Color(nsColor: .windowBackgroundColor))
+                .environment(\.colorScheme, scheme)
+                .transaction { $0.disablesAnimations = true }
+            if let data = png(of: view, width: 480, scheme: scheme) {
+                try? data.write(to: directory.appending(path: "settings-general-\(scheme == .dark ? "dark" : "light").png"))
+            }
+        }
+    }
+
+    /// Every menu bar style on light, dark and red-wallpaper bars at 88%, 15% and 5% free, at 2x,
+    /// one file each plus a sheet of all of them; the Ring again at 1x, where it drops its dots.
+    static func writeMenuBar(to directory: URL) {
+        let now = Date.now
+        let levels: [(session: Int, weekly: Int, refill: Double)] = [(88, 45, 130), (15, 45, 100), (5, 8, 38)]
+        var sheet: [[NSImage]] = []
+        for style in MenuBarStyle.allCases {
+            var row: [NSImage] = []
+            for bar in MenuBarSample.allCases {
+                for level in levels {
+                    let pool = MenuBarPool(
+                        session: WindowReading(window: .session, percent: level.session, refillsAt: now + level.refill * 60),
+                        weekly: WindowReading(window: .weekly, percent: level.weekly, refillsAt: now + 3 * 86400),
+                        accounts: [true, true, level.session > 15, false],
+                        lastReadAt: now
+                    )
+                    let item = MenuBarItem(style: style, limit: .fiveHour, pool: pool, now: now)
+                    let cell = bar.render(item)
+                    row.append(cell)
+                    let name = "menubar-\(style.rawValue)-\(bar.rawValue)-\(level.session).png"
+                    if let data = bitmap(cell, scale: 2) { try? data.write(to: directory.appending(path: name)) }
+                    if style == .ring, let data = bitmap(cell, scale: 1) {
+                        try? data.write(to: directory.appending(path: "menubar-ring-\(bar.rawValue)-\(level.session)@1x.png"))
+                    }
+                }
+            }
+            sheet.append(row)
+        }
+        if let data = bitmap(contactSheet(sheet), scale: 2) {
+            try? data.write(to: directory.appending(path: "menubar-sheet.png"))
+        }
+    }
+
+    /// The menu bar strips in a grid: a row per style, columns light, dark and wallpaper at each level.
+    private static func contactSheet(_ rows: [[NSImage]]) -> NSImage {
+        let cell = NSSize(width: 130, height: MenuBarImage.height)
+        let gap: CGFloat = 6
+        let labelWidth: CGFloat = 86
+        let columns = rows.first?.count ?? 0
+        let size = NSSize(width: labelWidth + CGFloat(columns) * (cell.width + gap), height: CGFloat(rows.count) * (cell.height + gap) + gap)
+        return NSImage(size: size, flipped: true) { _ in
+            NSColor.white.setFill()
+            NSRect(origin: .zero, size: size).fill()
+            for (index, row) in rows.enumerated() {
+                let y = gap + CGFloat(index) * (cell.height + gap)
+                (MenuBarStyle.allCases[index].title as NSString).draw(
+                    at: NSPoint(x: 6, y: y + 4),
+                    withAttributes: [.font: NSFont.systemFont(ofSize: 11, weight: .medium), .foregroundColor: NSColor.black]
+                )
+                for (column, image) in row.enumerated() {
+                    image.draw(in: NSRect(x: labelWidth + CGFloat(column) * (cell.width + gap), y: y, width: cell.width, height: cell.height))
+                }
+            }
+            return true
+        }
+    }
+
+    private static func bitmap(_ image: NSImage, scale: CGFloat) -> Data? {
+        guard let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: Int(image.size.width * scale), pixelsHigh: Int(image.size.height * scale),
+            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+            colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
+        ) else { return nil }
+        rep.size = image.size
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        image.draw(in: NSRect(origin: .zero, size: image.size))
+        NSGraphicsContext.restoreGraphicsState()
         return rep.representation(using: .png, properties: [:])
     }
 
@@ -79,5 +170,48 @@ enum Snapshot {
             )
         }.sorted { $0.label < $1.label }
         return PoolStore(connection: connection, summary: summary, details: details, proxyReadAt: now - 150)
+    }
+}
+
+/// The bars the snapshot draws the menu bar item on, matching the design record's sheet.
+private enum MenuBarSample: String, CaseIterable {
+    case light, dark, wallpaper
+
+    /// The item centred on a 130 × 22 pt strip, coloured the way the menu bar colours it.
+    @MainActor
+    func render(_ item: MenuBarItem) -> NSImage {
+        let isDark = self != .light
+        let appearance = NSAppearance(named: isDark ? .darkAqua : .aqua)!
+        let image = MenuBarImage.make(item, appearance: appearance)
+        let size = NSSize(width: 130, height: MenuBarImage.height)
+        return NSImage(size: size, flipped: false) { rect in
+            background.draw(in: NSBezierPath(roundedRect: rect, xRadius: 7, yRadius: 7), angle: self == .wallpaper ? -60 : -10)
+            let frame = NSRect(x: ((size.width - image.size.width) / 2).rounded(), y: 0, width: image.size.width, height: image.size.height)
+            if image.isTemplate {
+                // What the menu bar does with a template: its alpha, in the bar's text colour.
+                let tinted = NSImage(size: image.size, flipped: false) { bounds in
+                    image.draw(in: bounds)
+                    (isDark ? NSColor.white.withAlphaComponent(0.92) : NSColor.black.withAlphaComponent(0.86)).setFill()
+                    bounds.fill(using: .sourceIn)
+                    return true
+                }
+                tinted.draw(in: frame)
+            } else {
+                appearance.performAsCurrentDrawingAppearance { image.draw(in: frame) }
+            }
+            return true
+        }
+    }
+
+    private var background: NSGradient {
+        switch self {
+        case .light: NSGradient(starting: NSColor(srgbRed: 0.914, green: 0.933, blue: 0.957, alpha: 1), ending: NSColor(srgbRed: 0.843, green: 0.878, blue: 0.918, alpha: 1))!
+        case .dark: NSGradient(starting: NSColor(srgbRed: 0.114, green: 0.133, blue: 0.161, alpha: 1), ending: NSColor(srgbRed: 0.078, green: 0.094, blue: 0.114, alpha: 1))!
+        case .wallpaper: NSGradient(colors: [
+                NSColor(srgbRed: 0.765, green: 0.208, blue: 0.169, alpha: 1),
+                NSColor(srgbRed: 0.478, green: 0.078, blue: 0.063, alpha: 1),
+                NSColor(srgbRed: 0.227, green: 0.031, blue: 0.024, alpha: 1),
+            ])!
+        }
     }
 }

@@ -116,6 +116,11 @@ final class PoolStore {
         self.init(connection: connection, state: state, proxyReadAt: proxyReadAt)
     }
 
+    /// The management key is set but the proxy didn't answer its last poll.
+    var isProxyUnreachable: Bool {
+        connection.endpoint != nil && proxyReadAt == nil
+    }
+
     /// The pool the menu bar shows: the provider chosen in Settings while it has logins, else the default.
     func menuBarProvider(choice: String) -> String? {
         state.providers.contains(choice) ? choice : state.defaultProvider ?? state.providers.first
