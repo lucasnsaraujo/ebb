@@ -27,6 +27,24 @@ else
     echo "actool not found; using Resources/Ebb.icns"
     cp Resources/Ebb.icns "$stage/Contents/Resources/Ebb.icns"
 fi
+# Shortcuts and Spotlight find the App Intents through metadata Xcode extracts at build time;
+# SwiftPM doesn't, so run the same extractor on the compiler's constant values.
+const_values="$(mktemp)"
+find "$bin_path/../../Intermediates.noindex" -path "*/Release/$executable-p.build/*" -name "*.swiftconstvalues" > "$const_values" 2>/dev/null || true
+if [[ -s "$const_values" ]] && xcrun --find appintentsmetadataprocessor >/dev/null 2>&1; then
+    sources="$(mktemp)"
+    print -l "$PWD"/Sources/$executable/*.swift > "$sources"
+    xcrun appintentsmetadataprocessor --output "$stage/Contents/Resources" \
+        --toolchain-dir "$(dirname "$(dirname "$(dirname "$(xcrun --find swift)")")")" --module-name "$executable" \
+        --sdk-root "$(xcrun --sdk macosx --show-sdk-path)" --xcode-version "$(xcodebuild -version | awk '/Build version/ {print $3}')" \
+        --platform-family macOS --deployment-target 26.0 --target-triple "$(uname -m)-apple-macos26.0" \
+        --source-file-list "$sources" --swift-const-vals-list "$const_values" >/dev/null \
+        || echo "App Intents metadata extraction failed; Shortcuts won't list Ebb's actions"
+    rm -f "$sources"
+else
+    echo "No App Intents metadata: needs Swift 6.4's build system and Xcode's appintentsmetadataprocessor"
+fi
+rm -f "$const_values"
 build_number="$(git rev-list --count HEAD 2>/dev/null || echo 1)"
 cat > "$stage/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>

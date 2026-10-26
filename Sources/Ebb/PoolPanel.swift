@@ -70,9 +70,11 @@ struct PoolPanel: View {
         // The menu bar window sizes itself to this; without it, expanding clips the content.
         .fixedSize(horizontal: false, vertical: true)
         .onAppear {
+            PanelOpener.isPanelOpen = true
             store.panelDidOpen()
             if LaunchOptions.demo == .disclosure { playDisclosureDemo() }
         }
+        .onDisappear { PanelOpener.isPanelOpen = false }
     }
 
     private func toggleAccounts() {

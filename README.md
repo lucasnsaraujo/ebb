@@ -36,12 +36,16 @@ Settings → General → Install Command Line Tool puts an `ebb` command on your
 
 The command reads the numbers the app already saved and never touches the network. See [docs/cli.md](docs/cli.md).
 
+## Shortcuts and Siri
+
+Ebb adds two actions to Shortcuts, Spotlight and Siri. **Get Pool Status** returns a provider's 5-hour (or daily) and weekly free share and its next refill, as separate values; leave the provider empty for the pool the menu bar shows. **Open Ebb** opens the panel. Say "Check my Ebb pool" or "Get Codex pool status in Ebb". Like the command, both use the numbers Ebb already has.
+
 ## Build
 
 Requires macOS 26 or later and Xcode 26 or later.
 
 ```sh
-./build.sh      # builds and installs ~/Applications/Ebb.app, with the ebb command inside
+./build.sh      # builds and installs ~/Applications/Ebb.app, with the ebb command and App Intents metadata
 swift test      # runs the unit tests
 ```
 
