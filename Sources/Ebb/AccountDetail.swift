@@ -12,6 +12,10 @@ struct AccountDetail: Identifiable, Equatable {
         case retired
         /// Disabled by hand in the proxy; never touched.
         case disabledByUser
+        /// The provider refused the token the proxy holds, so its windows can't be read.
+        case limitsUnavailable
+        /// A provider without usage windows: only the proxy's view of its health.
+        case health(AccountHealth.State)
     }
 
     let email: String
@@ -23,8 +27,16 @@ struct AccountDetail: Identifiable, Equatable {
     /// Percent of new threads the proxy routes here.
     var share: Double?
     var readAt: Date?
+    /// Ebb's provider name; Claude unless set.
+    var provider = ClaudeProvider().proxyName
+    /// The auth file name, for logins without an email.
+    var fileName: String?
+    /// The plan as the provider names it, for providers whose weight doesn't spell it out.
+    var planTitle: String?
+    /// The proxy's message for a login it holds back.
+    var healthMessage: String?
 
-    var id: String { email }
+    var id: String { provider == ClaudeProvider().proxyName ? email : "\(provider)/\(fileName ?? email)" }
 
     /// Read recently, and the plan has no general weekly cap (Team plans).
     var hasNoWeeklyCap: Bool {
@@ -36,7 +48,12 @@ struct AccountDetail: Identifiable, Equatable {
     }
 
     var planBadge: String? {
-        guard case let .paid(weight) = plan else { return nil }
+        if let planTitle { return planTitle }
+        guard provider == ClaudeProvider().proxyName, case let .paid(weight) = plan else { return nil }
         return weight > 1 ? "\(Int(weight))x" : "Pro"
+    }
+
+    var isHealthOnly: Bool {
+        if case .health = status { true } else { false }
     }
 }

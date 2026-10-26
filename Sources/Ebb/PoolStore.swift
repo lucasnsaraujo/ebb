@@ -2,11 +2,25 @@ import Foundation
 import Observation
 import EbbCore
 
-/// Keeps the pool summary fresh while the menu bar item is visible.
+/// What the panel and the menu bar show: one pool per provider, never blended.
+struct PoolState: Equatable {
+    var summaries: [String: PoolSummary] = [:]
+    /// Every login, for the accounts panel: the only place accounts appear.
+    var details: [AccountDetail] = []
+    /// Providers with usage windows and at least one enabled login, in `Providers.all` order.
+    var providers: [String] = []
+    /// The provider with the most pooled weight.
+    var defaultProvider: String?
+    /// The newest usage-API reading per provider, among logins that rely on one.
+    var usageAPIReadAt: [String: Date] = [:]
+}
+
+/// Keeps the pools fresh while the menu bar item is visible.
 ///
 /// CLIProxyAPI's management API is the main source: free, polled every 30 s, carrying the
-/// rate-limit headers of each account's latest real response. Providers are asked only for
-/// idle accounts and plan checks, one request at a time and at least a minute apart.
+/// quota signals of each login's latest real response. Providers are asked only for idle
+/// logins and plan checks, one request at a time and at least a minute apart: Claude directly
+/// with the login's token, the others through the proxy's `api-call`, which holds the token.
 @MainActor
 @Observable
 final class PoolStore {
@@ -15,13 +29,14 @@ final class PoolStore {
     /// Opening the panel re-reads an idle account whose reading is older than this.
     static let staleOnOpen: TimeInterval = 2 * 60
 
-    private(set) var summary: PoolSummary?
-    /// Every Claude login, for the accounts panel: the only place accounts appear.
-    private(set) var accountDetails: [AccountDetail] = []
+    /// An `api-call` login whose token was refused is tried again after this long.
+    static let rejectedTokenRetry: TimeInterval = 6 * 60 * 60
+    /// Each call to `muse-code/key` also mints a key, so Meta logins are read at most hourly.
+    static let callMinimumAge: [String: TimeInterval] = ["meta": 60 * 60]
+
+    private(set) var state = PoolState()
     /// When the proxy last answered; `nil` while it's unreachable.
     private(set) var proxyReadAt: Date?
-    /// The newest usage-API reading among accounts that rely on one.
-    private(set) var usageAPIReadAt: Date?
     private(set) var isRefreshing = false
 
     private struct Dated<Value> {
@@ -32,6 +47,8 @@ final class PoolStore {
     private enum Job {
         case usage(String)
         case profile(String)
+        /// A usage read through `api-call`, by auth file name.
+        case call(String)
     }
 
     @ObservationIgnored private let accountClient = AccountClient()
@@ -52,6 +69,16 @@ final class PoolStore {
     /// Accounts whose token was refused; their plan is checked next.
     @ObservationIgnored private var profileRequested: Set<String> = []
     @ObservationIgnored private var inactiveStreaks: [String: Int] = [:]
+    /// Claude tiers by email, for weight overrides.
+    @ObservationIgnored private var tiers: [String: String] = [:]
+    /// `api-call` logins, by auth file name.
+    @ObservationIgnored private var callReadings: [String: DatedLimits] = [:]
+    @ObservationIgnored private var callPlans: [String: String] = [:]
+    @ObservationIgnored private var callStates: [String: FetchState] = [:]
+    @ObservationIgnored private var rejectedTokens: Set<String> = []
+    /// Logins whose provider said their subscription ended.
+    @ObservationIgnored private var endedSubscriptions: Set<String> = []
+    @ObservationIgnored private var callInactiveStreaks: [String: Int] = [:]
     @ObservationIgnored private var writtenCaches: [String: Data] = [:]
     /// Kept across launches, so a relaunch never sends two requests back to back.
     @ObservationIgnored private var lastProviderRequest = UserDefaults.standard.object(forKey: "lastProviderRequest") as? Date {
@@ -60,13 +87,38 @@ final class PoolStore {
     @ObservationIgnored private var isPollingProxy = false
     @ObservationIgnored private var loops: [Task<Void, Never>] = []
 
+    /// Set for fixed numbers that never change: `--snapshot` renders.
+    @ObservationIgnored private let isFixed: Bool
+
     /// `isOffline` shows cached numbers only; used for screenshots and UI work.
     init(connection: ProxyConnection, isOffline: Bool = false) {
         self.connection = connection
         self.isOffline = isOffline
+        isFixed = false
         reloadAccounts()
         loadCaches()
         recompute()
+    }
+
+    /// Shows the given numbers and never reads anything: `--demo` and `--snapshot`.
+    init(connection: ProxyConnection, state: PoolState, proxyReadAt: Date?) {
+        self.connection = connection
+        isOffline = false
+        isFixed = true
+        self.state = state
+        self.proxyReadAt = proxyReadAt
+    }
+
+    /// A fixed Claude-only pool.
+    convenience init(connection: ProxyConnection, summary: PoolSummary?, details: [AccountDetail], proxyReadAt: Date?) {
+        let claude = ClaudeProvider().proxyName
+        let state = PoolState(summaries: summary.map { [claude: $0] } ?? [:], details: details, providers: [claude], defaultProvider: claude)
+        self.init(connection: connection, state: state, proxyReadAt: proxyReadAt)
+    }
+
+    /// The pool the menu bar shows: the provider chosen in Settings while it has logins, else the default.
+    func menuBarProvider(choice: String) -> String? {
+        state.providers.contains(choice) ? choice : state.defaultProvider ?? state.providers.first
     }
 
     /// Starts or stops all network activity, localhost included.
@@ -74,7 +126,7 @@ final class PoolStore {
         loops.forEach { $0.cancel() }
         loops = []
         recompute()
-        guard isActive, !isOffline else { return }
+        guard isActive, !isOffline, !isFixed else { return }
         loops = [
             Task { await repeatEvery(Self.proxyInterval) { await $0.pollProxy() } },
             Task { await repeatEvery(Self.providerInterval) { await $0.runNextProviderJob(usageMinimumAge: RefreshPlan.period - 30) } },
@@ -90,6 +142,11 @@ final class PoolStore {
         if isProviderSlotFree(at: .now), let job = nextJob(usageMinimumAge: Self.staleOnOpen) {
             Task { await run(job) }
         }
+    }
+
+    /// Settings changed a plan weight: the pools re-weigh at once, the proxy on its next poll.
+    func weightsDidChange() {
+        recompute()
     }
 
     func refreshNow() {
@@ -111,7 +168,12 @@ final class PoolStore {
 
     // MARK: - Proxy
 
-    private func pollProxy() async {
+    /// One read of the proxy's listing, without provider requests or weight changes: `--snapshot --live`.
+    func readProxyOnce() async {
+        await pollProxy(syncsWeights: false)
+    }
+
+    private func pollProxy(syncsWeights: Bool = true) async {
         guard !isPollingProxy else { return }
         isPollingProxy = true
         defer { isPollingProxy = false }
@@ -127,7 +189,7 @@ final class PoolStore {
         reloadAccounts()
         writeSignalCaches()
         recompute()
-        await syncProxyWeights()
+        if syncsWeights { await syncProxyWeights() }
     }
 
     /// Steers new threads toward free capacity: weight = plan size × free percent.
@@ -143,6 +205,18 @@ final class PoolStore {
             guard ProxyWeight.needsUpdate(current: listed.weight, target: target) else { continue }
             if await proxy.setWeight(target, for: account.name, endpoint) {
                 proxyFiles[account.name]?.weight = target
+            }
+        }
+        // The proxy's weighted round robin only weighs logins of one provider against each
+        // other (its state key is provider and model), so each provider's plan scale stands alone.
+        for file in proxyFiles.values where file.provider != ClaudeProvider().proxyName && file.hasUsageWindows && !file.isDisabled {
+            guard case let .paid(planWeight) = plan(for: file),
+                  let limits = ReadingChoice.best(signals: file.quota, usage: callReadings[file.name], now: now)
+            else { continue }
+            let target = ProxyWeight.target(planWeight: planWeight, freePercent: Pool.effectiveFree(limits, at: now))
+            guard ProxyWeight.needsUpdate(current: file.weight, target: target) else { continue }
+            if await proxy.setWeight(target, for: file.name, endpoint) {
+                proxyFiles[file.name]?.weight = target
             }
         }
     }
@@ -179,8 +253,32 @@ final class PoolStore {
             .min()
         if let profileDue { return .profile(profileDue) }
 
-        let eligible = usageStates.filter { isUsageEligible($0.key, now: now) }
-        return RefreshPlan.nextAccount(in: eligible, minimumAge: usageMinimumAge, now: now).map(Job.usage)
+        // Claude usage reads and api-call reads share one queue: the account tried longest ago goes first.
+        var eligible = Dictionary(uniqueKeysWithValues: usageStates.filter { isUsageEligible($0.key, now: now) }.map { ("usage:" + $0.key, $0.value) })
+        for (name, callState) in callStates where isCallEligible(name, minimumAge: usageMinimumAge, now: now) {
+            eligible["call:" + name] = callState
+        }
+        guard let key = RefreshPlan.nextAccount(in: eligible, minimumAge: usageMinimumAge, now: now) else { return nil }
+        return key.hasPrefix("call:") ? .call(String(key.dropFirst(5))) : .usage(String(key.dropFirst(6)))
+    }
+
+    /// Idle logins with a usage call, each read at most every five minutes whatever asks;
+    /// retired ones are re-read daily, ended ones after the confirmation interval, Meta at most hourly.
+    private func isCallEligible(_ name: String, minimumAge: TimeInterval, now: Date) -> Bool {
+        guard connection.endpoint != nil, let file = proxyFiles[name],
+              let provider = Providers.named(file.provider), provider.usageCall(for: file) != nil,
+              !file.isDisabled || retired.contains(name),
+              !ReadingChoice.hasFreshSignals(file.quota, now: now)
+        else { return false }
+        guard let last = callStates[name]?.lastAttempt else { return true }
+        let age = if file.isDisabled {
+            ProfilePlan.retiredInterval
+        } else if endedSubscriptions.contains(name) {
+            ProfilePlan.confirmationInterval
+        } else {
+            max(minimumAge, RefreshPlan.period, Self.callMinimumAge[file.provider] ?? 0)
+        }
+        return now.timeIntervalSince(last) >= age
     }
 
     /// Idle, paying, enabled accounts: the proxy has no recent headers for them.
@@ -194,6 +292,7 @@ final class PoolStore {
         switch job {
         case let .usage(email): await readUsage(email)
         case let .profile(email): await checkPlan(email)
+        case let .call(name): await readThroughProxy(name)
         }
         recompute()
     }
@@ -244,6 +343,7 @@ final class PoolStore {
         switch await accountClient.fetchPlan(account) {
         case let .success(profile, cacheData):
             plans[email] = Dated(value: profile.plan, date: .now)
+            tiers[email] = profile.tier
             profileStates[email]?.failures = 0
             profileStates[email]?.retryNotBefore = nil
             EbbPaths.writeCache(cacheData, to: EbbPaths.planCache(for: email))
@@ -252,6 +352,40 @@ final class PoolStore {
             await applyRetirement(to: account, plan: profile.plan, inactiveStreak: streak)
         case let .failed(_, retryAfter):
             Self.backOff(&profileStates, email, retryAfter: retryAfter)
+        }
+    }
+
+    /// One usage read through the proxy. A refused token shows "Limits not available" and
+    /// waits hours before the next try; it never touches the plan or retires the login.
+    private func readThroughProxy(_ name: String) async {
+        if let last = callStates[name]?.lastAttempt, Date.now.timeIntervalSince(last) < RefreshPlan.minimumSpacing { return }
+        guard let endpoint = connection.endpoint, let file = proxyFiles[name],
+              let provider = Providers.named(file.provider), let call = provider.usageCall(for: file)
+        else { return }
+
+        lastProviderRequest = .now
+        callStates[name, default: FetchState()].lastAttempt = .now
+        let outcome = await proxy.apiCall(call, endpoint)
+            .map { CallOutcome.read(proxyStatus: $0.status, body: $0.body, provider: provider, now: .now) } ?? .failed
+        switch outcome {
+        case let .reading(reading):
+            if let limits = reading.limits { callReadings[name] = DatedLimits(limits: limits, date: .now) }
+            if let plan = reading.planName { callPlans[name] = plan }
+            rejectedTokens.remove(name)
+            callStates[name]?.failures = 0
+            callStates[name]?.retryNotBefore = nil
+            if reading.hasEndedSubscription { endedSubscriptions.insert(name) } else { endedSubscriptions.remove(name) }
+            let streak = reading.hasEndedSubscription ? callInactiveStreaks[name, default: 0] + 1 : 0
+            callInactiveStreaks[name] = streak
+            let action = Retirement.action(after: outcome, isDisabled: file.isDisabled, isRetiredByUs: retired.contains(name), inactiveStreak: streak)
+            await apply(action, toFileNamed: name)
+        case .tokenRejected:
+            rejectedTokens.insert(name)
+            callStates[name]?.retryNotBefore = .now + Self.rejectedTokenRetry
+        case let .rateLimited(retryAfter):
+            Self.backOff(&callStates, name, retryAfter: retryAfter)
+        case .failed:
+            Self.backOff(&callStates, name, retryAfter: nil)
         }
     }
 
@@ -265,11 +399,16 @@ final class PoolStore {
             plan: plan,
             inactiveStreak: inactiveStreak
         )
-        guard action != .keep, let endpoint = connection.endpoint,
-              await proxy.setDisabled(action == .retire, for: account.name, endpoint)
+        await apply(action, toFileNamed: account.name)
+    }
+
+    /// Recorded only after the proxy accepts, so the list never claims a login we didn't touch.
+    private func apply(_ action: Retirement.Action, toFileNamed name: String) async {
+        guard action != .keep, proxyFiles[name] != nil, let endpoint = connection.endpoint,
+              await proxy.setDisabled(action == .retire, for: name, endpoint)
         else { return }
-        proxyFiles[account.name]?.isDisabled = action == .retire
-        try? EbbPaths.retiredAccounts.record(action, name: account.name)
+        proxyFiles[name]?.isDisabled = action == .retire
+        try? EbbPaths.retiredAccounts.record(action, name: name)
         reloadAccounts()
     }
 
@@ -319,6 +458,20 @@ final class PoolStore {
         profileStates = profileStates.filter { accounts[$0.key] != nil }
         usageReadings = usageReadings.filter { accounts[$0.key] != nil }
         plans = plans.filter { accounts[$0.key] != nil }
+
+        // Logins reached through `api-call` come from the proxy's listing alone.
+        let callable = Set(proxyFiles.values.filter { file in
+            Providers.named(file.provider).map { $0.usageCall(for: file) != nil } ?? false
+        }.map(\.name))
+        for name in callable where callStates[name] == nil {
+            callStates[name] = FetchState()
+        }
+        guard !proxyFiles.isEmpty else { return }
+        callStates = callStates.filter { callable.contains($0.key) }
+        callReadings = callReadings.filter { callable.contains($0.key) }
+        callPlans = callPlans.filter { callable.contains($0.key) }
+        rejectedTokens = rejectedTokens.filter(callable.contains)
+        endedSubscriptions = endedSubscriptions.filter(callable.contains)
     }
 
     /// Seeds from the cache so a relaunch shows numbers at once
@@ -334,27 +487,70 @@ final class PoolStore {
             if let (data, modified) = EbbPaths.readCache(EbbPaths.planCache(for: email)),
                let profile = try? JSONDecoder().decode(PlanProfile.self, from: data) {
                 plans[email] = Dated(value: profile.plan, date: modified)
+                tiers[email] = profile.tier
             }
         }
     }
 
-    private func recompute() {
-        let now = Date.now
-        let members = accounts.values.filter { !isDisabled($0) }.map { account in
-            PoolMember(plan: plans[account.email]?.value, signals: signals(for: account), usage: usageReadings[account.email])
-        }
-        let next = Pool.summarize(PoolMember.poolInput(members, now: now), at: now)
-        if next != summary { summary = next }
+    /// Plan sizes the user set in Settings, by `PlanWeights.overrideKey`.
+    private var weightOverrides: [String: Double] {
+        UserDefaults.standard.dictionary(forKey: PlanWeights.overridesKey) as? [String: Double] ?? [:]
+    }
 
-        let details = makeDetails(at: now)
-        if details != accountDetails { accountDetails = details }
-        let usageAPIDate = accounts.values
+    /// A Claude plan, resized by the user's override for its tier.
+    private func claudePlan(_ email: String) -> Plan? {
+        guard let plan = plans[email]?.value else { return nil }
+        guard case .paid = plan, let tier = tiers[email],
+              let weight = PlanWeights.weight(provider: ClaudeProvider().proxyName, plan: ClaudeProvider.planName(rateLimitTier: tier), overrides: weightOverrides)
+        else { return plan }
+        return .paid(weight: weight)
+    }
+
+    /// An `api-call` or signals login's plan: ended, sized from the weight table, or unknown.
+    private func plan(for file: ProxyAuthFile) -> Plan {
+        if endedSubscriptions.contains(file.name) { return .inactive }
+        let name = callPlans[file.name] ?? file.planName
+        return PlanWeights.weight(provider: file.provider, plan: name, overrides: weightOverrides).map { .paid(weight: $0) } ?? .unknown
+    }
+
+    /// Logins of every provider but Claude, which comes from the auth folder.
+    private var otherFiles: [ProxyAuthFile] {
+        proxyFiles.values.filter { $0.provider != ClaudeProvider().proxyName }
+    }
+
+    private func recompute() {
+        guard !isFixed else { return }
+        let now = Date.now
+        let claude = ClaudeProvider().proxyName
+        var logins = accounts.values.filter { !isDisabled($0) }.map { account in
+            ProviderLogin(provider: claude, member: PoolMember(plan: claudePlan(account.email), signals: signals(for: account), usage: usageReadings[account.email]))
+        }
+        for file in otherFiles where !file.isDisabled {
+            let member = file.hasUsageWindows ? PoolMember(plan: plan(for: file), signals: file.quota, usage: callReadings[file.name]) : nil
+            logins.append(ProviderLogin(provider: file.provider, member: member))
+        }
+        let pooled = Set(logins.filter { $0.member != nil }.map(\.provider))
+        var usageAPIReadAt: [String: Date] = [:]
+        let claudeUsageDate = accounts.values
             .filter { !isDisabled($0) }
             .compactMap { readingSource(for: $0, at: now) }
             .filter { $0.source == .usageAPI }
             .map(\.reading.date)
             .max()
-        if usageAPIDate != usageAPIReadAt { usageAPIReadAt = usageAPIDate }
+        usageAPIReadAt[claude] = claudeUsageDate
+        for file in otherFiles where !file.isDisabled {
+            guard let choice = ReadingChoice.choose(signals: file.quota, usage: callReadings[file.name], now: now), choice.source == .usageAPI else { continue }
+            usageAPIReadAt[file.provider] = max(usageAPIReadAt[file.provider] ?? .distantPast, choice.reading.date)
+        }
+
+        let next = PoolState(
+            summaries: ProviderPools.summarize(logins, at: now),
+            details: makeDetails(at: now),
+            providers: Providers.all.map(\.proxyName).filter(pooled.contains),
+            defaultProvider: ProviderPools.defaultProvider(ProviderPools.pooledWeight(logins)),
+            usageAPIReadAt: usageAPIReadAt
+        )
+        if next != state { state = next }
     }
 
     private func makeDetails(at now: Date) -> [AccountDetail] {
@@ -363,7 +559,7 @@ final class PoolStore {
         }) { first, _ in first }
         let shares = ProxyWeight.shares(enabledWeights)
         let rows = accounts.values.map { account -> AccountDetail in
-            let plan = plans[account.email]?.value
+            let plan = claudePlan(account.email)
             guard !isDisabled(account) else {
                 return AccountDetail(email: account.email, plan: plan, status: .retired)
             }
@@ -382,6 +578,51 @@ final class PoolStore {
             )
         }
         let userDisabled = disabledByUser.map { AccountDetail(email: $0.email, plan: plans[$0.email]?.value, status: .disabledByUser) }
-        return (rows + userDisabled).sorted { $0.label < $1.label }
+        return (rows + userDisabled + otherDetails(at: now)).sorted { $0.label < $1.label }
+    }
+
+    /// Rows for logins reached through the proxy's listing; shares are within each provider.
+    private func otherDetails(at now: Date) -> [AccountDetail] {
+        let files = otherFiles
+        var shares: [String: Double] = [:]
+        for provider in Set(files.map(\.provider)) {
+            let weights = Dictionary(files.filter { $0.provider == provider && !$0.isDisabled && $0.hasUsageWindows }.compactMap { file in
+                file.weight.map { (file.name, $0) }
+            }) { first, _ in first }
+            shares.merge(ProxyWeight.shares(weights)) { first, _ in first }
+        }
+        return files.map { file in
+            guard file.hasUsageWindows else {
+                var row = AccountDetail(email: file.displayName, plan: nil, status: .health(file.health.state), provider: file.provider, fileName: file.name)
+                row.healthMessage = file.health.message
+                return row
+            }
+            let plan = plan(for: file)
+            let planName = callPlans[file.name] ?? file.planName
+            let title = PlanWeights.defaults[file.provider]?.first { $0.plan == planName?.lowercased() }?.title
+            guard !file.isDisabled else {
+                let status: AccountDetail.Status = retired.contains(file.name) ? .retired : .disabledByUser
+                return AccountDetail(email: file.displayName, plan: plan, status: status, provider: file.provider, fileName: file.name, planTitle: title)
+            }
+            let reading = ReadingChoice.choose(signals: file.quota, usage: callReadings[file.name], now: now)
+            if reading == nil, rejectedTokens.contains(file.name) {
+                return AccountDetail(email: file.displayName, plan: plan, status: .limitsUnavailable, provider: file.provider, fileName: file.name, planTitle: title)
+            }
+            let limits = reading?.reading.limits ?? []
+            let free = { (kind: UsageLimit.Kind) in limits.first { $0.kind == kind }.map { 100 - $0.used(at: now) } }
+            let isCounted = reading?.isFresh == true && plan.weight > 0
+            return AccountDetail(
+                email: file.displayName,
+                plan: plan,
+                status: isCounted ? .active : .stale,
+                sessionFree: reading == nil ? nil : free(.session) ?? 100,
+                weeklyFree: free(.weeklyAll),
+                share: shares[file.name],
+                readAt: reading?.reading.date,
+                provider: file.provider,
+                fileName: file.name,
+                planTitle: title
+            )
+        }
     }
 }

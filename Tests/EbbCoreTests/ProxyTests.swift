@@ -24,11 +24,13 @@ private func listing() throws -> [ProxyAuthFile] {
         #expect(team.quota?.limits == [UsageLimit(kind: .session, usedPercent: 6, resetsAt: Date(timeIntervalSince1970: 1_793_059_800))])
     }
 
-    @Test func accountWithoutSignalsHasNoQuotaAndOtherProvidersAreSkipped() throws {
+    @Test func accountWithoutSignalsHasNoQuotaAndOtherProvidersAreListedApart() throws {
         let files = try listing()
-        #expect(files.map(\.name) == ["claude-4c515511-max@example.com.json", "claude-f11cea8c-team@example.com.json", "claude-0000-idle@example.com.json"])
+        #expect(files.filter { $0.provider == "claude" }.map(\.name) == ["claude-4c515511-max@example.com.json", "claude-f11cea8c-team@example.com.json", "claude-0000-idle@example.com.json"])
         #expect(files[2].quota == nil)
         #expect(files[2].isDisabled)
+        #expect(files.last?.provider == "codex")
+        #expect(files.last?.quota == nil)
     }
 
     @Test func liveListingDecodesEveryLoginWithWeightAndQuota() throws {

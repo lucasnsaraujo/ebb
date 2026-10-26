@@ -69,7 +69,8 @@ public enum Pool {
     public static let sessionHorizon: TimeInterval = 5 * 60 * 60
 
     /// Summarizes the pool. `nil` entries are accounts without a usable reading.
-    public static func summarize(_ accounts: [AccountUsage?], at now: Date) -> PoolSummary? {
+    /// `sessionHorizon` bounds the short window's resets: five hours, or a day for Devin.
+    public static func summarize(_ accounts: [AccountUsage?], at now: Date, sessionHorizon: TimeInterval = sessionHorizon) -> PoolSummary? {
         let readable = accounts.compactMap { $0 }.filter { $0.weight > 0 }
         let totalWeight = readable.reduce(0) { $0 + $1.weight }
         guard totalWeight > 0 else { return nil }
@@ -114,5 +115,60 @@ public enum Pool {
             }
         }
         return merged.map(\.event)
+    }
+}
+
+/// A login as the pools see it: the provider it belongs to, and its pool member,
+/// or `nil` for a login whose provider only reports health.
+public struct ProviderLogin: Sendable {
+    public var provider: String
+    public var member: PoolMember?
+
+    public init(provider: String, member: PoolMember?) {
+        self.provider = provider
+        self.member = member
+    }
+}
+
+/// One pool per provider. A Claude 5-hour share and a Codex 5-hour share are different
+/// allowances, so capacity is never blended across providers.
+public enum ProviderPools {
+    /// Summaries by provider name; health-only logins never count.
+    public static func summarize(_ logins: [ProviderLogin], at now: Date) -> [String: PoolSummary] {
+        var members: [String: [PoolMember]] = [:]
+        for login in logins {
+            guard let member = login.member, Providers.named(login.provider) != nil else { continue }
+            members[login.provider, default: []].append(member)
+        }
+        var summaries: [String: PoolSummary] = [:]
+        for (name, group) in members {
+            let horizon = Providers.named(name)?.shortWindow.horizon ?? Pool.sessionHorizon
+            summaries[name] = Pool.summarize(PoolMember.poolInput(group, now: now), at: now, sessionHorizon: horizon)
+        }
+        return summaries
+    }
+
+    /// Each provider's pooled plan weight: paying, enabled logins only.
+    public static func pooledWeight(_ logins: [ProviderLogin]) -> [String: Double] {
+        var weights: [String: Double] = [:]
+        for login in logins {
+            guard let plan = login.member?.plan, Providers.named(login.provider) != nil else { continue }
+            weights[login.provider, default: 0] += plan.weight
+        }
+        return weights
+    }
+
+    /// The provider the menu bar shows by default: the one with the most pooled weight,
+    /// ties going to the earlier one in `Providers.all`.
+    public static func defaultProvider(_ weights: [String: Double]) -> String? {
+        let order = Providers.all.map(\.proxyName)
+        return weights
+            .filter { $0.value > 0 }
+            .max { lhs, rhs in
+                lhs.value == rhs.value
+                    ? (order.firstIndex(of: lhs.key) ?? .max) > (order.firstIndex(of: rhs.key) ?? .max)
+                    : lhs.value < rhs.value
+            }?
+            .key
     }
 }

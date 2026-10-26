@@ -1,10 +1,11 @@
 import AppKit
+import EbbCore
 import ServiceManagement
 import SwiftUI
 import UniformTypeIdentifiers
 
 enum SettingsTab: String {
-    case general, connection, routing, about
+    case general, connection, routing, plans, about
 
     static let storageKey = "settingsTab"
 }
@@ -12,12 +13,13 @@ enum SettingsTab: String {
 struct SettingsView: View {
     let connection: ProxyConnection
     let visibility: Visibility
+    let store: PoolStore
 
     @AppStorage(SettingsTab.storageKey) private var tab = SettingsTab.general.rawValue
 
     var body: some View {
         TabView(selection: $tab) {
-            GeneralSettings(visibility: visibility)
+            GeneralSettings(visibility: visibility, store: store)
                 .tabItem { Label("General", systemImage: "gearshape") }
                 .tag(SettingsTab.general.rawValue)
             ConnectionSettings(connection: connection)
@@ -26,6 +28,9 @@ struct SettingsView: View {
             RoutingSettingsPane(connection: connection)
                 .tabItem { Label("Routing", systemImage: "arrow.triangle.branch") }
                 .tag(SettingsTab.routing.rawValue)
+            PlanWeightSettings(store: store)
+                .tabItem { Label("Plans", systemImage: "scalemass") }
+                .tag(SettingsTab.plans.rawValue)
             AboutSettings()
                 .tabItem { Label("About", systemImage: "info.circle") }
                 .tag(SettingsTab.about.rawValue)
@@ -39,7 +44,9 @@ struct SettingsView: View {
 
 private struct GeneralSettings: View {
     let visibility: Visibility
+    let store: PoolStore
 
+    @AppStorage(ProviderDisplay.menuBarProviderKey) private var menuBarChoice = ""
     @State private var launchesAtLogin = SMAppService.mainApp.status == .enabled
 
     var body: some View {
@@ -53,6 +60,14 @@ private struct GeneralSettings: View {
                 .pickerStyle(.radioGroup)
                 if visibility.mode == .apps {
                     WatchedAppsList(visibility: visibility)
+                }
+                if store.state.providers.count > 1 {
+                    Picker("Pool", selection: $menuBarChoice) {
+                        Text("Most Pooled Capacity").tag("")
+                        ForEach(store.state.providers, id: \.self) { provider in
+                            Text(ProviderDisplay.title(provider)).tag(provider)
+                        }
+                    }
                 }
             }
             Section("Startup") {
@@ -177,7 +192,7 @@ private struct ConnectionSettings: View {
             } header: {
                 Text("Management Key")
             } footer: {
-                Text("The proxy keeps only a hash of this key, so Ebb asks once and stores it in your keychain. Without it, Ebb reads the logins folder and asks each provider directly, and routing and auto-retire stay off.")
+                Text("The proxy keeps only a hash of this key, so Ebb asks once and stores it in your keychain. Without it, Ebb reads only Claude logins, from the logins folder, and routing and auto-retire stay off.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -274,6 +289,64 @@ private struct RoutingSettingsPane: View {
     }
 }
 
+// MARK: - Plans
+
+/// The size each plan counts with, relative to its provider's base plan. Only plans of one
+/// provider are ever compared, so each provider's numbers stand alone.
+private struct PlanWeightSettings: View {
+    let store: PoolStore
+
+    @State private var overrides = UserDefaults.standard.dictionary(forKey: PlanWeights.overridesKey) as? [String: Double] ?? [:]
+
+    var body: some View {
+        Form {
+            if store.state.providers.isEmpty {
+                Text("Plans appear here once Ebb reads a pool.")
+                    .foregroundStyle(.secondary)
+            }
+            ForEach(store.state.providers, id: \.self) { provider in
+                Section(ProviderDisplay.title(provider)) {
+                    ForEach(PlanWeights.defaults[provider] ?? []) { row in
+                        LabeledContent {
+                            TextField(row.title, value: weight(provider, row), format: .number.precision(.fractionLength(0...2)))
+                                .labelsHidden()
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 56)
+                        } label: {
+                            Text(row.title)
+                            Text(row.source)
+                        }
+                    }
+                }
+            }
+            if !overrides.isEmpty {
+                HStack {
+                    Spacer()
+                    Button("Restore Defaults") { save([:]) }
+                }
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    private func weight(_ provider: String, _ row: PlanDefault) -> Binding<Double> {
+        let key = PlanWeights.overrideKey(provider: provider, plan: row.plan)
+        return Binding {
+            overrides[key] ?? row.weight
+        } set: { value in
+            var next = overrides
+            next[key] = value > 0 && value != row.weight ? value : nil
+            save(next)
+        }
+    }
+
+    private func save(_ next: [String: Double]) {
+        overrides = next
+        UserDefaults.standard.set(next, forKey: PlanWeights.overridesKey)
+        store.weightsDidChange()
+    }
+}
+
 // MARK: - About
 
 private struct AboutSettings: View {
@@ -288,7 +361,7 @@ private struct AboutSettings: View {
                 }
                 LabeledContent("License", value: "MIT")
             } footer: {
-                Text("Ebb is not affiliated with Anthropic. The Claude mark belongs to Anthropic.")
+                Text("Ebb is not affiliated with Anthropic, OpenAI, Cognition, Google, Moonshot AI or Meta. The Claude mark belongs to Anthropic.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

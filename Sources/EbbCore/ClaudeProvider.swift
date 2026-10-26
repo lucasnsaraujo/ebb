@@ -10,6 +10,7 @@ public struct ClaudeProvider: Provider {
     public init() {}
 
     public var proxyName: String { "claude" }
+    public var title: String { "Claude" }
 
     public func usageRequest(accessToken: String) -> URLRequest {
         request(Self.usageEndpoint, accessToken: accessToken)
@@ -39,6 +40,12 @@ public struct ClaudeProvider: Provider {
         return PlanProfile(plan: Self.plan(rateLimitTier: tier, subscriptionStatus: organization["subscription_status"] as? String), tier: tier)
     }
 
+    /// The tier without its prefix: "max_20x", "max_5x", "pro"; the key for weight overrides.
+    public static func planName(rateLimitTier: String?) -> String? {
+        guard let tier = rateLimitTier?.lowercased(), !tier.isEmpty else { return nil }
+        return tier.hasPrefix("default_claude_") ? String(tier.dropFirst("default_claude_".count)) : tier
+    }
+
     /// "default_claude_max_20x" weighs 20, "default_claude_max_5x" 5, a paid tier without a
     /// multiplier (Pro) 1. Anything but an active subscription is inactive.
     public static func plan(rateLimitTier: String?, subscriptionStatus: String?) -> Plan {
@@ -50,13 +57,14 @@ public struct ClaudeProvider: Provider {
         return .paid(weight: 1)
     }
 
+    public func limits(fromSignals signals: [String: Any], observedAt: Date) -> [UsageLimit]? {
+        limits(fromSignals: signals)
+    }
+
     /// `Anthropic-Ratelimit-Unified-5h-*` and `-7d-*`. `nil` without a 5-hour utilization, the one
     /// window every plan has. `7d` is the general weekly window; `7d_oi` and per-model caps are ignored.
     public func limits(fromSignals signals: [String: Any]) -> [UsageLimit]? {
-        let values = Dictionary(signals.compactMap { key, value -> (String, String)? in
-            let text = (value as? String) ?? (value as? NSNumber)?.stringValue
-            return text.map { (key.lowercased(), $0) }
-        }) { first, _ in first }
+        let values = Signals.lowercased(signals)
 
         func window(_ name: String, kind: UsageLimit.Kind) -> UsageLimit? {
             guard let utilization = values[Self.signalPrefix + name + "-utilization"].flatMap(Double.init) else { return nil }

@@ -17,6 +17,14 @@ public enum Retirement {
         default: .keep
         }
     }
+
+    /// After a usage call: only a definitive answer about the subscription can retire or
+    /// reinstate. A refused token, a rate limit or a failure leaves the account alone.
+    public static func action(after outcome: CallOutcome, isDisabled: Bool, isRetiredByUs: Bool, inactiveStreak: Int) -> Action {
+        guard case .reading = outcome else { return .keep }
+        let plan = outcome.subscriptionEvidence ?? .paid(weight: 1)
+        return action(isDisabled: isDisabled, isRetiredByUs: isRetiredByUs, plan: plan, inactiveStreak: inactiveStreak)
+    }
 }
 
 /// `retired.json`: auth file names this app disabled.

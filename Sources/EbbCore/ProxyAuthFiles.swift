@@ -11,37 +11,115 @@ public struct DatedLimits: Sendable, Equatable {
     }
 }
 
+/// A login's health as the proxy sees it: every provider has this, usage windows or not.
+public struct AccountHealth: Sendable, Equatable {
+    public enum State: Sendable, Equatable {
+        case ok
+        /// The proxy is holding it back until `until`, after errors or a spent quota.
+        case coolingDown(until: Date?)
+        case failing
+        case disabled
+    }
+
+    public var state: State
+    /// The proxy's own words, such as "quota exhausted".
+    public var message: String?
+    public var successes: Int
+    public var failures: Int
+
+    public init(state: State, message: String? = nil, successes: Int = 0, failures: Int = 0) {
+        self.state = state
+        self.message = message
+        self.successes = successes
+        self.failures = failures
+    }
+
+    /// `disabled`, `unavailable` with `next_retry_after`, and `status: "error"` from the listing.
+    static func read(_ file: [String: Any]) -> AccountHealth {
+        let message = (file["status_message"] as? String).flatMap { $0.isEmpty ? nil : $0 }
+        let retry = (file["next_retry_after"] as? String).flatMap(UsageLimit.parseTimestamp)
+        let state: State = if file["disabled"] as? Bool == true || file["status"] as? String == "disabled" {
+            .disabled
+        } else if file["unavailable"] as? Bool == true || retry != nil {
+            .coolingDown(until: retry)
+        } else if file["status"] as? String == "error" {
+            .failing
+        } else {
+            .ok
+        }
+        return AccountHealth(
+            state: state,
+            message: message,
+            successes: (file["success"] as? NSNumber)?.intValue ?? 0,
+            failures: (file["failed"] as? NSNumber)?.intValue ?? 0
+        )
+    }
+}
+
 /// One entry of CLIProxyAPI's `GET /v0/management/auth-files`.
 public struct ProxyAuthFile: Sendable, Equatable {
     /// The auth file name, which is also the management API's key for it.
     public var name: String
+    /// Ebb's name for the provider: the supported provider's `proxyName`, else the proxy's own.
     public var provider: String
+    /// The proxy's name for it, which can differ (`kimi-ai`).
+    public var proxyProvider: String
+    /// The key `api-call` takes to act as this login.
+    public var authIndex: String?
     public var email: String?
+    public var label: String?
     public var isDisabled: Bool
     public var weight: Int?
-    /// Limits from the rate-limit headers of the account's latest real response.
+    /// Limits from the quota signals of the account's latest real response.
     public var quota: DatedLimits?
+    /// The plan named in the listing (Codex ID token, Devin signals).
+    public var planName: String?
+    /// Codex's `chatgpt_account_id`, sent along with usage reads.
+    public var accountID: String?
+    /// Google Cloud project, needed for Antigravity's quota summary.
+    public var projectID: String?
+    public var health: AccountHealth
 
-    /// Parses the listing; logins of providers Ebb doesn't support are left out.
-    public static func parseList(_ data: Data, providers: [any Provider] = Providers.all) -> [ProxyAuthFile]? {
+    /// Logins of providers with usage windows count toward a pool; the rest show health only.
+    public var hasUsageWindows: Bool {
+        Providers.named(provider) != nil
+    }
+
+    /// Email, else the label, else the file name.
+    public var displayName: String {
+        email ?? label ?? name
+    }
+
+    /// Parses the listing, every provider included.
+    public static func parseList(_ data: Data) -> [ProxyAuthFile]? {
         guard let body = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let files = body["files"] as? [[String: Any]]
         else { return nil }
         return files.compactMap { file in
-            let providerName = file["provider"] as? String ?? file["type"] as? String
             guard let name = file["name"] as? String,
-                  let provider = providers.first(where: { $0.proxyName == providerName })
+                  let proxyProvider = (file["provider"] as? String ?? file["type"] as? String)?.lowercased()
             else { return nil }
+            let provider = Providers.named(proxyProvider)
             let quota = file["quota"] as? [String: Any]
             let observedAt = (quota?["observed_at"] as? String).flatMap(UsageLimit.parseTimestamp)
-            let limits = (quota?["signals"] as? [String: Any]).flatMap(provider.limits(fromSignals:))
+            let limits = observedAt.flatMap { date in
+                (quota?["signals"] as? [String: Any]).flatMap { provider?.limits(fromSignals: $0, observedAt: date) }
+            }
+            let idToken = file["id_token"] as? [String: Any]
             return ProxyAuthFile(
                 name: name,
-                provider: provider.proxyName,
-                email: file["email"] as? String,
+                provider: provider?.proxyName ?? proxyProvider,
+                proxyProvider: proxyProvider,
+                authIndex: (file["auth_index"] as? String).flatMap { $0.isEmpty ? nil : $0 },
+                email: (file["email"] as? String).flatMap { $0.isEmpty ? nil : $0 },
+                label: (file["label"] as? String).flatMap { $0.isEmpty ? nil : $0 },
                 isDisabled: file["disabled"] as? Bool ?? false,
                 weight: (file["weight"] as? NSNumber)?.intValue,
-                quota: limits.flatMap { limits in observedAt.map { DatedLimits(limits: limits, date: $0) } }
+                quota: limits.flatMap { limits in observedAt.map { DatedLimits(limits: limits, date: $0) } },
+                planName: provider?.planName(fromEntry: file),
+                accountID: idToken?["chatgpt_account_id"] as? String,
+                projectID: (file["project_id"] as? String).flatMap { $0.isEmpty ? nil : $0 },
+                health: AccountHealth.read(file)
             )
         }
     }

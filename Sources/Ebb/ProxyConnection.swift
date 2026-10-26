@@ -24,7 +24,8 @@ final class ProxyConnection {
 
     init() {
         discover()
-        key = ManagementKeychain.read()
+        // A snapshot or demo never touches the keychain, so no access prompt can appear.
+        key = LaunchOptions.snapshotDirectory == nil && !LaunchOptions.isDemo ? ManagementKeychain.read() : LaunchOptions.snapshotKey
         keyState = key == nil ? .missing : .checking
     }
 

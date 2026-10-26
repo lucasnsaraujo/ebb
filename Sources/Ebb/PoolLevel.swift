@@ -20,9 +20,9 @@ struct PoolLevel {
 }
 
 extension PoolWindow {
-    var title: String {
+    func title(_ short: ShortWindow) -> String {
         switch self {
-        case .session: "5-hour"
+        case .session: short.title
         case .weekly: "Weekly"
         }
     }

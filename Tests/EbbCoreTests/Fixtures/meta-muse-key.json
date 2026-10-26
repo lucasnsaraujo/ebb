@@ -1,0 +1,12 @@
+{
+  "api_key": "LLM|0000|fake-key",
+  "user_email": "muse@example.com",
+  "subs_tier_name": "Muse Code Power Usage",
+  "subs_tier_id": "0000",
+  "is_subs_active": true,
+  "require_payment": false,
+  "subs_usage": {
+    "window": { "used_percent": 96, "window_duration_mins": 300, "resets_at": 1793056000 },
+    "weekly": { "used_percent": 40, "resets_at": 1793400000 }
+  }
+}

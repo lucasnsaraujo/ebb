@@ -1,0 +1,15 @@
+{
+  "response": {
+    "groups": [
+      { "displayName": "Gemini Models", "buckets": [
+        { "bucketId": "gemini-5h", "window": "5h", "remaining": { "remainingFraction": 0.8 }, "resetTime": "2026-10-26T22:00:00Z" },
+        { "bucketId": "gemini-weekly", "window": "weekly", "remainingFraction": 0.6, "resetTime": "2026-10-30T00:00:00Z" }
+      ] },
+      { "displayName": "Claude and GPT models", "buckets": [
+        { "bucketId": "claude-gpt-5h", "window": "5h", "remainingFraction": 0.3, "resetTime": "2026-10-26T21:00:00Z" },
+        { "bucketId": "claude-gpt-weekly", "window": "weekly", "remainingFraction": 0.9, "resetTime": "2026-10-31T00:00:00Z" },
+        { "bucketId": "claude-gpt-image", "displayName": "Image", "disabled": true, "remainingFraction": 0.0 }
+      ] }
+    ]
+  }
+}

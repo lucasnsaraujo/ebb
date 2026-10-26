@@ -15,7 +15,7 @@ public struct FetchState: Sendable, Equatable {
 public enum RefreshPlan {
     /// An idle account's usage is read this often.
     public static let period: TimeInterval = 5 * 60
-    /// No two requests to Anthropic, from any trigger, go out closer than this.
+    /// No two provider requests, direct or through the proxy's `api-call`, go out closer than this.
     public static let minimumSpacing: TimeInterval = 60
 
     /// The account to read next: the one tried longest ago, skipping accounts

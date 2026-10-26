@@ -35,11 +35,13 @@ enum EbbPaths {
     }
 }
 
-/// One CLIProxyAPI login from its auth folder. The proxy refreshes `access_token`
-/// in place, so read the file again before each request.
+/// One Claude login from CLIProxyAPI's auth folder, read directly so Claude keeps working
+/// without a management key. The proxy refreshes `access_token` in place, so read the file
+/// again before each request. Other providers are never read from disk: Ebb reaches them
+/// through the proxy's `api-call`, which fills in the token.
 struct ProxyAccount {
     let file: URL
-    let provider: any Provider
+    let provider = ClaudeProvider()
     let email: String
     let accessToken: String
     /// As written in the file; the management API's view wins when it's reachable.
@@ -60,7 +62,7 @@ struct ProxyAccount {
         }
     }
 
-    /// Every login of a supported provider, including disabled ones.
+    /// Every Claude login, including disabled ones.
     static func loadAll(in directory: URL) -> [ProxyAccount] {
         let files = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
         return files
@@ -68,11 +70,11 @@ struct ProxyAccount {
             .compactMap { file -> ProxyAccount? in
                 guard let data = try? Data(contentsOf: file),
                       let fields = try? JSONDecoder().decode(Fields.self, from: data),
-                      let provider = Providers.named(fields.type),
+                      fields.type == ClaudeProvider().proxyName,
                       let email = fields.email, !email.isEmpty,
                       let accessToken = fields.accessToken, !accessToken.isEmpty
                 else { return nil }
-                return ProxyAccount(file: file, provider: provider, email: email, accessToken: accessToken, isDisabledInFile: fields.disabled ?? false)
+                return ProxyAccount(file: file, email: email, accessToken: accessToken, isDisabledInFile: fields.disabled ?? false)
             }
             .sorted { $0.name < $1.name }
     }

@@ -1,0 +1,174 @@
+{
+  "files": [
+    {
+      "id": "claude-00000000-work@example.com.json",
+      "auth_index": "0a1b2c3d4e5f6071",
+      "name": "claude-00000000-work@example.com.json",
+      "type": "claude",
+      "provider": "claude",
+      "email": "work@example.com",
+      "status": "active",
+      "status_message": "",
+      "disabled": false,
+      "unavailable": false,
+      "runtime_only": false,
+      "success": 120,
+      "failed": 2,
+      "weight": 80,
+      "quota": {
+        "observed_at": "2026-10-26T19:51:17.589504Z",
+        "signals": {
+          "Anthropic-Ratelimit-Unified-5h-Reset": "1793056200",
+          "Anthropic-Ratelimit-Unified-5h-Utilization": "0.40",
+          "Anthropic-Ratelimit-Unified-7d-Reset": "1793149200",
+          "Anthropic-Ratelimit-Unified-7d-Utilization": "0.50"
+        }
+      }
+    },
+    {
+      "id": "codex-plus@example.com.json",
+      "auth_index": "1b2c3d4e5f607182",
+      "name": "codex-plus@example.com.json",
+      "type": "codex",
+      "provider": "codex",
+      "email": "plus@example.com",
+      "status": "active",
+      "disabled": false,
+      "unavailable": false,
+      "success": 40,
+      "failed": 0,
+      "weight": 50,
+      "id_token": {
+        "chatgpt_account_id": "00000000-0000-4000-8000-000000000001",
+        "plan_type": "plus"
+      },
+      "quota": {
+        "observed_at": "2026-10-26T19:50:00Z",
+        "signals": {
+          "X-Codex-Plan-Type": "plus",
+          "X-Codex-Active-Limit": "codex",
+          "X-Codex-Primary-Used-Percent": "25",
+          "X-Codex-Primary-Window-Minutes": "300",
+          "X-Codex-Primary-Reset-After-Seconds": "9000",
+          "X-Codex-Primary-Reset-At": "1793056000",
+          "X-Codex-Secondary-Used-Percent": "60",
+          "X-Codex-Secondary-Window-Minutes": "10080",
+          "X-Codex-Secondary-Reset-At": "1793400000",
+          "X-Codex-Credits-Has-Credits": "false",
+          "X-Codex-Credits-Unlimited": "false",
+          "X-Codex-Credits-Balance": "0",
+          "X-Codex-Bengalfox-Primary-Used-Percent": "90",
+          "X-Codex-Bengalfox-Primary-Window-Minutes": "300",
+          "X-Codex-Bengalfox-Primary-Reset-At": "1793056000"
+        }
+      }
+    },
+    {
+      "id": "codex-pro@example.com.json",
+      "auth_index": "2c3d4e5f60718293",
+      "name": "codex-pro@example.com.json",
+      "type": "codex",
+      "provider": "codex",
+      "email": "pro@example.com",
+      "status": "active",
+      "disabled": false,
+      "unavailable": false,
+      "id_token": {
+        "chatgpt_account_id": "00000000-0000-4000-8000-000000000002",
+        "plan_type": "pro"
+      },
+      "quota": { "signals": {} }
+    },
+    {
+      "id": "devin-dev@example.com.json",
+      "auth_index": "3d4e5f6071829304",
+      "name": "devin-dev@example.com.json",
+      "type": "devin",
+      "provider": "devin",
+      "email": "dev@example.com",
+      "status": "active",
+      "disabled": false,
+      "unavailable": false,
+      "quota": {
+        "observed_at": "2026-10-26T19:40:00Z",
+        "signals": {
+          "plan": "pro",
+          "daily_quota_remaining_percent": "73%",
+          "weekly_quota_remaining_percent": "40%",
+          "daily_quota_reset_at": "2026-10-27T00:00:00Z",
+          "weekly_quota_reset_at": "2026-11-02T00:00:00Z",
+          "plan_start": "2026-10-01T00:00:00Z",
+          "plan_end": "2026-11-01T00:00:00Z"
+        }
+      }
+    },
+    {
+      "id": "antigravity-agy@example.com.json",
+      "auth_index": "4e5f607182930415",
+      "name": "antigravity-agy@example.com.json",
+      "type": "antigravity",
+      "provider": "antigravity",
+      "email": "agy@example.com",
+      "project_id": "example-project-000",
+      "status": "active",
+      "disabled": false,
+      "unavailable": false,
+      "quota": { "signals": {} }
+    },
+    {
+      "id": "kimi-moon@example.com.json",
+      "auth_index": "5f60718293041526",
+      "name": "kimi-moon@example.com.json",
+      "type": "kimi-ai",
+      "provider": "kimi-ai",
+      "email": "moon@example.com",
+      "status": "active",
+      "disabled": false,
+      "unavailable": false,
+      "quota": { "signals": {} }
+    },
+    {
+      "id": "meta-muse@example.com.json",
+      "auth_index": "6071829304152637",
+      "name": "meta-muse@example.com.json",
+      "type": "meta",
+      "provider": "meta",
+      "email": "muse@example.com",
+      "status": "active",
+      "disabled": false,
+      "unavailable": false,
+      "quota": { "signals": {} }
+    },
+    {
+      "id": "xai-grok@example.com.json",
+      "auth_index": "7182930415263748",
+      "name": "xai-grok@example.com.json",
+      "type": "xai",
+      "provider": "xai",
+      "email": "grok@example.com",
+      "status": "error",
+      "status_message": "quota exhausted",
+      "disabled": false,
+      "unavailable": true,
+      "next_retry_after": "2026-10-26T20:30:00Z",
+      "success": 5,
+      "failed": 3,
+      "quota": { "signals": {} }
+    },
+    {
+      "id": "gemini-key-0000",
+      "auth_index": "8293041526374859",
+      "name": "gemini-key-0000",
+      "type": "gemini",
+      "provider": "gemini",
+      "label": "Gemini key",
+      "status": "active",
+      "disabled": false,
+      "unavailable": false,
+      "runtime_only": true,
+      "success": 9,
+      "failed": 0,
+      "quota": { "signals": {} }
+    }
+  ]
+}

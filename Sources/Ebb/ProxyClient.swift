@@ -60,6 +60,19 @@ struct ProxyClient {
         await send("auth-files/status", endpoint, method: "PATCH", body: ["name": name, "disabled": isDisabled])
     }
 
+    /// Sends a request on a login's behalf; the proxy fills in its token. The status is the
+    /// proxy's own: 200 wraps the provider's answer, 400 means it had no token to send.
+    func apiCall(_ call: ProxyAPICall, _ endpoint: ProxyEndpoint) async -> (status: Int, body: Data)? {
+        var request = request("api-call", endpoint, method: "POST")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = call.body()
+        request.timeoutInterval = 30
+        guard let (data, response) = try? await session.data(for: request),
+              let status = (response as? HTTPURLResponse)?.statusCode
+        else { return nil }
+        return (status, data)
+    }
+
     private func get(_ path: String, _ endpoint: ProxyEndpoint) async -> Data? {
         guard let (data, response) = try? await session.data(for: request(path, endpoint, method: "GET")),
               (response as? HTTPURLResponse)?.statusCode == 200

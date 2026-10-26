@@ -1,8 +1,9 @@
 import Foundation
 
-/// One rate-limit window as reported by `GET /api/oauth/usage`.
+/// One rate-limit window of an account, in Claude's `GET /api/oauth/usage` terms;
+/// every provider's windows are mapped onto these kinds.
 public struct UsageLimit: Sendable, Equatable {
-    public enum Kind: Sendable, Equatable {
+    public enum Kind: Sendable, Hashable {
         case session
         case weeklyAll
         /// Model-specific weekly cap; it never limits the pool as a whole.

@@ -1,0 +1,8 @@
+{
+  "user": { "membership": { "level": "LEVEL_BASIC" } },
+  "usage": { "limit": "2048", "used": "512", "remaining": "1536", "resetTime": "2026-11-01T15:23:13.716839300Z" },
+  "limits": [
+    { "window": { "duration": 300, "timeUnit": "TIME_UNIT_MINUTE" },
+      "detail": { "limit": "200", "used": "150", "remaining": "50", "resetTime": "2026-10-26T21:33:02.717479433Z" } }
+  ]
+}
