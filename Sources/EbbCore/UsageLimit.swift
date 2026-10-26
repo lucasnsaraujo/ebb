@@ -34,7 +34,7 @@ public struct UsageLimit: Sendable, Equatable {
         try JSONDecoder().decode([UsageLimit].self, from: data)
     }
 
-    /// Encodes limits in the usage endpoint's shape, the format of the shared cache files.
+    /// Encodes limits in the usage endpoint's shape, the format of the cache files.
     public static func encodeList(_ limits: [UsageLimit]) -> Data {
         let objects = limits.map { limit -> [String: Any] in
             [

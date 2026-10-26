@@ -19,7 +19,7 @@ public enum Retirement {
     }
 }
 
-/// `~/.config/pool-limits/retired.json`: auth file names this app disabled.
+/// `retired.json`: auth file names this app disabled.
 public struct RetiredAccounts: Sendable {
     public let file: URL
 

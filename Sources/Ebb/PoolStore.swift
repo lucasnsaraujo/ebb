@@ -147,7 +147,7 @@ final class PoolStore {
         }
     }
 
-    /// Keeps `~/.cache/pool-limits` current for the `pool-limits` CLI without extra requests.
+    /// Keeps the cache current from proxy headers, so a relaunch shows numbers without extra requests.
     private func writeSignalCaches() {
         for account in accounts.values {
             guard let quota = signals(for: account), ReadingChoice.hasFreshSignals(quota, now: .now) else { continue }
@@ -321,7 +321,7 @@ final class PoolStore {
         plans = plans.filter { accounts[$0.key] != nil }
     }
 
-    /// Seeds from the shared cache so a relaunch shows numbers at once
+    /// Seeds from the cache so a relaunch shows numbers at once
     /// and does not re-read accounts that were read moments ago.
     private func loadCaches() {
         for email in accounts.keys {
