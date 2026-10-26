@@ -1,0 +1,100 @@
+name: Bug report
+description: Something in Ebb doesn't work as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check the [open and closed issues](https://github.com/lucasnsaraujo/ebb/issues?q=is%3Aissue) first. For "how do I set this up" questions, use [Discussions](https://github.com/lucasnsaraujo/ebb/discussions).
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you see? Include any error text shown in Ebb.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Ebb's panel...
+        2. Click...
+        3. See...
+    validations:
+      required: true
+
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      description: Apple menu → About This Mac.
+      placeholder: e.g. macOS 26.0
+    validations:
+      required: true
+
+  - type: input
+    id: ebb-version
+    attributes:
+      label: Ebb version
+      description: Settings → About.
+      placeholder: e.g. 0.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: proxy-version
+    attributes:
+      label: CLIProxyAPI version
+      description: Run `cliproxyapi --version`.
+      placeholder: e.g. 6.x.x
+    validations:
+      required: true
+
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Provider involved
+      description: Which accounts are affected?
+      options:
+        - Claude
+        - Codex
+        - Other (say which below)
+        - Not sure / all of them
+    validations:
+      required: true
+
+  - type: input
+    id: menu-bar-style
+    attributes:
+      label: Menu bar style
+      description: What Ebb shows in the menu bar, and the "Show Ebb" setting in Settings → General.
+      placeholder: e.g. "5h 89%" next to the Claude mark, shown always
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Relevant lines from the Console app, or a screenshot.
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: redacted
+    attributes:
+      label: Before submitting
+      options:
+        - label: I removed tokens, keys and emails from anything I pasted.
+          required: true

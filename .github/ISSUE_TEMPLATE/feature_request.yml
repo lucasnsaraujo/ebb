@@ -1,0 +1,31 @@
+name: Feature request
+description: Suggest a change or addition to Ebb
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ebb is a small menu bar app. It shows how much pooled subscription capacity is free and tunes CLIProxyAPI's routing weights, and not much else. Requests that fit that are the easiest to accept. To add a new account type, use the provider request form.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do
+      description: Describe the situation, not the solution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like Ebb to do
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you do today instead
+      description: Workarounds, other tools, or alternatives you considered.
+    validations:
+      required: false

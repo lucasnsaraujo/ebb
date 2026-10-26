@@ -1,6 +1,8 @@
-# Ebb
+# Ebb: a macOS menu bar app for CLIProxyAPI
 
-Ebb is a macOS menu bar app that shows how much of your pooled Claude subscriptions is left. It reads the accounts you've logged in to [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) and shows two numbers: free share of the 5-hour window and free share of the weekly window, each weighted by plan size.
+See how much of your Claude Code usage limit is free right now, across every account in your CLIProxyAPI pool. Codex is next.
+
+Ebb is a native macOS menu bar app for [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI), the local proxy that pools Claude Code, Codex and other CLI subscriptions. If you run several Claude accounts behind it, Ebb reads them through CLIProxyAPI's management API and shows two numbers in the menu bar: the free share of the 5-hour limit and of the weekly limit, each weighted by plan size. It also tunes CLIProxyAPI's routing weights so the accounts drain evenly.
 
 This README is a placeholder. Full docs come with the first release.
 

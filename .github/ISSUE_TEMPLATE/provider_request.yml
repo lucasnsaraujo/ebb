@@ -1,0 +1,62 @@
+name: Provider request
+description: Ask Ebb to read another CLIProxyAPI account type
+labels: ["enhancement", "provider"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ebb reads limits per account type behind the `Provider` protocol in `Sources/EbbCore/Provider.swift`. A provider can only be added if there is a way to read an account's usage without spending quota.
+
+  - type: input
+    id: provider
+    attributes:
+      label: CLIProxyAPI provider
+      description: The name CLIProxyAPI uses for it, as in the auth file's `type` field.
+      placeholder: e.g. gemini-cli, antigravity
+    validations:
+      required: true
+
+  - type: dropdown
+    id: quota-source
+    attributes:
+      label: How does the provider expose usage?
+      options:
+        - Rate-limit response headers
+        - A usage or quota endpoint
+        - Both
+        - Neither / I don't know
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Header names or endpoint
+      description: Header names, endpoint URL and the shape of the response. Replace tokens, account IDs and emails with placeholders.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: links
+    attributes:
+      label: Links
+      description: Official docs, CLIProxyAPI issues or code, or another tool that already reads these limits.
+    validations:
+      required: false
+
+  - type: textarea
+    id: windows
+    attributes:
+      label: Limit windows and plans
+      description: Does the provider have a 5-hour or weekly window, daily or monthly caps, and different plan sizes?
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: redacted
+    attributes:
+      label: Before submitting
+      options:
+        - label: I removed tokens, keys and emails from anything I pasted.
+          required: true
