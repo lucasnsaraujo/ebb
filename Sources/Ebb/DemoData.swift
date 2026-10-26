@@ -1,7 +1,7 @@
 import EbbCore
 import Foundation
 
-/// `--demo`: fake logins of every kind, with no network and no keychain. Claude, Codex,
+/// `--demo`: fake logins of every kind, with no network and no saved key. Claude, Codex,
 /// Devin and Antigravity pools; a Kimi login whose token is refused; two health-only logins.
 @MainActor
 enum DemoData {

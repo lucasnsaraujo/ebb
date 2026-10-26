@@ -4,7 +4,7 @@ import Foundation
 /// Where to reach CLIProxyAPI's management API, and the key it accepts.
 struct ProxyEndpoint: Sendable {
     let baseURL: URL
-    let key: String
+    let key: ManagementKey
 }
 
 /// CLIProxyAPI's management API. Free to call: no provider traffic. Changes go
@@ -93,7 +93,7 @@ struct ProxyClient {
     private func request(_ path: String, _ endpoint: ProxyEndpoint, method: String) -> URLRequest {
         var request = URLRequest(url: endpoint.baseURL.appending(path: "v0/management/\(path)"))
         request.httpMethod = method
-        request.setValue("Bearer \(endpoint.key)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(endpoint.key.value)", forHTTPHeaderField: "Authorization")
         return request
     }
 }

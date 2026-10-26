@@ -5,6 +5,9 @@ import Foundation
 enum EbbPaths {
     static let bundleIdentifier = "io.github.lucasnsaraujo.ebb"
     static let home = FileManager.default.homeDirectoryForCurrentUser
+    static let applicationSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        .appending(path: "Ebb")
+    static let managementKeyFile = applicationSupport.appending(path: "management-key")
     static let configDirectory = home.appending(path: ".config/ebb")
     static let modeFile = configDirectory.appending(path: "mode")
     static let retiredAccounts = RetiredAccounts(file: configDirectory.appending(path: "retired.json"))

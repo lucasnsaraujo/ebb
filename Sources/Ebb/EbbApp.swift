@@ -1,4 +1,5 @@
 import AppKit
+import EbbCore
 import ServiceManagement
 import SwiftUI
 
@@ -77,7 +78,7 @@ private struct FirstRunSetup: ViewModifier {
 enum LaunchOptions {
     /// Shows cached numbers and never touches the network.
     static let isOffline = CommandLine.arguments.contains("--offline")
-    /// Fake logins of every provider tier, with no network and no keychain: `--demo`.
+    /// Fake logins of every provider tier, with no network and no saved key: `--demo`.
     static let isDemo = CommandLine.arguments.contains("--demo")
     /// Puts the demo in a state worth a screenshot or recording: `--demo accounts|hover|disclosure|low`.
     /// `low` fakes a nearly empty pool in the menu bar to show its warning colors.
@@ -91,9 +92,9 @@ enum LaunchOptions {
     /// With `--snapshot`, renders what the running proxy reports instead of fixed numbers: `--live`.
     static let isLive = CommandLine.arguments.contains("--live")
     /// With `--snapshot`, reads the live proxy using the management key in this file: `--key-file <path>`.
-    static let snapshotKey: String? = value(after: "--key-file")
+    static let snapshotKey: ManagementKey? = value(after: "--key-file")
         .flatMap { try? String(contentsOfFile: $0, encoding: .utf8) }
-        .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        .flatMap(ManagementKey.init)
     /// Forces the panel's appearance: `--appearance light|dark`.
     static let appearance: NSAppearance.Name? = value(after: "--appearance").map { $0 == "dark" ? .darkAqua : .aqua }
 

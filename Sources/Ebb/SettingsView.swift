@@ -192,7 +192,7 @@ private struct ConnectionSettings: View {
             } header: {
                 Text("Management Key")
             } footer: {
-                Text("The proxy keeps only a hash of this key, so Ebb asks once and stores it in your keychain. Without it, Ebb reads only Claude logins, from the logins folder, and routing and auto-retire stay off.")
+                Text("The proxy keeps only a hash of this key, so Ebb asks once and stores it in a file only you can read, in Ebb's Application Support folder. A .management-key file in the logins folder is picked up on its own until you forget the key. Without the key, Ebb reads only Claude logins, from the logins folder, and routing and auto-retire stay off.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

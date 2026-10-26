@@ -12,6 +12,8 @@ final class ProxyConnection {
     }
 
     private static let configOverrideKey = "proxyConfigPath"
+    /// Set by Forget Key, so the logins folder's `.management-key` isn't imported again.
+    private static let forgotKeyKey = "forgotManagementKey"
 
     private(set) var configFile: URL?
     private(set) var config = ProxyConfig.defaults
@@ -19,13 +21,22 @@ final class ProxyConnection {
     /// `nil` until read, or when the proxy can't be asked.
     private(set) var routingStrategy: String?
 
-    @ObservationIgnored private var key: String?
+    @ObservationIgnored private var key: ManagementKey?
+    /// A key read from the logins folder, saved only once the proxy accepts it.
+    @ObservationIgnored private var unsavedKey: ManagementKey?
     @ObservationIgnored private let client = ProxyClient()
+    @ObservationIgnored private let keyFile = ManagementKeyFile(url: EbbPaths.managementKeyFile)
 
     init() {
         discover()
-        // A snapshot or demo never touches the keychain, so no access prompt can appear.
-        key = LaunchOptions.snapshotDirectory == nil && !LaunchOptions.isDemo ? ManagementKeychain.read() : LaunchOptions.snapshotKey
+        // A snapshot or demo reads a key only from `--key-file`, never the user's saved one.
+        if LaunchOptions.snapshotDirectory != nil || LaunchOptions.isDemo {
+            key = LaunchOptions.snapshotKey
+        } else {
+            let loaded = keyFile.load(importingFrom: UserDefaults.standard.bool(forKey: Self.forgotKeyKey) ? nil : authDirectory)
+            key = loaded?.key
+            unsavedKey = loaded?.origin == .loginsFolder ? loaded?.key : nil
+        }
         keyState = key == nil ? .missing : .checking
     }
 
@@ -64,14 +75,15 @@ final class ProxyConnection {
 
     /// Checks the key against the live proxy and keeps it only if accepted.
     func save(key newKey: String) async {
-        let trimmed = newKey.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
+        guard let newKey = ManagementKey(newKey) else { return }
         keyState = .checking
-        let result = await client.check(ProxyEndpoint(baseURL: config.baseURL, key: trimmed))
+        let result = await client.check(ProxyEndpoint(baseURL: config.baseURL, key: newKey))
         switch result {
         case .valid:
-            key = ManagementKeychain.save(trimmed) ? trimmed : nil
+            key = (try? keyFile.save(newKey)) == nil ? nil : newKey
             keyState = key == nil ? .missing : .valid
+            unsavedKey = nil
+            UserDefaults.standard.removeObject(forKey: Self.forgotKeyKey)
             await refreshRoutingStrategy()
         case .rejected:
             keyState = .rejected
@@ -81,8 +93,10 @@ final class ProxyConnection {
     }
 
     func forgetKey() {
-        ManagementKeychain.delete()
+        keyFile.delete()
+        UserDefaults.standard.set(true, forKey: Self.forgotKeyKey)
         key = nil
+        unsavedKey = nil
         keyState = .missing
         routingStrategy = nil
     }
@@ -98,7 +112,9 @@ final class ProxyConnection {
         case .rejected: .rejected
         case .unreachable: .unreachable
         }
-        if keyState == .valid { await refreshRoutingStrategy() }
+        guard keyState == .valid else { return }
+        if let unsavedKey, (try? keyFile.save(unsavedKey)) != nil { self.unsavedKey = nil }
+        await refreshRoutingStrategy()
     }
 
     func refreshRoutingStrategy() async {

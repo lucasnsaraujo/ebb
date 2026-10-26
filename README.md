@@ -16,7 +16,7 @@ Ebb is a native macOS menu bar app for [CLIProxyAPI](https://github.com/router-f
 | Meta Muse | 5-hour, weekly | `muse-code/key` through the proxy; shows "Limits not available" while the proxy can't send the device-code token |
 | xAI, Vertex, Gemini API key, AI Studio, OpenAI-compatible, plugins | none | Health only: status and cooldown. Never counted in a pool. |
 
-Calls "through the proxy" use CLIProxyAPI's `api-call` endpoint: Ebb names the account and the proxy fills in its token, so Ebb never reads those tokens. Plan weights have defaults (Settings → Plans) that you can change.
+Ebb needs the proxy's management key for everything but Claude. Enter it once in Settings → Connection, or keep it in a `.management-key` file in CLIProxyAPI's logins folder and Ebb picks it up until you press Forget Key. Calls "through the proxy" use CLIProxyAPI's `api-call` endpoint: Ebb names the account and the proxy fills in its token, so Ebb never reads those tokens. Plan weights have defaults (Settings → Plans) that you can change.
 
 This README is a placeholder. Full docs come with the first release.
 
