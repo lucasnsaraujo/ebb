@@ -83,6 +83,15 @@ enum Snapshot {
             if let data = png(of: view, width: 480, scheme: scheme) {
                 try? data.write(to: directory.appending(path: "settings-general-\(scheme == .dark ? "dark" : "light").png"))
             }
+            let routing = RoutingSettingsPane(connection: model.connection, store: model.store)
+                .frame(width: 480)
+                .fixedSize(horizontal: false, vertical: true)
+                .background(Color(nsColor: .windowBackgroundColor))
+                .environment(\.colorScheme, scheme)
+                .transaction { $0.disablesAnimations = true }
+            if let data = png(of: routing, width: 480, scheme: scheme) {
+                try? data.write(to: directory.appending(path: "settings-routing-\(scheme == .dark ? "dark" : "light").png"))
+            }
         }
     }
 

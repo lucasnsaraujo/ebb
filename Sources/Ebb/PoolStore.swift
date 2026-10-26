@@ -40,6 +40,8 @@ final class PoolStore {
     /// When the proxy last answered; `nil` while it's unreachable.
     private(set) var proxyReadAt: Date?
     private(set) var isRefreshing = false
+    /// The login reset urgency raises most, for Settings → Routing.
+    private(set) var strongestUrgency: UrgentLogin?
 
     private struct Dated<Value> {
         var value: Value
@@ -118,13 +120,14 @@ final class PoolStore {
     }
 
     /// Shows the given numbers and never reads anything: `--demo` and `--snapshot`.
-    init(connection: ProxyConnection, state: PoolState, proxyReadAt: Date?) {
+    init(connection: ProxyConnection, state: PoolState, proxyReadAt: Date?, strongestUrgency: UrgentLogin? = nil) {
         self.connection = connection
         isOffline = false
         isFixed = true
         savesStatus = false
         self.state = state
         self.proxyReadAt = proxyReadAt
+        self.strongestUrgency = strongestUrgency
     }
 
     /// A fixed Claude-only pool.
@@ -244,20 +247,20 @@ final class PoolStore {
         await delivery.enable()
     }
 
-    /// Steers new threads toward free capacity: weight = plan size × free percent.
+    /// Steers new threads toward free capacity: weight = plan size × free percent × reset urgency.
     private func syncProxyWeights() async {
-        guard RoutingSettings.balancesSessions, let endpoint = connection.endpoint else { return }
+        guard RoutingSettings.balancesSessions, let endpoint = connection.endpoint else {
+            if strongestUrgency != nil { strongestUrgency = nil }
+            return
+        }
         let now = Date.now
+        var logins: [(name: String, provider: String, planWeight: Double, limits: [UsageLimit], weight: Int?)] = []
         for account in accounts.values where !isDisabled(account) {
             guard case let .paid(planWeight) = plans[account.email]?.value,
                   let listed = proxyFiles[account.name],
                   let limits = reading(for: account, at: now)
             else { continue }
-            let target = ProxyWeight.target(planWeight: planWeight, freePercent: Pool.effectiveFree(limits, at: now))
-            guard ProxyWeight.needsUpdate(current: listed.weight, target: target) else { continue }
-            if await proxy.setWeight(target, for: account.name, endpoint) {
-                proxyFiles[account.name]?.weight = target
-            }
+            logins.append((account.name, ClaudeProvider().proxyName, planWeight, limits, listed.weight))
         }
         // The proxy's weighted round robin only weighs logins of one provider against each
         // other (its state key is provider and model), so each provider's plan scale stands alone.
@@ -265,12 +268,22 @@ final class PoolStore {
             guard case let .paid(planWeight) = plan(for: file),
                   let limits = ReadingChoice.best(signals: file.quota, usage: callReadings[file.name], now: now)
             else { continue }
-            let target = ProxyWeight.target(planWeight: planWeight, freePercent: Pool.effectiveFree(limits, at: now))
-            guard ProxyWeight.needsUpdate(current: file.weight, target: target) else { continue }
-            if await proxy.setWeight(target, for: file.name, endpoint) {
-                proxyFiles[file.name]?.weight = target
+            logins.append((file.name, file.provider, planWeight, limits, file.weight))
+        }
+        var urgent: [UrgentLogin] = []
+        for login in logins {
+            let free = Pool.effectiveFree(login.limits, at: now)
+            let resetsAt = ResetUrgency.weeklyReset(in: login.limits)
+            let urgency = ResetUrgency.factor(weeklyResetsAt: resetsAt, now: now)
+            urgent.append(UrgentLogin(provider: ProviderDisplay.title(login.provider), freePercent: free, factor: urgency, weeklyResetsAt: resetsAt))
+            let target = ProxyWeight.target(planWeight: login.planWeight, freePercent: free, urgency: urgency)
+            guard ProxyWeight.needsUpdate(current: login.weight, target: target) else { continue }
+            if await proxy.setWeight(target, for: login.name, endpoint) {
+                proxyFiles[login.name]?.weight = target
             }
         }
+        let strongest = UrgentLogin.strongest(urgent)
+        if strongest != strongestUrgency { strongestUrgency = strongest }
     }
 
     /// Keeps the cache current from proxy headers, so a relaunch shows numbers without extra requests.

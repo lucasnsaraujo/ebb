@@ -191,9 +191,10 @@ public enum ProxyWeight {
     /// Changes smaller than this share aren't worth a write.
     public static let changeThreshold = 0.10
 
-    /// Plan size times free percent: Max 20x at 4% free is 80, Team 5x at 95% free is 475.
-    public static func target(planWeight: Double, freePercent: Double) -> Int {
-        max(1, Int((planWeight * freePercent).rounded()))
+    /// Plan size times free percent times reset urgency: Max 20x at 4% free is 80, Team 5x at
+    /// 95% free is 475, and 713 a day before its weekly reset.
+    public static func target(planWeight: Double, freePercent: Double, urgency: Double = 1) -> Int {
+        max(1, Int((planWeight * freePercent * urgency).rounded()))
     }
 
     /// Each login's share of new threads, in percent of the summed weights.
@@ -206,5 +207,62 @@ public enum ProxyWeight {
     public static func needsUpdate(current: Int?, target: Int) -> Bool {
         guard let current, current > 0 else { return true }
         return abs(Double(target - current)) / Double(current) > changeThreshold
+    }
+}
+
+/// Favors free weekly capacity that's about to expire: what a login hasn't used by its weekly
+/// reset is lost, so in the week's last two days its weight rises steadily, up to double at the
+/// reset. cliproxy-rs's `soonest-reset` strategy spends the soonest-resetting account outright;
+/// a bounded factor keeps the even drain, so no single login runs into its 5-hour limit.
+public enum ResetUrgency {
+    /// Urgency starts this long before the weekly reset.
+    public static let horizon: TimeInterval = 48 * 60 * 60
+    public static let maximum = 2.0
+
+    /// 1 with no weekly reset ahead or more than `horizon` away, rising linearly to `maximum` at the reset.
+    public static func factor(weeklyResetsAt: Date?, now: Date) -> Double {
+        guard let weeklyResetsAt else { return 1 }
+        let left = weeklyResetsAt.timeIntervalSince(now)
+        guard left > 0, left < horizon else { return 1 }
+        return 1 + (maximum - 1) * (1 - left / horizon)
+    }
+
+    /// The weekly window's reset, for `factor`.
+    public static func weeklyReset(in limits: [UsageLimit]) -> Date? {
+        limits.first { $0.kind == .weeklyAll }?.resetsAt
+    }
+}
+
+/// A login's reset urgency, for the Settings → Routing explanation.
+public struct UrgentLogin: Sendable, Equatable {
+    /// Below this the boost would read as "×1.0".
+    public static let shownFactor = 1.05
+
+    public var provider: String
+    public var freePercent: Double
+    public var factor: Double
+    public var weeklyResetsAt: Date?
+
+    public init(provider: String, freePercent: Double, factor: Double, weeklyResetsAt: Date?) {
+        self.provider = provider
+        self.freePercent = freePercent
+        self.factor = factor
+        self.weeklyResetsAt = weeklyResetsAt
+    }
+
+    /// The highest boost worth naming: on a login with room left, whose provider has another
+    /// login to weigh it against, since the proxy only balances logins of one provider.
+    public static func strongest(_ logins: [UrgentLogin]) -> UrgentLogin? {
+        let counts = Dictionary(logins.map { ($0.provider, 1) }, uniquingKeysWith: +)
+        return logins
+            .filter { $0.factor >= shownFactor && $0.freePercent > 0 && $0.weeklyResetsAt != nil && counts[$0.provider, default: 0] > 1 }
+            .max { $0.factor < $1.factor }
+    }
+
+    /// "Now ×1.7 for a Codex login whose week resets in 13h."
+    public func explanation(now: Date) -> String {
+        let factorText = factor.formatted(.number.precision(.fractionLength(1)).locale(Locale(identifier: "en_US_POSIX")))
+        let left = weeklyResetsAt.map { RefillText.until($0, now: now) } ?? "?"
+        return "Now ×\(factorText) for a \(provider) login whose week resets in \(left)."
     }
 }

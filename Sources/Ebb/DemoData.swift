@@ -88,7 +88,8 @@ enum DemoData {
             defaultProvider: ProviderPools.defaultProvider(ProviderPools.pooledWeight(providerLogins)),
             forecasts: forecasts
         )
-        return PoolStore(connection: connection, state: state, proxyReadAt: now - 150)
+        let urgent = UrgentLogin(provider: "Codex", freePercent: 40, factor: 1.73, weeklyResetsAt: now + 13 * 3600)
+        return PoolStore(connection: connection, state: state, proxyReadAt: now - 150, strongestUrgency: urgent)
     }
 
     /// `--demo low`: a nearly empty pool, to show the menu bar's warning colours.

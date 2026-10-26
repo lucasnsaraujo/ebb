@@ -88,7 +88,7 @@ enum LaunchOptions {
     enum Demo: String {
         case accounts, hover, disclosure, low
     }
-    /// Renders the panel, the menu bar styles and Settings → General offscreen into this folder and quits: `--snapshot <dir>`.
+    /// Renders the panel, the menu bar styles and Settings → General and Routing offscreen into this folder and quits: `--snapshot <dir>`.
     static let snapshotDirectory: URL? = value(after: "--snapshot").map { URL(fileURLWithPath: $0) }
     /// With `--snapshot`, renders what the running proxy reports instead of fixed numbers: `--live`.
     static let isLive = CommandLine.arguments.contains("--live")

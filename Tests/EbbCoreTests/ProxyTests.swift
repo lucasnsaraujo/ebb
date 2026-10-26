@@ -146,3 +146,90 @@ private func listing() throws -> [ProxyAuthFile] {
         #expect(ProxyWeight.needsUpdate(current: 0, target: 80))
     }
 }
+
+@Suite struct ResetUrgencyTests {
+    private let now = UsageLimit.parseTimestamp("2026-10-26T19:34:00+00:00")!
+
+    private func hours(_ value: Double) -> Date {
+        now.addingTimeInterval(value * 3600)
+    }
+
+    @Test func farFromTheWeeklyResetThereIsNoUrgency() {
+        #expect(ResetUrgency.factor(weeklyResetsAt: hours(100), now: now) == 1)
+        #expect(ResetUrgency.factor(weeklyResetsAt: hours(48), now: now) == 1)
+        #expect(ResetUrgency.factor(weeklyResetsAt: nil, now: now) == 1)
+    }
+
+    @Test func urgencyRisesSteadilyOverTheLastTwoDays() {
+        #expect(abs(ResetUrgency.factor(weeklyResetsAt: hours(24), now: now) - 1.5) < 0.001)
+        #expect(abs(ResetUrgency.factor(weeklyResetsAt: hours(12), now: now) - 1.75) < 0.001)
+    }
+
+    @Test func urgencyPeaksJustBeforeTheReset() {
+        #expect(abs(ResetUrgency.factor(weeklyResetsAt: hours(0.01), now: now) - 2) < 0.001)
+    }
+
+    @Test func urgencyStaysWithinItsBounds() {
+        for hoursLeft in stride(from: -10.0, through: 200, by: 0.5) {
+            let factor = ResetUrgency.factor(weeklyResetsAt: hours(hoursLeft), now: now)
+            #expect(factor >= 1 && factor <= 2, "\(hoursLeft) h → \(factor)")
+        }
+    }
+
+    @Test func aResetThatAlreadyPassedStartsANewWeekWithoutUrgency() {
+        #expect(ResetUrgency.factor(weeklyResetsAt: hours(-1), now: now) == 1)
+    }
+
+    @Test func urgencyScalesTheWeight() {
+        #expect(ProxyWeight.target(planWeight: 5, freePercent: 40, urgency: 1.5) == 300)
+        #expect(ProxyWeight.target(planWeight: 5, freePercent: 40) == 200)
+    }
+
+    @Test func urgencyCantLiftAnExhaustedAccount() {
+        #expect(ProxyWeight.target(planWeight: 20, freePercent: 0, urgency: 2) == 1)
+    }
+}
+
+@Suite struct ResetUrgencyExplanationTests {
+    private let now = UsageLimit.parseTimestamp("2026-10-26T19:34:00+00:00")!
+
+    private func login(_ provider: String, factor: Double, free: Double = 50) -> UrgentLogin {
+        UrgentLogin(provider: provider, freePercent: free, factor: factor, weeklyResetsAt: now)
+    }
+
+    @Test func namesTheMostUrgentLoginsBoostAndTimeLeft() {
+        let urgent = UrgentLogin(provider: "Codex", freePercent: 50, factor: 1.73, weeklyResetsAt: now.addingTimeInterval(13 * 3600))
+        #expect(urgent.explanation(now: now) == "Now ×1.7 for a Codex login whose week resets in 13h.")
+    }
+
+    @Test func picksTheStrongestBoostAmongLoginsWithRoomLeft() {
+        let logins = [
+            login("Claude", factor: 1.2), login("Claude", factor: 1),
+            login("Codex", factor: 1.9, free: 0), login("Codex", factor: 1.8), login("Codex", factor: 1),
+        ]
+        #expect(UrgentLogin.strongest(logins)?.factor == 1.8)
+    }
+
+    @Test func aBoostThatWouldReadAsTimesOneIsNotShown() {
+        #expect(UrgentLogin.strongest([login("Claude", factor: 1.04), login("Claude", factor: 1)]) == nil)
+    }
+
+    @Test func aProviderWithOneLoginHasNothingToSteer() {
+        #expect(UrgentLogin.strongest([login("Codex", factor: 1.8)]) == nil)
+    }
+}
+
+@Suite struct WeeklyResetChoiceTests {
+    private let now = UsageLimit.parseTimestamp("2026-10-26T19:34:00+00:00")!
+
+    @Test func onlyTheWholeWeeklyWindowDrivesUrgency() {
+        let weekly = now.addingTimeInterval(20 * 3600)
+        let limits = [
+            UsageLimit(kind: .session, usedPercent: 10, resetsAt: now.addingTimeInterval(3600)),
+            UsageLimit(kind: .weeklyScoped, usedPercent: 10, resetsAt: now.addingTimeInterval(2 * 3600)),
+            UsageLimit(kind: .weeklyAll, usedPercent: 10, resetsAt: weekly),
+        ]
+        #expect(ResetUrgency.weeklyReset(in: limits) == weekly)
+        #expect(ResetUrgency.weeklyReset(in: Array(limits.prefix(2))) == nil)
+    }
+}

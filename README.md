@@ -2,7 +2,7 @@
 
 See how much of your coding-agent usage limits is free right now, across every account in your CLIProxyAPI pool.
 
-Ebb is a native macOS menu bar app for [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI), the local proxy that pools Claude Code, Codex and other CLI subscriptions. Ebb reads your accounts through CLIProxyAPI's management API and shows, per provider, the free share of the short (5-hour or daily) limit and of the weekly limit, each weighted by plan size. Providers are never added together: a Claude 5-hour share and a Codex one are different allowances. Ebb also tunes CLIProxyAPI's routing weights so each provider's accounts drain evenly.
+Ebb is a native macOS menu bar app for [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI), the local proxy that pools Claude Code, Codex and other CLI subscriptions. Ebb reads your accounts through CLIProxyAPI's management API and shows, per provider, the free share of the short (5-hour or daily) limit and of the weekly limit, each weighted by plan size. Providers are never added together: a Claude 5-hour share and a Codex one are different allowances. Ebb also tunes CLIProxyAPI's routing weights so each provider's accounts drain evenly, favoring weekly capacity in its last two days before a reset, when it would otherwise expire unused.
 
 When a pool is being used fast enough to run out before it refills, the line under its meter says so, Battery style: "About 2 h left" for the 5-hour window, "Runs out ~Thu 14:00" for the weekly one. Hovering shows the pace of either window, including "Lasts until reset". The 5-hour pace is the recent rate while you work, with idle time left out; the weekly pace is your usual rhythm over the last week. Neither shows until there's enough history: about 15 minutes of work, or a day of use.
 
@@ -49,7 +49,7 @@ Requires macOS 26 or later and Xcode 26 or later.
 swift test      # runs the unit tests
 ```
 
-`Ebb --demo` shows fake accounts of every provider with no network, for screenshots and testing. `Ebb --snapshot <dir>` renders the panel, every menu bar style and Settings → General offscreen to PNGs and quits; add `--demo` for the fake accounts.
+`Ebb --demo` shows fake accounts of every provider with no network, for screenshots and testing. `Ebb --snapshot <dir>` renders the panel, every menu bar style and Settings → General and Routing offscreen to PNGs and quits; add `--demo` for the fake accounts.
 
 ## License
 

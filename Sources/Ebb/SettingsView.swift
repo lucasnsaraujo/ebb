@@ -26,7 +26,7 @@ struct SettingsView: View {
             ConnectionSettings(connection: connection)
                 .tabItem { Label("Connection", systemImage: "point.3.connected.trianglepath.dotted") }
                 .tag(SettingsTab.connection.rawValue)
-            RoutingSettingsPane(connection: connection)
+            RoutingSettingsPane(connection: connection, store: store)
                 .tabItem { Label("Routing", systemImage: "arrow.triangle.branch") }
                 .tag(SettingsTab.routing.rawValue)
             PlanWeightSettings(store: store)
@@ -341,8 +341,9 @@ private struct KeyStatus: View {
 
 // MARK: - Routing
 
-private struct RoutingSettingsPane: View {
+struct RoutingSettingsPane: View {
     let connection: ProxyConnection
+    let store: PoolStore
 
     @AppStorage(RoutingSettings.balancesSessionsKey) private var balancesSessions = true
 
@@ -352,9 +353,16 @@ private struct RoutingSettingsPane: View {
                 Toggle("Balance new sessions by remaining capacity", isOn: $balancesSessions)
                     .disabled(!connection.hasManagementAccess)
             } footer: {
-                Text("Ebb sets each login's weight to its plan size times its free share, so the proxy sends new sessions where capacity is left.")
+                Text("Ebb sets each login's weight so the proxy sends new sessions where capacity is left.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+            Section("Why This Weight") {
+                Text("Plan size × free share × reset urgency. Weekly capacity a login hasn't used by its reset is lost, so in the last two days before that reset its weight rises steadily, up to double. The weight changes only when it moves by more than 10%.")
+                    .foregroundStyle(.secondary)
+                if balancesSessions, let urgent = store.strongestUrgency {
+                    Text(urgent.explanation(now: .now))
+                }
             }
             Section("Proxy Routing") {
                 LabeledContent("Strategy", value: connection.routingStrategy ?? "Unknown")
