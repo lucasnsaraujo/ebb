@@ -6,6 +6,8 @@ Ebb is a native macOS menu bar app for [CLIProxyAPI](https://github.com/router-f
 
 When a pool is being used fast enough to run out before it refills, the line under its meter says so, Battery style: "About 2 h left" for the 5-hour window, "Runs out ~Thu 14:00" for the weekly one. Hovering shows the pace of either window, including "Lasts until reset". The 5-hour pace is the recent rate while you work, with idle time left out; the weekly pace is your usual rhythm over the last week. Neither shows until there's enough history: about 15 minutes of work, or a day of use.
 
+Ebb can also notify you when a 5-hour pool is about to run out at the current pace, and when weekly capacity comes back ("Claude weekly back +55%"). It asks for permission the first time an alert is due, never at launch, and Settings → General turns alerts off.
+
 ## Providers
 
 | Provider | Windows | Source |

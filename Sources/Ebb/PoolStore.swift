@@ -16,22 +16,6 @@ struct PoolState: Equatable {
     var forecasts: [String: PoolForecast] = [:]
 }
 
-/// When each window of a pool runs out at the current pace; `nil` while there's too little to go on.
-struct PoolForecast: Equatable {
-    var session: Pace.Forecast?
-    var weekly: Pace.Forecast?
-
-    init(session: Pace.Forecast? = nil, weekly: Pace.Forecast? = nil) {
-        self.session = session
-        self.weekly = weekly
-    }
-
-    init(ledger: DemandLedger, pool summary: PoolSummary, provider: String, now: Date) {
-        let horizon = Providers.named(provider)?.shortWindow.horizon ?? Pool.sessionHorizon
-        session = Pace.session(ledger, pool: provider, summary: summary, horizon: horizon, now: now)
-        weekly = Pace.weekly(ledger, pool: provider, summary: summary, now: now)
-    }
-}
 
 /// Keeps the pools fresh while the menu bar item is visible.
 ///
@@ -107,6 +91,11 @@ final class PoolStore {
     @ObservationIgnored private var isPollingProxy = false
     @ObservationIgnored private var loops: [Task<Void, Never>] = []
     @ObservationIgnored private var ledger = DemandLedger()
+    @ObservationIgnored private var alertTracker = UserDefaults.standard.data(forKey: PoolStore.alertTrackerKey)
+        .flatMap { try? JSONDecoder().decode(AlertTracker.self, from: $0) } ?? AlertTracker()
+    /// Made on the first alert, so a snapshot or demo never touches UserNotifications.
+    @ObservationIgnored private var alertDelivery: AlertDelivery?
+    private static let alertTrackerKey = "alertTracker"
     @ObservationIgnored private var ledgerSavedAt = Date.now
     /// Written at most this often while polling, and when Ebb hides or quits.
     static let ledgerSaveInterval: TimeInterval = 5 * 60
@@ -235,6 +224,24 @@ final class PoolStore {
         ledgerSavedAt = .now
         try? FileManager.default.createDirectory(at: EbbPaths.applicationSupport, withIntermediateDirectories: true)
         try? ledger.encoded().write(to: EbbPaths.demandFile, options: .atomic)
+        saveAlertTracker()
+    }
+
+    private func saveAlertTracker() {
+        UserDefaults.standard.set(try? JSONEncoder().encode(alertTracker), forKey: Self.alertTrackerKey)
+    }
+
+    private var delivery: AlertDelivery {
+        if let alertDelivery { return alertDelivery }
+        let notifier: any Notifier = Bundle.main.bundleURL.pathExtension == "app" ? SystemNotifier() : SilentNotifier()
+        let delivery = AlertDelivery(notifier: notifier, isEnabled: { AlertSettings.isEnabled })
+        alertDelivery = delivery
+        return delivery
+    }
+
+    /// The user turned alerts on in Settings: asks for permission now. False when they can't show.
+    func enableAlerts() async -> Bool {
+        await delivery.enable()
     }
 
     /// Steers new threads toward free capacity: weight = plan size × free percent.
@@ -592,7 +599,8 @@ final class PoolStore {
         }
 
         let summaries = ProviderPools.summarize(logins, at: now)
-        if !isOffline { recordDemand(at: now) }
+        let pools = poolAccounts(at: now)
+        if !isOffline { recordDemand(pools) }
         let next = PoolState(
             summaries: summaries,
             details: makeDetails(at: now),
@@ -605,6 +613,8 @@ final class PoolStore {
         )
         if next != state { state = next }
         if savesStatus { saveStatus(at: now) }
+        // Only while polling: alerts must rest on fresh readings.
+        if !loops.isEmpty, !isOffline, LaunchOptions.snapshotDirectory == nil { raiseAlerts(pools, at: now) }
     }
 
     /// Saves the pools for readers outside the app: when they change, and every few minutes so their age tells.
@@ -621,33 +631,54 @@ final class PoolStore {
         }
     }
 
-    /// Feeds every counted login's latest reading to the ledger, by plan weight.
-    private func recordDemand(at now: Date) {
-        var members: [String: [(id: String, weight: Double, reading: DatedLimits)]] = [:]
+    /// Every counted login's latest reading and plan weight, by pool.
+    private func poolAccounts(at now: Date) -> [String: [PoolAccount]] {
+        var pools: [String: [PoolAccount]] = [:]
         let claude = ClaudeProvider().proxyName
         for account in accounts.values where !isDisabled(account) {
             guard let plan = claudePlan(account.email), plan.weight > 0, let choice = readingSource(for: account, at: now) else { continue }
-            members[claude, default: []].append((account.email, plan.weight, choice.reading))
+            pools[claude, default: []].append(PoolAccount(id: account.email, weight: plan.weight, limits: choice.reading.limits, readAt: choice.reading.date))
         }
         for file in otherFiles where !file.isDisabled && file.hasUsageWindows {
             let weight = plan(for: file).weight
             guard weight > 0, let choice = ReadingChoice.choose(signals: file.quota, usage: callReadings[file.name], now: now) else { continue }
-            members[file.provider, default: []].append((file.name, weight, choice.reading))
+            pools[file.provider, default: []].append(PoolAccount(id: file.name, weight: weight, limits: choice.reading.limits, readAt: choice.reading.date))
         }
+        return pools
+    }
+
+    /// Feeds every counted login's latest reading to the ledger.
+    private func recordDemand(_ pools: [String: [PoolAccount]]) {
         for provider in Providers.all.map(\.proxyName) {
-            let group = members[provider] ?? []
+            let group = pools[provider] ?? []
             ledger.keepAccounts(Set(group.map(\.id)), in: provider)
             let shortWindow = Providers.named(provider)?.shortWindow.horizon ?? Pool.sessionHorizon
-            for member in group {
+            for account in group {
                 for (kind, limitKind, window) in [(DemandLedger.Kind.session, UsageLimit.Kind.session, shortWindow), (.weekly, .weeklyAll, 7 * 24 * 60 * 60)] {
                     ledger.record(
-                        member.reading.limits.first { $0.kind == limitKind },
-                        readAt: member.reading.date, pool: provider, kind: kind,
-                        account: member.id, weight: member.weight, window: window
+                        account.limits.first { $0.kind == limitKind },
+                        readAt: account.readAt, pool: provider, kind: kind,
+                        account: account.id, weight: account.weight, window: window
                     )
                 }
             }
         }
+    }
+
+    /// Run-out and "weekly back" alerts, each once; delivered only if the user wants them.
+    private func raiseAlerts(_ pools: [String: [PoolAccount]], at now: Date) {
+        // Time since boot including sleep: tells a changed clock from a sleeping Mac.
+        let uptime = TimeInterval(clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW)) / 1_000_000_000
+        var alerts: [PoolAlert] = []
+        for (provider, summary) in state.summaries.sorted(by: { $0.key < $1.key }) {
+            alerts += alertTracker.alerts(
+                pool: provider, title: ProviderDisplay.title(provider), short: Providers.named(provider)?.shortWindow ?? .fiveHours,
+                summary: summary, forecast: state.forecasts[provider], accounts: pools[provider] ?? [], now: now, uptime: uptime
+            )
+        }
+        guard !alerts.isEmpty else { return }
+        saveAlertTracker()
+        Task { await delivery.deliver(alerts) }
     }
 
     private func makeDetails(at now: Date) -> [AccountDetail] {

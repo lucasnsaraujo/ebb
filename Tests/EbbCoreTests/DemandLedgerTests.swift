@@ -251,3 +251,49 @@ struct LedgerRun {
         #expect(run.totals.units == units)
     }
 }
+
+@Suite struct DemandLedgerReboundTests {
+    /// syrtis#367: a reset time that drifts by seconds is the same window, not a new one.
+    @Test func aResetTimeThatDriftsBySecondsStaysOneWindow() {
+        var run = LedgerRun(weights: ["a": 5], kind: .weekly)
+        run.used["a"] = 73
+        run.resets["a"] = ledgerStart + 60
+        run.poll()
+
+        run.now = ledgerStart + 62
+        run.resets["a"] = ledgerStart + 65
+        run.poll()
+
+        #expect(run.totals.units == 0)
+    }
+
+    /// CodexBar#2230: after a refill, the source briefly returns the stale pre-refill value.
+    @Test func aStaleReboundAfterARefillIsNotDemand() {
+        var run = LedgerRun(weights: ["a": 5], kind: .weekly)
+        run.used["a"] = 73
+        run.poll()
+        for used in [0.0, 73, 0, 2] {
+            run.now += 15
+            run.used["a"] = used
+            run.poll()
+        }
+
+        #expect(run.totals.units == 10)
+    }
+}
+
+@Suite struct DemandLedgerBogusSampleTests {
+    /// CodexBar#2222: one bogus near-zero sample, then the real level again.
+    @Test func aBogusLowSampleIsNotARefill() {
+        var run = LedgerRun(weights: ["a": 5], kind: .weekly)
+        run.used["a"] = 73
+        run.poll()
+        for used in [0.0, 73, 74] {
+            run.now += 15
+            run.used["a"] = used
+            run.poll()
+        }
+
+        #expect(run.totals.units == 5)
+    }
+}

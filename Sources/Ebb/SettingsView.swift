@@ -49,6 +49,8 @@ struct GeneralSettings: View {
     @Bindable var menuBarSettings: MenuBarSettings
 
     @AppStorage(ProviderDisplay.menuBarProviderKey) private var menuBarChoice = ""
+    @AppStorage(AlertSettings.isEnabledKey) private var sendsAlerts = true
+    @State private var areAlertsBlocked = false
     @State private var launchesAtLogin = SMAppService.mainApp.status == .enabled
 
     var body: some View {
@@ -82,6 +84,21 @@ struct GeneralSettings: View {
                     }
                 }
                 .disabled(menuBarSettings.style.showsBothWindows)
+            }
+            Section {
+                Toggle("Pool alerts", isOn: $sendsAlerts)
+                    .onChange(of: sendsAlerts) { _, isOn in
+                        guard isOn else { return }
+                        Task { areAlertsBlocked = await !store.enableAlerts() }
+                    }
+            } header: {
+                Text("Notifications")
+            } footer: {
+                Text(areAlertsBlocked && sendsAlerts
+                    ? "Notifications for Ebb are off in System Settings → Notifications."
+                    : "When a 5-hour pool is about to run out at the current pace, and when weekly capacity comes back.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             Section("Startup") {
                 Toggle("Launch at login", isOn: $launchesAtLogin)

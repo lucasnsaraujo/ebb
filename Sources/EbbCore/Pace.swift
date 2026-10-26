@@ -161,3 +161,20 @@ public enum Pace {
         return time <= horizon ? time : nil
     }
 }
+
+/// When each window of a pool runs out at the current pace; `nil` while there's too little to go on.
+public struct PoolForecast: Sendable, Equatable {
+    public var session: Pace.Forecast?
+    public var weekly: Pace.Forecast?
+
+    public init(session: Pace.Forecast? = nil, weekly: Pace.Forecast? = nil) {
+        self.session = session
+        self.weekly = weekly
+    }
+
+    public init(ledger: DemandLedger, pool summary: PoolSummary, provider: String, now: Date) {
+        let horizon = Providers.named(provider)?.shortWindow.horizon ?? Pool.sessionHorizon
+        session = Pace.session(ledger, pool: provider, summary: summary, horizon: horizon, now: now)
+        weekly = Pace.weekly(ledger, pool: provider, summary: summary, now: now)
+    }
+}

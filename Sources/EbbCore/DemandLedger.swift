@@ -26,6 +26,13 @@ public struct DemandLedger: Codable, Sendable, Equatable {
     static let cycleShift: TimeInterval = 30 * 60
     /// A reset further out than the window plus this is a bad reading, and is ignored.
     static let resetSlack: TimeInterval = 10 * 60
+    /// Reset times this close are the same reset: providers' times drift by seconds.
+    static let resetDrift: TimeInterval = 10 * 60
+    /// A fall this big within one window is a refill or a bogus low sample.
+    static let bigDrop = 10.0
+    /// A reading back at the level before a big fall, this soon, is a stale or bogus sample
+    /// on one side of the fall: the change counts as nothing either way.
+    static let reboundWindow: TimeInterval = 30 * 60
     static let currentVersion = 1
 
     struct Bin: Codable, Sendable, Equatable {
@@ -44,6 +51,9 @@ public struct DemandLedger: Codable, Sendable, Equatable {
         var used: Double
         var resetsAt: Date?
         var at: Date
+        /// The level before a big fall within the window, and when it fell.
+        var droppedFrom: Double?
+        var droppedAt: Date?
     }
 
     private var version = Self.currentVersion
@@ -93,15 +103,28 @@ public struct DemandLedger: Codable, Sendable, Equatable {
     public mutating func record(_ limit: UsageLimit?, readAt: Date, pool: String, kind: Kind, account: String, weight: Double, window: TimeInterval) {
         let key = "\(pool)/\(kind.rawValue)/\(Self.hashed(account))"
         let resetsAt = limit?.resetsAt.flatMap { $0.timeIntervalSince(readAt) > window + Self.resetSlack ? nil : $0 }
-        let reading = Cursor(used: limit?.used(at: readAt) ?? 0, resetsAt: resetsAt, at: readAt)
+        var reading = Cursor(used: limit?.used(at: readAt) ?? 0, resetsAt: resetsAt, at: readAt)
         guard let previous = cursors[key], readAt >= previous.at else {
             // First reading, or the clock stepped back: start over from here.
             cursors[key] = reading
             return
         }
         guard readAt > previous.at else { return }
+        let increase: Double
+        if Self.isNewCycle(from: previous, to: reading) {
+            increase = reading.used
+        } else if reading.used <= previous.used - Self.bigDrop {
+            (reading.droppedFrom, reading.droppedAt) = (previous.used, readAt)
+            increase = 0
+        } else if let from = previous.droppedFrom, let at = previous.droppedAt,
+                  readAt.timeIntervalSince(at) <= Self.reboundWindow, reading.used >= from - 1 {
+            increase = 0
+        } else {
+            (reading.droppedFrom, reading.droppedAt) = (previous.droppedFrom, previous.droppedAt)
+            increase = max(0, reading.used - previous.used)
+        }
         cursors[key] = reading
-        let units = weight * Self.increase(from: previous, to: reading)
+        let units = weight * increase
         guard units > 0 else { return }
 
         let start = previous.at
@@ -133,14 +156,12 @@ public struct DemandLedger: Codable, Sendable, Equatable {
         SHA256.hash(data: Data(account.utf8)).prefix(12).map { String(format: "%02x", $0) }.joined()
     }
 
-    /// Use since the previous reading: all of it after a reset, only increases otherwise.
-    private static func increase(from previous: Cursor, to reading: Cursor) -> Double {
-        let isNewCycle = if let old = previous.resetsAt {
-            old <= reading.at || reading.resetsAt.map { $0 > old + cycleShift } == true
-        } else {
-            false
-        }
-        return isNewCycle ? reading.used : max(0, reading.used - previous.used)
+    /// The old window ended: its reset passed, or the reading names a clearly later one. A
+    /// reset time a few seconds off the old one is the same window, early or late.
+    private static func isNewCycle(from previous: Cursor, to reading: Cursor) -> Bool {
+        guard let old = previous.resetsAt else { return false }
+        if let new = reading.resetsAt, abs(new.timeIntervalSince(old)) <= resetDrift { return false }
+        return old <= reading.at || reading.resetsAt.map { $0 > old + cycleShift } == true
     }
 
     private mutating func spread(_ units: Double, from start: Date, to end: Date, into key: String) {
