@@ -58,7 +58,7 @@ public struct CodexProvider: Provider {
             return Window(used: used, minutes: seconds / 60, reset: Signals.date(window["reset_at"]))
         }
         let isBlocked = rateLimit["limit_reached"] as? Bool == true || rateLimit["allowed"] as? Bool == false
-        return UsageCallReading(limits: Self.limits(windows, isBlocked: isBlocked) ?? [], planName: plan)
+        return UsageCallReading(limits: Self.limits(windows, isBlocked: isBlocked), planName: plan)
     }
 
     private struct Window {

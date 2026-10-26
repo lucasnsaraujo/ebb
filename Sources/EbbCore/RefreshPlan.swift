@@ -18,6 +18,12 @@ public enum RefreshPlan {
     /// No two provider requests, direct or through the proxy's `api-call`, go out closer than this.
     public static let minimumSpacing: TimeInterval = 60
 
+    /// False when the login was tried after the job picked it: another trigger got there
+    /// while this one waited for its slot.
+    public static func isStillDue(_ state: FetchState?, chosenAt: Date) -> Bool {
+        (state?.lastAttempt ?? .distantPast) < chosenAt
+    }
+
     /// The account to read next: the one tried longest ago, skipping accounts
     /// that are backing off or were tried within `minimumAge`.
     public static func nextAccount(in states: [String: FetchState], minimumAge: TimeInterval, now: Date) -> String? {

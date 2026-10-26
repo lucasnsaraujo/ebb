@@ -27,11 +27,12 @@ public struct MetaProvider: Provider {
     }
 
     /// `subs_usage.window` (5-hour, `window_duration_mins`) and `.weekly`, `used_percent` with
-    /// unix `resets_at`. `is_subs_active: false` is a definitive "no subscription".
+    /// unix `resets_at`. `is_subs_active: false` never retires the login: the proxy sends the
+    /// minted key, so the answer may describe the key rather than the subscription.
     public func readUsageCall(_ body: Data) -> UsageCallReading? {
         guard let root = Signals.object(body), let isActive = root["is_subs_active"] as? Bool else { return nil }
         let plan = (root["subs_tier_name"] as? String).flatMap { $0.isEmpty ? nil : $0 }
-        guard isActive else { return UsageCallReading(limits: nil, planName: plan, hasEndedSubscription: true) }
+        guard isActive else { return UsageCallReading(limits: nil, planName: plan) }
         let usage = root["subs_usage"] as? [String: Any]
         func window(_ key: String, kind: UsageLimit.Kind) -> UsageLimit? {
             guard let window = usage?[key] as? [String: Any], let used = Signals.number(window["used_percent"]) else { return nil }

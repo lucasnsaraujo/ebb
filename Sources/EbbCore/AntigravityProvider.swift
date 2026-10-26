@@ -24,7 +24,7 @@ public struct AntigravityProvider: Provider {
     }
 
     /// Each window takes its tightest group: an account is out of 5-hour capacity once
-    /// either model family is. Disabled buckets and buckets without a fraction are skipped.
+    /// either model family is. Disabled buckets, and buckets with neither a fraction nor a reset, are skipped.
     public func readUsageCall(_ body: Data) -> UsageCallReading? {
         guard let root = Signals.object(body) else { return nil }
         let payload = (root["response"] as? [String: Any]) ?? (root["summary"] as? [String: Any]) ?? root
@@ -48,9 +48,10 @@ public struct AntigravityProvider: Provider {
         return nil
     }
 
+    /// Google's JSON leaves out fields at zero, so a bucket with a reset but no fraction is spent.
     private static func remainingFraction(_ bucket: [String: Any]) -> Double? {
-        if let fraction = Signals.number(bucket["remainingFraction"]) { return min(max(fraction, 0), 1) }
-        guard let remaining = bucket["remaining"] as? [String: Any] else { return nil }
-        return Signals.number(remaining["remainingFraction"]).map { min(max($0, 0), 1) }
+        let nested = (bucket["remaining"] as? [String: Any])?["remainingFraction"]
+        if let fraction = Signals.number(bucket["remainingFraction"]) ?? Signals.number(nested) { return min(max(fraction, 0), 1) }
+        return Signals.date(bucket["resetTime"]) == nil ? nil : 0
     }
 }

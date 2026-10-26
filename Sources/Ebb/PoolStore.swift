@@ -32,7 +32,7 @@ final class PoolStore {
     /// An `api-call` login whose token was refused is tried again after this long.
     static let rejectedTokenRetry: TimeInterval = 6 * 60 * 60
     /// Each call to `muse-code/key` also mints a key, so Meta logins are read at most hourly.
-    static let callMinimumAge: [String: TimeInterval] = ["meta": 60 * 60]
+    static let callMinimumAge: [String: TimeInterval] = [MetaProvider().proxyName: 60 * 60]
 
     private(set) var state = PoolState()
     /// When the proxy last answered; `nil` while it's unreachable.
@@ -274,7 +274,7 @@ final class PoolStore {
         let age = if file.isDisabled {
             ProfilePlan.retiredInterval
         } else if endedSubscriptions.contains(name) {
-            ProfilePlan.confirmationInterval
+            max(ProfilePlan.confirmationInterval, Self.callMinimumAge[file.provider] ?? 0)
         } else {
             max(minimumAge, RefreshPlan.period, Self.callMinimumAge[file.provider] ?? 0)
         }
@@ -288,11 +288,12 @@ final class PoolStore {
     }
 
     private func run(_ job: Job) async {
+        let chosenAt = Date.now
         guard await waitForProviderSlot() else { return }
         switch job {
-        case let .usage(email): await readUsage(email)
-        case let .profile(email): await checkPlan(email)
-        case let .call(name): await readThroughProxy(name)
+        case let .usage(email): await readUsage(email, chosenAt: chosenAt)
+        case let .profile(email): await checkPlan(email, chosenAt: chosenAt)
+        case let .call(name): await readThroughProxy(name, chosenAt: chosenAt)
         }
         recompute()
     }
@@ -311,9 +312,9 @@ final class PoolStore {
         return !Task.isCancelled
     }
 
-    private func readUsage(_ email: String) async {
+    private func readUsage(_ email: String, chosenAt: Date) async {
         // Another trigger may have read this account while we waited.
-        if let last = usageStates[email]?.lastAttempt, Date.now.timeIntervalSince(last) < RefreshPlan.minimumSpacing { return }
+        guard RefreshPlan.isStillDue(usageStates[email], chosenAt: chosenAt) else { return }
         // The proxy may have refreshed the token while we waited, too.
         guard let account = loadAccounts()[email] else { return }
 
@@ -333,8 +334,8 @@ final class PoolStore {
         }
     }
 
-    private func checkPlan(_ email: String) async {
-        if let last = profileStates[email]?.lastAttempt, Date.now.timeIntervalSince(last) < RefreshPlan.minimumSpacing { return }
+    private func checkPlan(_ email: String, chosenAt: Date) async {
+        guard RefreshPlan.isStillDue(profileStates[email], chosenAt: chosenAt) else { return }
         guard let account = loadAccounts()[email] else { return }
 
         lastProviderRequest = .now
@@ -357,8 +358,8 @@ final class PoolStore {
 
     /// One usage read through the proxy. A refused token shows "Limits not available" and
     /// waits hours before the next try; it never touches the plan or retires the login.
-    private func readThroughProxy(_ name: String) async {
-        if let last = callStates[name]?.lastAttempt, Date.now.timeIntervalSince(last) < RefreshPlan.minimumSpacing { return }
+    private func readThroughProxy(_ name: String, chosenAt: Date) async {
+        guard RefreshPlan.isStillDue(callStates[name], chosenAt: chosenAt) else { return }
         guard let endpoint = connection.endpoint, let file = proxyFiles[name],
               let provider = Providers.named(file.provider), let call = provider.usageCall(for: file)
         else { return }
@@ -377,7 +378,9 @@ final class PoolStore {
             if reading.hasEndedSubscription { endedSubscriptions.insert(name) } else { endedSubscriptions.remove(name) }
             let streak = reading.hasEndedSubscription ? callInactiveStreaks[name, default: 0] + 1 : 0
             callInactiveStreaks[name] = streak
-            let action = Retirement.action(after: outcome, isDisabled: file.isDisabled, isRetiredByUs: retired.contains(name), inactiveStreak: streak)
+            // The listing may have changed during the call; a login disabled by hand meanwhile stays the user's.
+            let isDisabled = proxyFiles[name]?.isDisabled ?? file.isDisabled
+            let action = Retirement.action(after: outcome, isDisabled: isDisabled, isRetiredByUs: retired.contains(name), inactiveStreak: streak)
             await apply(action, toFileNamed: name)
         case .tokenRejected:
             rejectedTokens.insert(name)

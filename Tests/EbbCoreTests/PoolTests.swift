@@ -261,4 +261,12 @@ private func todaysAccounts() throws -> [AccountUsage] {
         #expect(RefreshPlan.nextAccount(in: states, minimumAge: 120, now: now) == nil)
         #expect(RefreshPlan.nextAccount(in: states, minimumAge: 30, now: now) == "b")
     }
+
+    /// Two triggers can pick the same login; the one that waited for the slot must not read it again.
+    @Test func aLoginReadWhileTheJobWaitedForItsSlotIsSkipped() {
+        let chosenAt = now
+        #expect(!RefreshPlan.isStillDue(FetchState(lastAttempt: chosenAt + 0.1), chosenAt: chosenAt))
+        #expect(RefreshPlan.isStillDue(FetchState(lastAttempt: chosenAt - RefreshPlan.period), chosenAt: chosenAt))
+        #expect(RefreshPlan.isStillDue(nil, chosenAt: chosenAt))
+    }
 }

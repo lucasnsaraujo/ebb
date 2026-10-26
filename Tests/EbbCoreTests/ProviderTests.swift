@@ -65,6 +65,15 @@ private let observed = Date(timeIntervalSince1970: 1_793_040_000)
         #expect(codex.quota == nil)
     }
 
+    @Test func unreadableWindowsAreNoReadingRatherThanAFreeAccount() throws {
+        for windows in [#""primary_window":null,"secondary_window":null"#, #""primary":{"used_pct":97,"window_secs":18000}"#] {
+            let body = #"{"plan_type":"pro","rate_limit":{"allowed":true,"#.appending(windows) + "}}"
+            let reading = try #require(CodexProvider().readUsageCall(Data(body.utf8)))
+            #expect(reading.limits == nil)
+            #expect(reading.planName == "pro")
+        }
+    }
+
     @Test func whamUsageGivesWindowsAndPlan() throws {
         let reading = try #require(CodexProvider().readUsageCall(fixtureData("codex-wham-usage")))
         #expect(reading.planName == "pro")
@@ -97,6 +106,18 @@ private let observed = Date(timeIntervalSince1970: 1_793_040_000)
         #expect(limits[0].resetsAt == UsageLimit.parseTimestamp("2026-10-26T21:00:00Z"))
         #expect(abs(limits[1].usedPercent - 40) < 0.001)
         #expect(limits[1].resetsAt == UsageLimit.parseTimestamp("2026-10-30T00:00:00Z"))
+    }
+
+    /// Google's JSON leaves out fields at zero, so a spent bucket arrives with its reset but no fraction.
+    @Test func aSpentBucketWithoutItsFractionReadsAsFullyUsed() throws {
+        let body = #"""
+        {"groups":[
+          {"buckets":[{"bucketId":"gemini-5h","window":"5h","remainingFraction":0.8,"resetTime":"2026-10-26T22:00:00Z"}]},
+          {"buckets":[{"bucketId":"claude-gpt-5h","window":"5h","resetTime":"2026-10-26T21:00:00Z"}]}
+        ]}
+        """#
+        let limits = try #require(AntigravityProvider().readUsageCall(Data(body.utf8))?.limits)
+        #expect(limits == [UsageLimit(kind: .session, usedPercent: 100, resetsAt: UsageLimit.parseTimestamp("2026-10-26T21:00:00Z"))])
     }
 
     @Test func summaryWithoutMeasuredBucketsHasNoLimits() throws {
@@ -136,10 +157,11 @@ private let observed = Date(timeIntervalSince1970: 1_793_040_000)
         #expect(!reading.hasEndedSubscription)
     }
 
-    @Test func inactiveSubscriptionIsDefinitive() throws {
+    /// The proxy sends Meta the minted key, not the login token, so an inactive answer may describe the key.
+    @Test func inactiveAnswerNeverRetiresTheLogin() throws {
         let reading = try #require(MetaProvider().readUsageCall(Data(#"{"is_subs_active":false,"subs_usage":null}"#.utf8)))
-        #expect(reading.hasEndedSubscription)
-        #expect(CallOutcome.reading(reading).subscriptionEvidence == .inactive)
+        #expect(!reading.hasEndedSubscription)
+        #expect(Retirement.action(after: .reading(reading), isDisabled: false, isRetiredByUs: false, inactiveStreak: 9) == .keep)
     }
 
     @Test func idleWindowIsNoReadingRatherThanAnEmptyAccount() throws {
