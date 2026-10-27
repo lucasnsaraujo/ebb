@@ -23,7 +23,7 @@ A test (`EbbDataTests`) fails when this block and the list in `Sources/EbbCore/E
 | Path | What Ebb keeps there |
 | --- | --- |
 | `~/Library/Application Support/Ebb` | `management-key` (the CLIProxyAPI key, mode 0600), `demand.json` (14 days of pooled usage, accounts as hashes) and `status.json` (what the `ebb` command reads) |
-| `~/Library/Caches/io.github.lucasnsaraujo.ebb` | Each idle account's last usage and plan reading, named by its email; Sparkle's update downloads in `org.sparkle-project.Sparkle` |
+| `~/Library/Caches/io.github.lucasnsaraujo.ebb` | Each idle account's last usage and plan reading, named by a hash of its email; Sparkle's update downloads in `org.sparkle-project.Sparkle` |
 | `~/Library/Preferences/io.github.lucasnsaraujo.ebb.plist` | Ebb's settings, plan weights, alert state, and Sparkle's last-check time |
 | `~/.config/ebb` | `mode` (when the menu bar item shows) and `retired.json` (the logins Ebb disabled because their plan ended) |
 | `~/Library/HTTPStorages/io.github.lucasnsaraujo.ebb` and `.binarycookies` | macOS's cookie store for Ebb's requests; Ebb sets no cookies, so these usually don't exist |

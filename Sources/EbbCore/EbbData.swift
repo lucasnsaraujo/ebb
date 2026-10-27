@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 
 /// Everything Ebb writes outside its app bundle, for `ebb --uninstall-data` and the Homebrew cask's
@@ -18,6 +19,12 @@ public struct EbbData: Sendable {
         "Library/Preferences/\(bundleIdentifier).plist",
         "Library/Saved Application State/\(bundleIdentifier).savedState",
     ]
+
+    /// The stem of an account's cache files: a hash of its email, so the folder names no one and
+    /// an email such as `../../x` can't reach outside it.
+    public static func cacheName(for email: String) -> String {
+        SHA256.hash(data: Data(email.lowercased().utf8)).prefix(16).map { String(format: "%02x", $0) }.joined()
+    }
 
     public struct Removal: Sendable, Equatable {
         public struct Failure: Sendable, Equatable {

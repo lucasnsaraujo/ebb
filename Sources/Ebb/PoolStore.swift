@@ -814,6 +814,7 @@ final class PoolStore {
     /// and does not re-read accounts that were read moments ago.
     private func loadCaches() {
         for email in accounts.keys {
+            if savesStatus { EbbPaths.moveLegacyCaches(for: email) }
             if let (data, modified) = EbbPaths.readCache(EbbPaths.usageCache(for: email)),
                let limits = try? UsageLimit.decodeList(from: data) {
                 usageReadings[email] = DatedLimits(limits: limits, date: modified)

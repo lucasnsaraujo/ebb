@@ -20,11 +20,25 @@ enum EbbPaths {
         .appending(path: bundleIdentifier)
 
     static func usageCache(for email: String) -> URL {
-        cacheDirectory.appending(path: "\(email).usage.json")
+        cacheDirectory.appending(path: "\(EbbData.cacheName(for: email)).usage.json")
     }
 
     static func planCache(for email: String) -> URL {
-        cacheDirectory.appending(path: "\(email).plan.json")
+        cacheDirectory.appending(path: "\(EbbData.cacheName(for: email)).plan.json")
+    }
+
+    /// Before 0.1.0 the files were named by the email itself; renames them, keeping their dates.
+    static func moveLegacyCaches(for email: String) {
+        guard !email.contains("/"), !email.hasPrefix(".") else { return }
+        for (legacy, current) in [("\(email).usage.json", usageCache(for: email)), ("\(email).plan.json", planCache(for: email))] {
+            let old = cacheDirectory.appending(path: legacy)
+            guard FileManager.default.fileExists(atPath: old.path) else { continue }
+            if FileManager.default.fileExists(atPath: current.path) {
+                try? FileManager.default.removeItem(at: old)
+            } else {
+                try? FileManager.default.moveItem(at: old, to: current)
+            }
+        }
     }
 
     /// Contents and modification date of a cache file.

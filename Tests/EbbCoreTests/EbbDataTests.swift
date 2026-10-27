@@ -153,4 +153,16 @@ private final class Sandbox {
 
         #expect(listed.sorted() == EbbData.homeRelativePaths.map { "~/" + $0 }.sorted())
     }
+
+    /// A cache name comes from an auth file's email, which anyone who can write that file chooses.
+    @Test func anAccountsCacheNameHidesItsEmailAndStaysInTheCacheFolder() {
+        let name = EbbData.cacheName(for: "a@example.com")
+        #expect(name == EbbData.cacheName(for: "a@example.com"))
+        #expect(name != EbbData.cacheName(for: "b@example.com"))
+        #expect(!name.contains("example"))
+        for email in ["../../.zshrc", "a/b@example.com", ".."] {
+            let other = EbbData.cacheName(for: email)
+            #expect(!other.contains("/") && !other.contains(".."), "\(email) → \(other)")
+        }
+    }
 }
