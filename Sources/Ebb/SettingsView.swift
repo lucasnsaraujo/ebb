@@ -198,6 +198,8 @@ private struct CommandLineToolSection: View {
             failure = nil
         } catch CommandLineTool.InstallError.occupied(let url) {
             failure = String(localized: "\(abbreviated(url.path)) is another program")
+        } catch CommandLineTool.InstallError.translocated {
+            failure = String(localized: "Move Ebb to Applications and open it from there first")
         } catch CommandLineTool.InstallError.noWritableFolder {
             failure = String(localized: "No folder on your PATH Ebb can write to")
         } catch {

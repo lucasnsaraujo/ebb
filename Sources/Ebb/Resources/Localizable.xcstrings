@@ -887,6 +887,17 @@
         }
       }
     },
+    "Move Ebb to Applications and open it from there first" : {
+      "comment" : "Settings → Command Line Tool, when macOS runs Ebb from a temporary copy",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mova o Ebb para Aplicativos e abra-o de lá primeiro"
+          }
+        }
+      }
+    },
     "Needs the management key." : {
       "localizations" : {
         "pt-BR" : {
