@@ -43,7 +43,8 @@ struct ProxyClient {
     /// names the proxy's version, a refusal included.
     enum Listing {
         case files([ProxyAuthFile], version: String?)
-        case refused(version: String?)
+        /// `message` is the proxy's error text, which tells a lockout from a wrong key.
+        case refused(version: String?, status: Int, message: String)
         case unreachable
     }
 
@@ -54,9 +55,15 @@ struct ProxyClient {
         let version = Self.version(of: http)
         switch http.statusCode {
         case 200: return ProxyAuthFile.parseList(data).map { .files($0, version: version) } ?? .unreachable
-        case 401, 403: return .refused(version: version)
+        case 401, 403: return .refused(version: version, status: http.statusCode, message: Self.errorMessage(in: data))
         default: return .unreachable
         }
+    }
+
+    /// CLIProxyAPI answers `{"error": "…"}`.
+    private static func errorMessage(in data: Data) -> String {
+        let body = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+        return body?["error"] as? String ?? String(decoding: data.prefix(500), as: UTF8.self)
     }
 
     private static func version(of response: HTTPURLResponse) -> String? {
