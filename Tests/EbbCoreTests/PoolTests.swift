@@ -320,7 +320,7 @@ private func todaysAccounts() throws -> [AccountUsage] {
         #expect(summary.session.unlocksAt == at(24 * 60))
     }
 
-    /// This share is both locked, for the caption, and coming back, for the meter's lighter line.
+    /// The meter draws this share twice: hatched as locked, and in the lighter segment as coming back.
     @Test func aSpentWeekResettingWithinTheWindowIsBothLockedAndComingBack() throws {
         let spent = AccountUsage(weight: PlanWeight(5), limits: [session(0), weekly(100, resetsIn: 180)])
         let team = AccountUsage(weight: PlanWeight(15), limits: [session(40, resetsIn: 60)])
