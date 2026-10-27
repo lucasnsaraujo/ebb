@@ -273,7 +273,7 @@ private let observed = Date(timeIntervalSince1970: 1_793_040_000)
     private func member(weight: Double, sessionUsed: Double, weeklyUsed: Double? = nil, resetIn hours: Double = 1) -> PoolMember {
         let limits = [UsageLimit(kind: .session, usedPercent: sessionUsed, resetsAt: now + hours * 3600)]
             + (weeklyUsed.map { [UsageLimit(kind: .weeklyAll, usedPercent: $0, resetsAt: now + 3 * 86400)] } ?? [])
-        return PoolMember(plan: .paid(weight: weight), signals: DatedLimits(limits: limits, date: now), usage: nil)
+        return PoolMember(plan: .paid(weight: PlanWeight(weight)), signals: DatedLimits(limits: limits, date: now), usage: nil)
     }
 
     @Test func providersAreNeverBlended() throws {
@@ -315,37 +315,82 @@ private let observed = Date(timeIntervalSince1970: 1_793_040_000)
 
 @Suite struct PlanWeightTests {
     @Test func defaultsComeFromTheTable() {
-        #expect(PlanWeights.defaultWeight(provider: "codex", plan: "plus") == 1)
-        #expect(PlanWeights.defaultWeight(provider: "codex", plan: "pro") == 20)
-        #expect(PlanWeights.defaultWeight(provider: "codex", plan: "business") == 1)
-        #expect(PlanWeights.defaultWeight(provider: "claude", plan: "max_20x") == 20)
-        #expect(PlanWeights.defaultWeight(provider: "kimi", plan: "level_intermediate") == 7)
+        #expect(PlanWeights.defaultWeight(provider: "codex", plan: "plus") == PlanWeight(1))
+        #expect(PlanWeights.defaultWeight(provider: "codex", plan: "pro") == PlanWeight(20))
+        #expect(PlanWeights.defaultWeight(provider: "codex", plan: "business") == PlanWeight(1))
+        #expect(PlanWeights.defaultWeight(provider: "kimi", plan: "level_intermediate") == PlanWeight(7))
+    }
+
+    /// Anthropic's per-session multipliers for the 5-hour window; the measured ratios for the week,
+    /// where Max 20x holds about twice Max 5x, not four times.
+    @Test func claudePlansWeighLessAWeekThanTheirSessionMultiplier() {
+        #expect(PlanWeights.defaultWeight(provider: "claude", plan: "pro") == PlanWeight(session: 1, weekly: 1))
+        #expect(PlanWeights.defaultWeight(provider: "claude", plan: "max_5x") == PlanWeight(session: 5, weekly: 3.5))
+        #expect(PlanWeights.defaultWeight(provider: "claude", plan: "max_20x") == PlanWeight(session: 20, weekly: 7))
     }
 
     @Test func unlistedPlansFallBackOrStayUnknown() {
-        #expect(PlanWeights.defaultWeight(provider: "claude", plan: "team_5x") == 5)
-        #expect(PlanWeights.defaultWeight(provider: "devin", plan: "anything") == 1)
-        #expect(PlanWeights.defaultWeight(provider: "antigravity", plan: nil) == 1)
-        #expect(PlanWeights.defaultWeight(provider: "kimi", plan: "level_new") == 1)
+        #expect(PlanWeights.defaultWeight(provider: "claude", plan: "team_5x") == PlanWeight(session: 5, weekly: 3.5))
+        #expect(PlanWeights.defaultWeight(provider: "devin", plan: "anything") == PlanWeight(1))
+        #expect(PlanWeights.defaultWeight(provider: "antigravity", plan: nil) == PlanWeight(1))
+        #expect(PlanWeights.defaultWeight(provider: "kimi", plan: "level_new") == PlanWeight(1))
         #expect(PlanWeights.defaultWeight(provider: "codex", plan: "sci") == nil)
         #expect(PlanWeights.defaultWeight(provider: "codex", plan: nil) == nil)
     }
 
     @Test func overridesWinPerPlanRow() {
-        let overrides = ["codex/pro": 15.0, "claude/max_5x": 4, "devin/*": 3, "codex/plus": 0]
-        #expect(PlanWeights.weight(provider: "codex", plan: "pro", overrides: overrides) == 15)
-        #expect(PlanWeights.weight(provider: "codex", plan: "PRO", overrides: overrides) == 15)
-        #expect(PlanWeights.weight(provider: "codex", plan: "plus", overrides: overrides) == 1)
-        #expect(PlanWeights.weight(provider: "claude", plan: "max_5x", overrides: overrides) == 4)
-        #expect(PlanWeights.weight(provider: "claude", plan: "max_20x", overrides: overrides) == 20)
-        #expect(PlanWeights.weight(provider: "devin", plan: "team", overrides: overrides) == 3)
+        func fiveHour(_ provider: String, _ plan: String) -> String {
+            PlanWeights.overrideKey(provider: provider, plan: plan, window: .session)
+        }
+        let overrides = [fiveHour("codex", "pro"): 15.0, fiveHour("claude", "max_5x"): 4, fiveHour("devin", "*"): 3, fiveHour("codex", "plus"): 0]
+        #expect(PlanWeights.weight(provider: "codex", plan: "pro", overrides: overrides) == PlanWeight(session: 15, weekly: 20))
+        #expect(PlanWeights.weight(provider: "codex", plan: "PRO", overrides: overrides) == PlanWeight(session: 15, weekly: 20))
+        #expect(PlanWeights.weight(provider: "codex", plan: "plus", overrides: overrides) == PlanWeight(1))
+        #expect(PlanWeights.weight(provider: "claude", plan: "max_5x", overrides: overrides) == PlanWeight(session: 4, weekly: 3.5))
+        #expect(PlanWeights.weight(provider: "claude", plan: "max_20x", overrides: overrides) == PlanWeight(session: 20, weekly: 7))
+        #expect(PlanWeights.weight(provider: "devin", plan: "team", overrides: overrides) == PlanWeight(session: 3, weekly: 1))
+    }
+
+    @Test func eachWindowHasItsOwnOverride() {
+        let overrides = [
+            PlanWeights.overrideKey(provider: "claude", plan: "max_20x", window: .weekly): 8.0,
+            PlanWeights.overrideKey(provider: "claude", plan: "max_5x", window: .session): 6,
+            PlanWeights.overrideKey(provider: "claude", plan: "max_5x", window: .weekly): 4,
+            PlanWeights.overrideKey(provider: "claude", plan: "pro", window: .weekly): 0,
+        ]
+        #expect(PlanWeights.weight(provider: "claude", plan: "max_20x", overrides: overrides) == PlanWeight(session: 20, weekly: 8))
+        #expect(PlanWeights.weight(provider: "claude", plan: "max_5x", overrides: overrides) == PlanWeight(session: 6, weekly: 4))
+        #expect(PlanWeights.weight(provider: "claude", plan: "pro", overrides: overrides) == PlanWeight(1))
+    }
+
+    /// Settings saved one weight per plan, under "provider/plan", before plans had a weekly size.
+    /// Where a provider's plans weigh the same in both windows it sized both, and still does, so
+    /// routing and the weekly pool don't move. Claude's weeks are measured apart: there it was
+    /// meant for sessions, so it sizes the 5-hour window and the week keeps its default.
+    @Test func aWeightSavedBeforePlansHadAWeeklySizeKeepsWhatItSized() {
+        let saved = PlanWeights.splittingLegacyOverrides(["claude/max_20x": 10.0, "claude/pro": 2, "codex/pro": 30, "devin/*": 3])
+        #expect(PlanWeights.weight(provider: "claude", plan: "max_20x", overrides: saved) == PlanWeight(session: 10, weekly: 7))
+        #expect(PlanWeights.weight(provider: "claude", plan: "pro", overrides: saved) == PlanWeight(session: 2, weekly: 1))
+        #expect(PlanWeights.weight(provider: "codex", plan: "pro", overrides: saved) == PlanWeight(30))
+        #expect(PlanWeights.weight(provider: "devin", plan: "team", overrides: saved) == PlanWeight(3))
+    }
+
+    /// Once split, a 5-hour edit is the 5-hour window's alone, and a window's own override wins.
+    @Test func aSplitWeightNeverComesBackOverAWindowsOwnOverride() {
+        let weeklyKey = PlanWeights.overrideKey(provider: "codex", plan: "pro", window: .weekly)
+        let saved = PlanWeights.splittingLegacyOverrides(["codex/pro": 30, weeklyKey: 25])
+        #expect(PlanWeights.weight(provider: "codex", plan: "pro", overrides: saved) == PlanWeight(session: 30, weekly: 25))
+        #expect(saved["codex/pro"] == nil)
+
+        let edited = [PlanWeights.overrideKey(provider: "codex", plan: "pro", window: .session): 30.0]
+        #expect(PlanWeights.weight(provider: "codex", plan: "pro", overrides: PlanWeights.splittingLegacyOverrides(edited)) == PlanWeight(session: 30, weekly: 20))
     }
 
     @Test func everyDefaultCitesItsSource() {
         for (provider, rows) in PlanWeights.defaults {
             #expect(Providers.named(provider) != nil)
             for row in rows {
-                #expect(!row.source.isEmpty && row.weight > 0, "\(provider)/\(row.plan)")
+                #expect(!row.source.isEmpty && row.weight.isPositive, "\(provider)/\(row.plan)")
                 #expect(row.isGuess == (row.source.hasPrefix("Guess") || row.source.hasPrefix("Estimate")), "\(provider)/\(row.plan)")
             }
         }

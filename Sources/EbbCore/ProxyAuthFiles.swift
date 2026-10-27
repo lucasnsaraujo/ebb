@@ -211,10 +211,18 @@ public enum ProxyWeight {
     /// Changes smaller than this share aren't worth a write.
     public static let changeThreshold = 0.10
 
-    /// Plan size times free percent times reset urgency: Max 20x at 4% free is 80, Team 5x at
-    /// 95% free is 475, and 713 a day before its weekly reset.
+    /// The binding window's size times its free percent times reset urgency: a Max 20x whose
+    /// 5-hour window binds at 4% free is 80, a Max 5x at 95% free is 475, and 713 a day before
+    /// its weekly reset.
     public static func target(planWeight: Double, freePercent: Double, urgency: Double = 1) -> Int {
         max(1, Int((planWeight * freePercent * urgency).rounded()))
+    }
+
+    /// A login's weight: what's left in the window that binds, times reset urgency.
+    public static func target(_ weight: PlanWeight, limits: [UsageLimit], provider: String, at now: Date) -> Int {
+        let binding = BindingWindow.of(weight, limits: limits, weekInWindows: PlanWeights.weekInWindows(provider: provider), at: now)
+        let urgency = ResetUrgency.factor(weeklyResetsAt: ResetUrgency.weeklyReset(in: limits), now: now)
+        return target(planWeight: binding.size, freePercent: binding.freePercent, urgency: urgency)
     }
 
     /// Each login's share of new threads, in percent of the summed weights.
@@ -227,6 +235,36 @@ public enum ProxyWeight {
     public static func needsUpdate(current: Int?, target: Int) -> Bool {
         guard let current, current > 0 else { return true }
         return abs(Double(target - current)) / Double(current) > changeThreshold
+    }
+}
+
+/// The window a login's routing weight rests on: the one with less left, the two counted in
+/// one unit, the base plan's 5-hour windows. A Max 20x with 60% of its 5-hour window and 10% of
+/// its week left has 12 such windows left in the first and 11.8 in the second: the week binds.
+public struct BindingWindow: Sendable, Equatable {
+    public var window: PoolWindow
+    /// The whole window in base-plan 5-hour windows: the 5-hour weight, or the weekly weight
+    /// times the windows a base-plan week holds.
+    public var size: Double
+    public var freePercent: Double
+
+    public init(window: PoolWindow, size: Double, freePercent: Double) {
+        self.window = window
+        self.size = size
+        self.freePercent = freePercent
+    }
+
+    /// `weekInWindows` is `PlanWeights.weekInWindows` for the login's provider. A window the
+    /// login doesn't have never binds; without either, it's a fresh 5-hour window. Ties go to it too.
+    public static func of(_ weight: PlanWeight, limits: [UsageLimit], weekInWindows: Double, at now: Date) -> BindingWindow {
+        let session = limits.first { $0.kind == .session }.map {
+            BindingWindow(window: .session, size: weight.session, freePercent: 100 - $0.used(at: now))
+        }
+        let weekly = limits.first { $0.kind == .weeklyAll }.map {
+            BindingWindow(window: .weekly, size: weight.weekly * weekInWindows, freePercent: 100 - $0.used(at: now))
+        }
+        return [session, weekly].compactMap { $0 }.min { $0.size * $0.freePercent < $1.size * $1.freePercent }
+            ?? BindingWindow(window: .session, size: weight.session, freePercent: 100)
     }
 }
 

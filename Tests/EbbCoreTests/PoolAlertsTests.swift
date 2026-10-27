@@ -28,7 +28,7 @@ private actor FakeNotifier: Notifier {
 
 private let alertNow = Date(timeIntervalSince1970: 1_793_040_000)
 
-private func pool(weeklyFree: Double = 50, sessionFree: Double = 20, weight: Double = 40) -> PoolSummary {
+private func pool(weeklyFree: Double = 50, sessionFree: Double = 20, weight: PlanWeight = PlanWeight(40)) -> PoolSummary {
     PoolSummary(
         session: WindowSummary(freePercent: sessionFree, resets: []),
         weekly: WindowSummary(freePercent: weeklyFree, resets: []),
@@ -48,7 +48,7 @@ private struct AlertRun {
     var now = alertNow
     var uptime: TimeInterval = 10_000
     var accounts: [String: (used: Double, resetsAt: Date?, readAt: Date)] = [:]
-    var weights: [String: Double] = ["a": 20, "b": 20]
+    var weights: [String: PlanWeight] = ["a": PlanWeight(20), "b": PlanWeight(20)]
 
     mutating func tick(_ seconds: TimeInterval) {
         now += seconds
@@ -63,9 +63,9 @@ private struct AlertRun {
     mutating func alerts(_ forecast: PoolForecast? = nil, weeklyFree: Double = 50, sessionFree: Double = 20) -> [PoolAlert] {
         let list = accounts.keys.sorted().map { id in
             let account = accounts[id]!
-            return PoolAccount(id: "\(id)@example.com", weight: weights[id] ?? 20, limits: [UsageLimit(kind: .weeklyAll, usedPercent: account.used, resetsAt: account.resetsAt)], readAt: account.readAt)
+            return PoolAccount(id: "\(id)@example.com", weight: weights[id] ?? PlanWeight(20), limits: [UsageLimit(kind: .weeklyAll, usedPercent: account.used, resetsAt: account.resetsAt)], readAt: account.readAt)
         }
-        let total = list.reduce(0) { $0 + $1.weight }
+        let total = list.reduce(PlanWeight.zero) { $0 + $1.weight }
         return tracker.alerts(pool: "claude", title: "Claude", short: .fiveHours, summary: pool(weeklyFree: weeklyFree, sessionFree: sessionFree, weight: total), forecast: forecast, accounts: list, now: now, uptime: uptime)
     }
 
@@ -143,6 +143,18 @@ private struct AlertRun {
         #expect(landed.first?.body == "99% of the weekly pool is free.")
         run.tick(30)
         #expect(run.alerts(weeklyFree: 99).isEmpty)
+    }
+
+    /// A Max 20x's week holds about twice a Max 5x's: what comes back is weighed in weekly weights.
+    @Test func weeklyBackPointsAreWeighedInWeeklyWeights() {
+        var run = AlertRun()
+        run.weights = ["a": PlanWeight(session: 20, weekly: 7), "b": PlanWeight(session: 5, weekly: 3.5)]
+        run.read("a", used: 60, resetsAt: boundary)
+        run.read("b", used: 0, resetsAt: alertNow + 5 * 86400)
+        #expect(run.alerts().isEmpty)
+        run.tick(3630)
+
+        #expect(run.alerts(weeklyFree: 99).map(\.title) == ["Claude weekly back +40%"])
     }
 
     @Test func aResetObservedTwiceAlertsOnce() {
@@ -232,7 +244,7 @@ private struct AlertRun {
 
     @Test func returnsSecondsApartAddUpToOneAlert() {
         var run = AlertRun()
-        run.weights = ["a": 20, "b": 20, "c": 20]
+        run.weights = ["a": PlanWeight(20), "b": PlanWeight(20), "c": PlanWeight(20)]
         for (account, used) in [("a", 20.0), ("b", 25), ("c", 30)] {
             run.read(account, used: used, resetsAt: boundary + Double(account.unicodeScalars.first!.value - 97) * 30)
         }

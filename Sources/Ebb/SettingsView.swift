@@ -469,7 +469,7 @@ struct RoutingSettingsPane: View {
                     .foregroundStyle(.secondary)
             }
             Section("Why This Weight") {
-                Text("Plan size × free share × reset urgency. Weekly capacity a login hasn't used by its reset is lost, so in the last two days before that reset its weight rises steadily, up to double. The weight changes only when it moves by more than 10%.")
+                Text("What a login has left × reset urgency. What's left is the rest of its 5-hour window, or of its week when that's less, both counted in 5-hour windows: a Max 5x week holds about 12 of its windows, a Max 20x week about 6. Other providers publish no such count, so there the lower of the two shares counts. Weekly capacity a login hasn't used by its reset is lost, so in the last two days before that reset its weight rises steadily, up to double. The weight changes only when it moves by more than 10%.")
                     .foregroundStyle(.secondary)
                 if balancesSessions, let urgent = store.strongestUrgency {
                     Text(urgent.explanation(now: .now))
@@ -498,12 +498,15 @@ struct RoutingSettingsPane: View {
 
 // MARK: - Plans
 
-/// The size each plan counts with, relative to its provider's base plan. Only plans of one
-/// provider are ever compared, so each provider's numbers stand alone.
-private struct PlanWeightSettings: View {
+/// The size each plan counts with in each window, relative to its provider's base plan. Only
+/// plans of one provider are ever compared, so each provider's numbers stand alone.
+struct PlanWeightSettings: View {
     let store: PoolStore
 
-    @State private var overrides = UserDefaults.standard.dictionary(forKey: PlanWeights.overridesKey) as? [String: Double] ?? [:]
+    /// Saving writes these back, so a weight saved before plans had a weekly size is split for good.
+    @State private var overrides = PlanWeights.savedOverrides()
+
+    private static let columnWidth: CGFloat = 56
 
     var body: some View {
         Form {
@@ -512,17 +515,31 @@ private struct PlanWeightSettings: View {
                     .foregroundStyle(.secondary)
             }
             ForEach(store.state.providers, id: \.self) { provider in
-                Section(ProviderDisplay.title(provider)) {
+                Section {
                     ForEach(PlanWeights.defaults[provider] ?? []) { row in
                         LabeledContent {
-                            TextField(row.localizedTitle, value: weight(provider, row), format: .number.precision(.fractionLength(0...2)))
-                                .labelsHidden()
-                                .multilineTextAlignment(.trailing)
-                                .frame(width: 56)
+                            HStack {
+                                ForEach(windows(provider), id: \.self) { field(provider, row, $0) }
+                            }
                         } label: {
                             Text(row.localizedTitle)
                             Text(row.localizedSource)
                         }
+                    }
+                } header: {
+                    HStack {
+                        Text(ProviderDisplay.title(provider))
+                        Spacer()
+                        ForEach(windows(provider), id: \.self) { window in
+                            Text(columnTitle(window, provider))
+                                .frame(width: Self.columnWidth, alignment: .trailing)
+                        }
+                    }
+                } footer: {
+                    if provider == ClaudeProvider().proxyName {
+                        Text("5-hour defaults come from Anthropic's plan pages; weekly ones from measured usage.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -536,13 +553,34 @@ private struct PlanWeightSettings: View {
         .formStyle(.grouped)
     }
 
-    private func weight(_ provider: String, _ row: PlanDefault) -> Binding<Double> {
-        let key = PlanWeights.overrideKey(provider: provider, plan: row.plan)
+    /// Both windows, or the weekly one alone when the pool's logins report no short window, as
+    /// the panel shows it.
+    private func windows(_ provider: String) -> [PoolWindow] {
+        store.state.summaries[provider]?.hasShortWindow == false ? [.weekly] : [.session, .weekly]
+    }
+
+    private func columnTitle(_ window: PoolWindow, _ provider: String) -> String {
+        switch window {
+        case .session: ProviderDisplay.shortWindow(provider) == .day ? String(localized: "Daily") : String(localized: "5-Hour")
+        case .weekly: String(localized: "Weekly")
+        }
+    }
+
+    private func field(_ provider: String, _ row: PlanDefault, _ window: PoolWindow) -> some View {
+        TextField(row.localizedTitle + ", " + columnTitle(window, provider), value: weight(provider, row, window), format: .number.precision(.fractionLength(0...2)))
+            .labelsHidden()
+            .multilineTextAlignment(.trailing)
+            .frame(width: Self.columnWidth)
+    }
+
+    private func weight(_ provider: String, _ row: PlanDefault, _ window: PoolWindow) -> Binding<Double> {
+        let key = PlanWeights.overrideKey(provider: provider, plan: row.plan, window: window)
+        let fallback = window == .session ? row.weight.session : row.weight.weekly
         return Binding {
-            overrides[key] ?? row.weight
+            overrides[key] ?? fallback
         } set: { value in
             var next = overrides
-            next[key] = value > 0 && value != row.weight ? value : nil
+            next[key] = value > 0 && value != fallback ? value : nil
             save(next)
         }
     }

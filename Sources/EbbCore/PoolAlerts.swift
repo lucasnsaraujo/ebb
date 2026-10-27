@@ -5,11 +5,11 @@ import Foundation
 public struct PoolAccount: Sendable, Equatable {
     /// Stable within its pool: an email or an auth file name. Never shown or saved as is.
     public var id: String
-    public var weight: Double
+    public var weight: PlanWeight
     public var limits: [UsageLimit]
     public var readAt: Date
 
-    public init(id: String, weight: Double, limits: [UsageLimit], readAt: Date) {
+    public init(id: String, weight: PlanWeight, limits: [UsageLimit], readAt: Date) {
         self.id = id
         self.weight = weight
         self.limits = limits
@@ -163,7 +163,7 @@ public struct AlertTracker: Codable, Sendable, Equatable {
             uptime >= last.uptime && abs(now.timeIntervalSince(last.wall) - (uptime - last.uptime)) > Self.clockSlack
         } ?? false
         lastSeen[pool] = Moment(wall: now, uptime: uptime)
-        let back = weeklyReturn(pool: pool, accounts: accounts, totalWeight: summary.totalWeight, now: now, isClockChanged: isClockChanged)
+        let back = weeklyReturn(pool: pool, accounts: accounts, totalWeight: summary.totalWeight.weekly, now: now, isClockChanged: isClockChanged)
         let points = Int(back.rounded())
         if Double(points) >= Self.minimumWeeklyReturn {
             alerts.append(PoolAlert(
@@ -175,7 +175,8 @@ public struct AlertTracker: Codable, Sendable, Equatable {
         return alerts
     }
 
-    /// Pool points of weekly capacity that came back since the last call, across accounts.
+    /// Pool points of weekly capacity that came back since the last call, across accounts, in
+    /// weekly weights: `totalWeight` is the pool's weekly weight.
     private mutating func weeklyReturn(pool: String, accounts: [PoolAccount], totalWeight: Double, now: Date, isClockChanged: Bool) -> Double {
         let keys = Dictionary(accounts.map { ("\(pool)/\(AccountKey.hashed($0.id))", $0) }) { first, _ in first }
         for key in weeks.keys where key.hasPrefix("\(pool)/") && keys[key] == nil {
@@ -203,7 +204,7 @@ public struct AlertTracker: Codable, Sendable, Equatable {
             week.missedPolls = nil
             let back = Self.advance(&week, to: reading, now: now)
             if back > 0, !isClockChanged, week.announcedAt.map({ now.timeIntervalSince($0) > Self.announceQuiet }) ?? true, totalWeight > 0 {
-                pending[key] = Return(points: account.weight * back / totalWeight, at: now)
+                pending[key] = Return(points: account.weight.weekly * back / totalWeight, at: now)
             }
             weeks[key] = week
         }

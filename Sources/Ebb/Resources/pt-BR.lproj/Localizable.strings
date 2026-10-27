@@ -24,6 +24,10 @@
 	<string>+%1$lld%% %2$@</string>
 	<key>+%lld%% · %@</key>
 	<string>+%1$lld%% · %2$@</string>
+	<key>5-Hour</key>
+	<string>5 Horas</string>
+	<key>5-hour defaults come from Anthropic's plan pages; weekly ones from measured usage.</key>
+	<string>Os padrões de 5 horas vêm das páginas de planos da Anthropic; os semanais, do uso medido.</string>
 	<key>About</key>
 	<string>Sobre</string>
 	<key>Accounts</key>
@@ -90,6 +94,8 @@
 	<string>Não foi possível iniciar: %@</string>
 	<key>Counted in the pool</key>
 	<string>Contada na cota</string>
+	<key>Daily</key>
+	<string>Diário</string>
 	<key>Disabled</key>
 	<string>Desativada</string>
 	<key>Disabled in the proxy</key>
@@ -236,8 +242,6 @@
 	<string>Ritmo</string>
 	<key>Partial</key>
 	<string>Parcial</string>
-	<key>Plan size × free share × reset urgency. Weekly capacity a login hasn't used by its reset is lost, so in the last two days before that reset its weight rises steadily, up to double. The weight changes only when it moves by more than 10%.</key>
-	<string>Tamanho do plano × parcela livre × urgência da renovação. A capacidade semanal que um login não usou até a renovação se perde, então nos dois últimos dias antes dela o peso sobe gradualmente, até o dobro. O peso só muda quando varia mais de 10%.</string>
 	<key>Plans</key>
 	<string>Planos</string>
 	<key>Plans appear here once Ebb reads a pool.</key>
@@ -366,6 +370,8 @@
 	<string>Semanal Livre (%)</string>
 	<key>Weights only take effect with weighted round robin. The proxy uses %@ now.</key>
 	<string>Os pesos só valem com round robin ponderado. O proxy usa %@ agora.</string>
+	<key>What a login has left × reset urgency. What's left is the rest of its 5-hour window, or of its week when that's less, both counted in 5-hour windows: a Max 5x week holds about 12 of its windows, a Max 20x week about 6. Other providers publish no such count, so there the lower of the two shares counts. Weekly capacity a login hasn't used by its reset is lost, so in the last two days before that reset its weight rises steadily, up to double. The weight changes only when it moves by more than 10%.</key>
+	<string>O que resta a um login × urgência da renovação. O que resta é o restante da janela de 5 horas, ou da semana quando for menor, os dois contados em janelas de 5 horas: uma semana do Max 5x tem cerca de 12 janelas, e uma do Max 20x cerca de 6. Os outros provedores não publicam essa conta, então neles vale a menor das duas parcelas. A capacidade semanal que um login não usou até a renovação se perde, então nos dois últimos dias antes dela o peso sobe gradualmente, até o dobro. O peso só muda quando varia mais de 10%.</string>
 	<key>While Chosen Apps Are Running</key>
 	<string>Com os Apps Escolhidos Abertos</string>
 	<key>Why This Weight</key>

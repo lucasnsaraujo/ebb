@@ -22,7 +22,7 @@ public enum Retirement {
     /// reinstate. A refused token, a rate limit or a failure leaves the account alone.
     public static func action(after outcome: CallOutcome, isDisabled: Bool, isRetiredByUs: Bool, inactiveStreak: Int) -> Action {
         guard case .reading = outcome else { return .keep }
-        let plan = outcome.subscriptionEvidence ?? .paid(weight: 1)
+        let plan = outcome.subscriptionEvidence ?? .paid(weight: PlanWeight(1))
         return action(isDisabled: isDisabled, isRetiredByUs: isRetiredByUs, plan: plan, inactiveStreak: inactiveStreak)
     }
 }

@@ -1,16 +1,45 @@
 import Foundation
 
+/// A plan's size in each window, relative to its provider's base plan. The two differ:
+/// Max 20x gets four times Max 5x's 5-hour session but only about twice its week.
+public struct PlanWeight: Sendable, Equatable {
+    /// The short window's size: 5 hours, or a day for Devin.
+    public var session: Double
+    public var weekly: Double
+
+    public init(session: Double, weekly: Double) {
+        self.session = session
+        self.weekly = weekly
+    }
+
+    /// The same size in both windows, for plans whose windows aren't known to differ.
+    public init(_ weight: Double) {
+        self.init(session: weight, weekly: weight)
+    }
+
+    public static let zero = PlanWeight(0)
+
+    /// Sized in both windows, so it counts in the pool.
+    public var isPositive: Bool {
+        session > 0 && weekly > 0
+    }
+
+    public static func + (lhs: PlanWeight, rhs: PlanWeight) -> PlanWeight {
+        PlanWeight(session: lhs.session + rhs.session, weekly: lhs.weekly + rhs.weekly)
+    }
+}
+
 /// An account's subscription, as its provider reports it.
 public enum Plan: Sendable, Equatable {
     /// Paying; `weight` is the plan's size relative to the provider's base plan.
-    case paid(weight: Double)
+    case paid(weight: PlanWeight)
     /// The subscription is not active any more.
     case inactive
     /// Active, but the plan's size can't be read; left out of the pool rather than guessed.
     case unknown
 
-    public var weight: Double {
-        if case let .paid(weight) = self { weight } else { 0 }
+    public var weight: PlanWeight {
+        if case let .paid(weight) = self { weight } else { .zero }
     }
 }
 
@@ -18,6 +47,8 @@ public enum Plan: Sendable, Equatable {
 public struct PlanProfile: Codable, Sendable, Equatable {
     private var status: String
     private var weight: Double
+    /// Missing from caches written before plans had a weekly size: those count `weight` in both windows.
+    private var weeklyWeight: Double?
     /// The provider's own name for the plan, kept for troubleshooting.
     public var tier: String?
 
@@ -25,7 +56,8 @@ public struct PlanProfile: Codable, Sendable, Equatable {
         switch plan {
         case let .paid(weight):
             status = "paid"
-            self.weight = weight
+            self.weight = weight.session
+            weeklyWeight = weight.weekly
         case .inactive:
             status = "inactive"
             weight = 0
@@ -38,7 +70,7 @@ public struct PlanProfile: Codable, Sendable, Equatable {
 
     public var plan: Plan {
         switch status {
-        case "paid": .paid(weight: weight)
+        case "paid": .paid(weight: PlanWeight(session: weight, weekly: weeklyWeight ?? weight))
         case "inactive": .inactive
         default: .unknown
         }

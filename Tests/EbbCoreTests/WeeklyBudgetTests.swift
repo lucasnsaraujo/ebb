@@ -11,11 +11,11 @@ private let english = Locale(identifier: "en_US")
 private let brazil = Locale(identifier: "pt_BR")
 
 private func account(weight: Double, weeklyUsed: Double? = nil, resetsAt: Date? = wednesday) -> AccountUsage {
-    AccountUsage(weight: weight, limits: weeklyUsed.map { [UsageLimit(kind: .weeklyAll, usedPercent: $0, resetsAt: resetsAt)] } ?? [], readAt: now)
+    AccountUsage(weight: PlanWeight(weight), limits: weeklyUsed.map { [UsageLimit(kind: .weeklyAll, usedPercent: $0, resetsAt: resetsAt)] } ?? [], readAt: now)
 }
 
 private func weeklyBudget(_ accounts: [AccountUsage]) -> WeeklyBudget? {
-    WeeklyBudget.of(accounts, totalWeight: accounts.reduce(0) { $0 + $1.weight }, now: now)
+    WeeklyBudget.of(accounts, totalWeight: accounts.reduce(0) { $0 + $1.weight.weekly }, now: now)
 }
 
 @Suite struct WeeklyBudgetTests {

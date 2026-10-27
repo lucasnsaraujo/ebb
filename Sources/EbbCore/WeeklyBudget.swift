@@ -26,7 +26,8 @@ public struct WeeklyBudget: Sendable, Equatable {
         self.resetsAt = resetsAt
     }
 
-    /// `nil` with an uncapped account, or without a reset ahead that brings back a meaningful share.
+    /// `totalWeight` is the pool's weekly weight. `nil` with an uncapped account, or without a
+    /// reset ahead that brings back a meaningful share.
     public static func of(_ accounts: [AccountUsage], totalWeight: Double, now: Date) -> WeeklyBudget? {
         guard totalWeight > 0 else { return nil }
         var free = 0.0
@@ -34,8 +35,8 @@ public struct WeeklyBudget: Sendable, Equatable {
         for account in accounts {
             guard let limit = account.limits.first(where: { $0.kind == .weeklyAll }) else { return nil }
             let used = limit.used(at: now)
-            free += account.weight * (100 - used) / totalWeight
-            if let resetsAt = limit.resetsAt, resetsAt > now, account.weight * used / totalWeight >= minimumShare, resetsAt < horizon ?? .distantFuture {
+            free += account.weight.weekly * (100 - used) / totalWeight
+            if let resetsAt = limit.resetsAt, resetsAt > now, account.weight.weekly * used / totalWeight >= minimumShare, resetsAt < horizon ?? .distantFuture {
                 horizon = resetsAt
             }
         }

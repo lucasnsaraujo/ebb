@@ -26,7 +26,7 @@ import Testing
         try "port: \(proxy.port)\nauth-dir: \(auth.path)\n".write(to: EbbPaths.home.appending(path: ".cli-proxy-api/config.yaml"), atomically: true, encoding: .utf8)
         try "fake-key".write(to: auth.appending(path: ".management-key"), atomically: true, encoding: .utf8)
         try #"{"type":"claude","email":"a@example.com","access_token":"fake"}"#.write(to: auth.appending(path: Self.accountFile), atomically: true, encoding: .utf8)
-        EbbPaths.writeCache(try JSONEncoder().encode(PlanProfile(plan: .paid(weight: 5), tier: "default_claude_max_5x")), to: EbbPaths.planCache(for: "a@example.com"))
+        EbbPaths.writeCache(try JSONEncoder().encode(PlanProfile(plan: .paid(weight: PlanWeight(5)), tier: "default_claude_max_5x")), to: EbbPaths.planCache(for: "a@example.com"))
         return PoolStore(connection: ProxyConnection(), savesStatus: false)
     }
 

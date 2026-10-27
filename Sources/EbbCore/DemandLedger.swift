@@ -2,9 +2,9 @@ import CryptoKit
 import Foundation
 
 /// How fast each pool is being used, in 5-minute bins over the last 14 days: one series per
-/// provider pool and window, never mixed. Demand is kept in weighted units, plan weight ×
-/// percentage points used, so adding, retiring or resetting an account leaves history alone;
-/// dividing by the pool's current weight turns it into pool points.
+/// provider pool and window, never mixed. Demand is kept in weighted units, the window's plan
+/// weight × percentage points used, so adding, retiring or resetting an account leaves history
+/// alone; dividing by the pool's current weight for that window turns it into pool points.
 ///
 /// Only increases count: a reset adds the use after it, and a falling reading adds nothing.
 /// Time Ebb wasn't polling (asleep, quit, hidden) is unobserved, so sleep never reads as idle.
@@ -33,7 +33,8 @@ public struct DemandLedger: Codable, Sendable, Equatable {
     /// A reading back at the level before a big fall, this soon, is a stale or bogus sample
     /// on one side of the fall: the change counts as nothing either way.
     static let reboundWindow: TimeInterval = 30 * 60
-    static let currentVersion = 1
+    /// 2 weighs weekly demand in weekly plan weights; version 1 weighed it in 5-hour ones.
+    static let currentVersion = 2
 
     struct Bin: Codable, Sendable, Equatable {
         /// Demand seen while Ebb was watching.
@@ -67,10 +68,15 @@ public struct DemandLedger: Codable, Sendable, Equatable {
 
     public init() {}
 
-    /// A saved ledger; empty when the data is unreadable or from another version.
+    /// A saved ledger; empty when the data is unreadable or from another version. A version 1
+    /// ledger loses its weekly demand, which would overstate the weekly pace in weekly weights.
     public static func load(from data: Data) -> DemandLedger {
-        guard let ledger = try? JSONDecoder().decode(DemandLedger.self, from: data), ledger.version == currentVersion else { return DemandLedger() }
-        return ledger
+        guard var ledger = try? JSONDecoder().decode(DemandLedger.self, from: data) else { return DemandLedger() }
+        if ledger.version == 1 {
+            ledger.series = ledger.series.filter { !$0.key.hasSuffix("/\(Kind.weekly.rawValue)") }
+            ledger.version = currentVersion
+        }
+        return ledger.version == currentVersion ? ledger : DemandLedger()
     }
 
     public func encoded() -> Data {
@@ -139,6 +145,21 @@ public struct DemandLedger: Codable, Sendable, Equatable {
             forEachBin(from: start, to: readAt) { bin, seconds in
                 observed[bin] = max(observed[bin] ?? 0, seconds)
             }
+        }
+    }
+
+    /// Records both windows of a counted account's reading, each in its own plan weight.
+    /// `shortWindow` is the short window's length: five hours, or a day for Devin.
+    public mutating func record(_ account: PoolAccount, pool: String, shortWindow: TimeInterval) {
+        let windows: [(Kind, UsageLimit.Kind, Double, TimeInterval)] = [
+            (.session, .session, account.weight.session, shortWindow),
+            (.weekly, .weeklyAll, account.weight.weekly, 7 * 24 * 60 * 60),
+        ]
+        for (kind, limitKind, weight, window) in windows {
+            record(
+                account.limits.first { $0.kind == limitKind }, readAt: account.readAt, pool: pool, kind: kind,
+                account: account.id, weight: weight, window: window
+            )
         }
     }
 

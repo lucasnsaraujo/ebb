@@ -76,10 +76,10 @@ public enum Pace {
         let activeTime = used.reduce(0) { $0 + $1.observed }
         let events = used.reduce(0) { $0 + $1.events }
         let units = used.reduce(0) { $0 + $1.units }
-        guard activeTime >= minimumActiveTime, events >= minimumEvents, units / summary.totalWeight >= minimumPoints else { return nil }
+        guard activeTime >= minimumActiveTime, events >= minimumEvents, units / summary.totalWeight.session >= minimumPoints else { return nil }
 
         func rate(halfLife: TimeInterval) -> Double {
-            ewmaRate(used, halfLife: halfLife, now: now) / summary.totalWeight
+            ewmaRate(used, halfLife: halfLife, now: now) / summary.totalWeight.session
         }
         let window = summary.session
         func runOut(_ rate: Double) -> TimeInterval? {
@@ -114,7 +114,7 @@ public enum Pace {
             var slot = slot
             slot.units += slot.unwatched
             return slot
-        }, halfLife: weeklyHalfLife, now: now) / summary.totalWeight
+        }, halfLife: weeklyHalfLife, now: now) / summary.totalWeight.weekly
         let basis = slots.first.map { now.timeIntervalSince(DemandLedger.start(of: $0.bin)) } ?? 0
         guard let time = timeToEmpty(free: window.freePercent, resets: window.resets, rate: rate, horizon: weeklyLookback, now: now) else {
             return Forecast(outlook: .lasts, basis: basis)
@@ -123,7 +123,7 @@ public enum Pace {
     }
 
     private static func isReadable(_ summary: PoolSummary) -> Bool {
-        summary.totalWeight > 0 && (!summary.isPartial || summary.readableShare >= minimumReadableShare)
+        summary.totalWeight.isPositive && (!summary.isPartial || summary.readableShare >= minimumReadableShare)
     }
 
     /// Weighted demand per observed hour, recent bins counting most.

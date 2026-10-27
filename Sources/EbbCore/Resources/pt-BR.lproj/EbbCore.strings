@@ -76,6 +76,10 @@
 	<string>%1$lld–%2$lld min</string>
 	<key>2,048 requests a week (CodexBar's Kimi notes).</key>
 	<string>2.048 solicitações por semana (notas do CodexBar sobre o Kimi).</string>
+	<key>20 times Pro a session, about twice Max 5x a week.</key>
+	<string>20 vezes o Pro por sessão, cerca do dobro do Max 5x por semana.</string>
+	<key>5 times Pro a session, about 3.5 times a week.</key>
+	<string>5 vezes o Pro por sessão, cerca de 3,5 vezes por semana.</string>
 	<key>5-Hour</key>
 	<string>5 Horas</string>
 	<key>5-hour</key>
@@ -184,8 +188,6 @@
 	<string>Empilhado</string>
 	<key>The address needs a host name.</key>
 	<string>O endereço precisa de um nome de host.</string>
-	<key>The tier name carries the multiplier.</key>
-	<string>O nome do nível traz o multiplicador.</string>
 	<key>Tighter of the Two</key>
 	<string>O Mais Restrito</string>
 	<key>Under 10 min</key>

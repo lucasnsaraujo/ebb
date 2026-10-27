@@ -51,15 +51,20 @@ public struct ClaudeProvider: Provider {
     /// (`past_due`) or a missing value keeps the tier's weight.
     static let endedStatuses: Set<String> = ["canceled", "cancelled", "expired", "incomplete_expired", "inactive", "ended"]
 
-    /// "default_claude_max_20x" weighs 20, "default_claude_max_5x" 5, a paid tier without a
-    /// multiplier (Pro) 1. A subscription whose status says it ended is inactive.
+    /// The tier's default weight from `PlanWeights`: "default_claude_max_20x" weighs 20 a session
+    /// and 7 a week, a paid tier without a multiplier (Pro) 1. A subscription whose status says it ended is inactive.
     public static func plan(rateLimitTier: String?, subscriptionStatus: String?) -> Plan {
         if let status = subscriptionStatus?.lowercased(), endedStatuses.contains(status) { return .inactive }
-        guard let tier = rateLimitTier?.lowercased(), !tier.isEmpty, !tier.contains("free") else { return .unknown }
-        if let match = tier.firstMatch(of: /_(\d+)x$/), let multiplier = Double(match.1), multiplier > 0 {
-            return .paid(weight: multiplier)
-        }
-        return .paid(weight: 1)
+        guard let tier = rateLimitTier?.lowercased(), !tier.isEmpty, !tier.contains("free"),
+              let weight = PlanWeights.defaultWeight(provider: ClaudeProvider().proxyName, plan: planName(rateLimitTier: tier))
+        else { return .unknown }
+        return .paid(weight: weight)
+    }
+
+    /// The per-session multiplier a tier's name carries: 20 for "max_20x"; `nil` without one.
+    static func multiplier(rateLimitTier tier: String) -> Double? {
+        guard let match = tier.firstMatch(of: /_(\d+)x$/), let multiplier = Double(match.1), multiplier > 0 else { return nil }
+        return multiplier
     }
 
     public func limits(fromSignals signals: [String: Any], observedAt: Date) -> [UsageLimit]? {

@@ -5,7 +5,7 @@ import Testing
 private let now = Date(timeIntervalSince1970: 1_793_040_000)
 
 private func summary(_ accounts: [[UsageLimit]]) throws -> PoolSummary {
-    try #require(Pool.summarize(accounts.map { AccountUsage(weight: 1, limits: $0, readAt: now) }, at: now))
+    try #require(Pool.summarize(accounts.map { AccountUsage(weight: PlanWeight(1), limits: $0, readAt: now) }, at: now))
 }
 
 private let weeklyOnly = [UsageLimit(kind: .weeklyAll, usedPercent: 60, resetsAt: now + 3 * 86_400)]

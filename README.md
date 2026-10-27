@@ -60,7 +60,7 @@
   </tr>
 </table>
 
-[CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) (CLI Proxy API) pools several Claude Code, Codex and other coding-agent subscriptions behind one local endpoint. It spreads requests across those accounts but doesn't tell you how much is left. Ebb shows that in the menu bar: the free share of the pool's 5-hour limit and of its weekly limit, each weighted by plan size, so a Max 20x account counts four times a Max 5x one.
+[CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) (CLI Proxy API) pools several Claude Code, Codex and other coding-agent subscriptions behind one local endpoint. It spreads requests across those accounts but doesn't tell you how much is left. Ebb shows that in the menu bar: the free share of the pool's 5-hour limit and of its weekly limit, each weighted by the plan's size in that window, so a Max 20x account counts four times a Max 5x one in the 5-hour pool and about twice in the weekly one.
 
 ## What it shows
 
@@ -73,7 +73,7 @@
 
 ## Auto-tuned routing weights
 
-Ebb sets each login's routing weight in CLIProxyAPI to plan size × free share × reset urgency, so new sessions go where capacity is left and each provider's accounts drain evenly. Weekly capacity a login hasn't used by its reset is lost, so in the last two days before that reset its weight rises steadily, up to double. Weights only take effect with the proxy's weighted round robin strategy; Settings → Routing shows the strategy, switches it with one click, and turns balancing off.
+Ebb sets each login's routing weight in CLIProxyAPI to what it has left × reset urgency, so new sessions go where capacity is left and each provider's accounts drain evenly. What's left is the rest of the login's 5-hour window, or of its week when that's less, both counted in 5-hour windows: a Max 5x week holds about 12 of its windows ([one full window uses 8.2–8.9% of it](https://botfarm.run/blog/claude-max-100-vs-200/)), a Max 20x week about 6. Providers that publish no such count use the lower of the two shares. Weekly capacity a login hasn't used by its reset is lost, so in the last two days before that reset its weight rises steadily, up to double. Weights only take effect with the proxy's weighted round robin strategy; Settings → Routing shows the strategy, switches it with one click, and turns balancing off.
 
 With a management key, Ebb also disables a login in CLIProxyAPI once its provider answers twice in a row that the plan has ended, and enables it again when the plan renews. It only touches logins it disabled itself; one you disabled by hand stays as you left it. Each change comes with a pool alert, as does a new login the first time it counts, named by plan only: "Claude: a Max 20x account left the pool", "Codex: a new Team account joined the pool".
 
@@ -162,7 +162,7 @@ The management key is stored in a file only your user can read, and is never log
 
 **The numbers look stale.** CLIProxyAPI reports quota as accounts serve requests. An idle account is read from its provider's usage endpoint at a slower pace, so it can lag by a few minutes. The panel says how old each reading is.
 
-**Do the plan weights match what Anthropic and OpenAI actually give?** No one publishes exact sizes. The defaults follow the plan names (Max 20x weighs four times Max 5x); change them in Settings → Plans if your accounts behave differently.
+**Do the plan weights match what Anthropic and OpenAI actually give?** For Claude's 5-hour window, yes: [Anthropic gives](https://support.claude.com/en/articles/11049741-what-is-the-max-plan) Max 5x and Max 20x 5 and 20 times Pro's usage per session. The week doesn't scale the same way. [Readings from the usage endpoint](https://botfarm.run/blog/claude-max-100-vs-200/) put Max 20x's week at about twice Max 5x's, not four times, so in the weekly pool Claude plans weigh 1, 3.5 and 7. OpenAI and the other providers publish no weekly ratio, so their plans weigh the same in both windows. Settings → Plans lets you change either window's weight if your accounts behave differently.
 
 **How is Ebb different from Quotio or CodexBar?** [Quotio](https://github.com/nguyenphutrong/quotio) manages CLIProxyAPI itself: it runs the proxy and its accounts. [CodexBar](https://github.com/steipete/CodexBar) reads many providers directly, without a proxy. Ebb doesn't run the proxy; it shows how much of the whole pool is free and how long it lasts, and tunes the pool's routing weights.
 
@@ -179,7 +179,7 @@ swift test      # runs the unit tests
 
 `./build.sh --bundle <dir>` only writes `Ebb.app` into `<dir>`. Releases and updates are described in [docs/updates.md](docs/updates.md).
 
-Measured on a macOS 26 CI runner over 60 s idle against a stand-in proxy: a 4.6 MB single-architecture binary (the shipped app is universal, about twice that), 13–14 MB physical footprint, 0.02–0.09% CPU once launched, 9–10 network requests and 8 timer wakes, and none of either while the item is hidden. Sparkle and the login item only start inside the app bundle, so the budget doesn't cover them. `scripts/check-budget.sh` is the lightweight budget CI runs; it launches Ebb with `--budget-report <file> --budget-seconds 60`, once with `--hidden`, so run it only in a disposable session. `Ebb --demo` shows fake accounts of every provider with no network, for screenshots and testing. `Ebb --snapshot <dir>` renders the panel, every menu bar style and Settings → General, Routing and Connection offscreen to PNGs and quits; add `--demo` for the fake accounts. `Ebb --record <dir>` renders the README hero offscreen from the fake accounts, plus the demo video's frames in `frames/` (60 fps) and the GIF's in `gif-frames/` (20 fps) for ffmpeg, and quits.
+Measured on a macOS 26 CI runner over 60 s idle against a stand-in proxy: a 4.6 MB single-architecture binary (the shipped app is universal, about twice that), 13–14 MB physical footprint, 0.02–0.09% CPU once launched, 9–10 network requests and 8 timer wakes, and none of either while the item is hidden. Sparkle and the login item only start inside the app bundle, so the budget doesn't cover them. `scripts/check-budget.sh` is the lightweight budget CI runs; it launches Ebb with `--budget-report <file> --budget-seconds 60`, once with `--hidden`, so run it only in a disposable session. `Ebb --demo` shows fake accounts of every provider with no network, for screenshots and testing. `Ebb --snapshot <dir>` renders the panel, every menu bar style and Settings → General, Routing, Plans and Connection offscreen to PNGs and quits; add `--demo` for the fake accounts. `Ebb --record <dir>` renders the README hero offscreen from the fake accounts, plus the demo video's frames in `frames/` (60 fps) and the GIF's in `gif-frames/` (20 fps) for ffmpeg, and quits.
 
 ## Contributing
 

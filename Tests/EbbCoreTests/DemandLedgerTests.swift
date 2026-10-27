@@ -66,6 +66,43 @@ struct LedgerRun {
 }
 
 @Suite struct DemandLedgerTests {
+    /// Session demand in 5-hour weights, weekly demand in weekly weights: a Max 20x using 10
+    /// points of its 5-hour window and 2 of its week adds 20 × 10 and 7 × 2.
+    @Test func eachWindowsDemandIsWeighedInItsOwnPlanWeight() {
+        var ledger = DemandLedger()
+        let weight = PlanWeight(session: 20, weekly: 7)
+        func reading(session: Double, weekly: Double, at date: Date) -> PoolAccount {
+            PoolAccount(id: "a@example.com", weight: weight, limits: [
+                UsageLimit(kind: .session, usedPercent: session, resetsAt: ledgerStart + 4 * 3600),
+                UsageLimit(kind: .weeklyAll, usedPercent: weekly, resetsAt: ledgerStart + 6 * 86400),
+            ], readAt: date)
+        }
+        ledger.record(reading(session: 10, weekly: 30, at: ledgerStart), pool: "claude", shortWindow: 5 * 3600)
+        ledger.record(reading(session: 20, weekly: 32, at: ledgerStart + 60), pool: "claude", shortWindow: 5 * 3600)
+
+        #expect(ledger.totals(pool: "claude", kind: .session).units == 20 * 10)
+        #expect(ledger.totals(pool: "claude", kind: .weekly).units == 7 * 2)
+    }
+
+    /// Weekly demand recorded before plans had a weekly size is in 5-hour weights, which would
+    /// overstate the weekly pace against weekly weights; it's dropped, and the rest kept.
+    @Test func aLedgerFromBeforeWeeklyWeightsDropsOnlyItsWeeklyDemand() throws {
+        var run = LedgerRun(weights: ["a": 20])
+        run.burn(["a": 20], minutes: 10)
+        var ledger = run.ledger
+        ledger.record(UsageLimit(kind: .weeklyAll, usedPercent: 10, resetsAt: ledgerStart + 6 * 86400), readAt: run.now - 60, pool: "claude", kind: .weekly, account: "a", weight: 20, window: 7 * 86400)
+        ledger.record(UsageLimit(kind: .weeklyAll, usedPercent: 12, resetsAt: ledgerStart + 6 * 86400), readAt: run.now, pool: "claude", kind: .weekly, account: "a", weight: 20, window: 7 * 86400)
+        #expect(ledger.totals(pool: "claude", kind: .weekly).units > 0)
+
+        var saved = try #require(try JSONSerialization.jsonObject(with: ledger.encoded()) as? [String: Any])
+        saved["version"] = 1
+        let loaded = DemandLedger.load(from: try JSONSerialization.data(withJSONObject: saved))
+
+        #expect(loaded.totals(pool: "claude", kind: .session).units == ledger.totals(pool: "claude", kind: .session).units)
+        #expect(loaded.totals(pool: "claude", kind: .weekly).units == 0)
+        #expect(loaded.observedTime(until: run.now) == ledger.observedTime(until: run.now))
+    }
+
     @Test func aResetMidWindowAddsTheUseAfterItNeverANegative() {
         var run = LedgerRun(weights: ["a": 5])
         run.used["a"] = 80

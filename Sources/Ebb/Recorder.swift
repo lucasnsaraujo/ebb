@@ -321,7 +321,7 @@ private final class Desk {
             session.freePercent = pool
             state.summaries[claude]?.session = session
         }
-        if let index = state.details.firstIndex(where: { $0.provider == claude && $0.plan?.weight == 20 }) {
+        if let index = state.details.firstIndex(where: { $0.provider == claude && $0.plan?.weight.session == 20 }) {
             state.details[index].sessionFree = sessionFree
         }
         return PoolStore(connection: connection, state: state, proxyReadAt: store.proxyReadAt, strongestUrgency: store.strongestUrgency, incidents: store.incidents)
