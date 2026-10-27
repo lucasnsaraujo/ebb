@@ -1,13 +1,13 @@
-import AppKit
 import EbbCore
+import Foundation
 import ServiceManagement
 
 /// `ebb --uninstall-data`: lists Ebb's files and links, and removes them only after a yes.
 func uninstallData(isConfirmed: Bool) -> Never {
+    // Under sudo the files would go, but root's settings and login items would be the ones cleared.
+    guard geteuid() != 0 else { fail("Run this as yourself, without sudo.") }
     // Quitting Ebb writes its usage ledger again, so it would undo the removal.
-    guard NSRunningApplication.runningApplications(withBundleIdentifier: EbbData.bundleIdentifier).isEmpty else {
-        fail("Ebb is running. Quit it first, then run this again.")
-    }
+    guard !isEbbRunning() else { fail("Ebb is running. Quit it first, then run this again.") }
     let data = EbbData()
     let present = data.existing()
     if present.isEmpty {
@@ -47,6 +47,17 @@ private func unregisterLoginItem() -> Bool {
     let service = SMAppService.mainApp
     guard service.status == .enabled || service.status == .requiresApproval else { return false }
     return (try? service.unregister()) != nil && service.status != .enabled
+}
+
+/// pgrep rather than AppKit, so the statusline calls this tool also serves don't load AppKit.
+private func isEbbRunning() -> Bool {
+    let pgrep = Process()
+    pgrep.executableURL = URL(fileURLWithPath: "/usr/bin/pgrep")
+    pgrep.arguments = ["-x", "Ebb"]
+    pgrep.standardOutput = FileHandle.nullDevice
+    guard (try? pgrep.run()) != nil else { return false }
+    pgrep.waitUntilExit()
+    return pgrep.terminationStatus == 0
 }
 
 private func shortPath(_ url: URL) -> String {

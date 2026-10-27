@@ -17,15 +17,18 @@ seconds=60
 warmup=12       # CPU is also averaged after this many seconds, once launch work is done
 sample_at=$((seconds - 5))
 
-# Measured on the macos-26 runner, six runs of 60 s (range), and each ceiling at 1.5x the worst run, rounded up.
+# Measured on the macos-26 runner, six runs of 60 s (range). Sizes and memory get 1.5x the worst run, rounded up.
+# Counts are deterministic, so they get the worst run plus one: a doubled poll rate has to fail.
 # A number over its ceiling fails the build: raise one only on purpose, and say why in the commit.
 typeset -A ceiling
 ceiling[binary_mb]=7             # 4.58 MB, unstripped, one architecture
 ceiling[footprint_mb]=21         # 13-14 MB physical footprint near the end of the run (footprint prints whole MB)
-ceiling[cpu_percent]=3           # 0.85-1.93 %, the whole run, launch included
 ceiling[steady_cpu_percent]=0.5  # 0.02-0.09 %; 1.5x would be inside the noise of ps's centisecond clock, so the 0.5 % target stands
-ceiling[requests]=15             # 9-10 requests: 3 polls, 1 key check, 1 strategy read, 1 usage read, 1 status page, 2-3 weight sets
-ceiling[wakes]=12                # 8 wakes: 3 proxy polls, 2 provider reads, 2 status page checks, 1 menu bar clock
+ceiling[requests]=11             # 9-10 requests: 3 polls, 1 key check, 1 strategy read, 1 usage read, 1 status page, 2-3 weight sets
+ceiling[wakes]=9                 # 8 wakes: 3 proxy polls, 2 provider reads, 2 status page checks, 1 menu bar clock
+ceiling[proxy_polls]=4           # 3 GET auth-files, one per 30 s
+ceiling[proxy_poll_wakes]=4      # 3 "proxy poll" wakes
+# The whole-run CPU (0.85-1.93 %) is mostly launch work and swings with the runner, so it's shown, not held.
 # A run that did nothing would pass every ceiling above, so the proxy must have been polled at least this often.
 min_proxy_polls=2
 
@@ -92,8 +95,12 @@ measure() {
     run_cpu=$(( 100 * end_cpu / (end_time - start) ))
     run_steady_cpu=$(( 100 * (end_cpu - warm_cpu) / (end_time - warm_time) ))
 
+    # A run that never writes its report would otherwise hold the job until GitHub's timeout.
+    ( sleep $(( seconds + 30 )); kill "$pid" 2>/dev/null ) &
+    local watchdog=$!
     local exit_code=0
     wait "$pid" || exit_code=$?
+    kill "$watchdog" 2>/dev/null || true
     if (( exit_code != 0 )) || [[ ! -f $report ]]; then
         print -r -- "Ebb exited with $exit_code and no report:" >&2
         cat "$work/$label.log" >&2
@@ -112,12 +119,13 @@ record "binary size" "$size_mb" "${ceiling[binary_mb]}" MB
 print "\nItem showing, $seconds s"
 measure visible
 record "physical footprint" "$run_footprint" "${ceiling[footprint_mb]}" MB
-record "CPU, whole run" "$run_cpu" "${ceiling[cpu_percent]}" %
+record "CPU, whole run" "$run_cpu" "-" %
 record "CPU, after ${warmup} s" "$run_steady_cpu" "${ceiling[steady_cpu_percent]}" %
 record "network requests" "$(field "$report" requestTotal)" "${ceiling[requests]}" req
 record "timer and loop wakes" "$(field "$report" wakeTotal)" "${ceiling[wakes]}" wakes
 polls="$(field "$report" 'requests.GET auth-files' 2>/dev/null || print 0)"
-record "proxy polls" "$polls" "-" polls
+record "proxy polls" "$polls" "${ceiling[proxy_polls]}" polls
+record "proxy poll wakes" "$(field "$report" 'wakes.proxy poll' 2>/dev/null || print 0)" "${ceiling[proxy_poll_wakes]}" wakes
 (( polls >= min_proxy_polls )) || { print "OVER   the stand-in proxy was polled $polls times, under $min_proxy_polls: the run measured nothing"; failures=$((failures + 1)); }
 print -r -- "requests:" "$(plutil -extract requests json -o - "$report")"
 print -r -- "wakes:   " "$(plutil -extract wakes json -o - "$report")"
@@ -126,6 +134,8 @@ print "\nItem hidden (--hidden), $seconds s: no polling, no network"
 measure hidden --hidden
 record "physical footprint" "$run_footprint" "-" MB
 record "CPU, whole run" "$run_cpu" "-" %
+# A loop someone forgot to count still shows up as CPU.
+record "CPU, after ${warmup} s" "$run_steady_cpu" "${ceiling[steady_cpu_percent]}" %
 record "network requests" "$(field "$report" requestTotal)" 0 req
 record "timer and loop wakes" "$(field "$report" wakeTotal)" 0 wakes
 print -r -- "requests:" "$(plutil -extract requests json -o - "$report")"
