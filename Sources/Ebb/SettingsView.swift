@@ -102,7 +102,7 @@ struct GeneralSettings: View {
             } footer: {
                 Text(areAlertsBlocked && (sendsAlerts || sendsIncidentAlerts)
                     ? "Notifications for Ebb are off in System Settings → Notifications."
-                    : "Pool alerts: when a 5-hour pool is about to run out at the current pace, and when weekly capacity comes back. Provider incidents: when Claude's or OpenAI's status page reports a problem with what your pools run on.")
+                    : "Pool alerts: when a 5-hour pool is about to run out at the current pace, when weekly capacity comes back, and once per weekly reset when a meaningful share is about to reset unused. Provider incidents: when Claude's or OpenAI's status page reports a problem with what your pools run on.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

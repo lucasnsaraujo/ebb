@@ -98,6 +98,9 @@ final class PoolStore {
     /// Made on the first alert, so a snapshot or demo never touches UserNotifications.
     @ObservationIgnored private var alertDelivery: AlertDelivery?
     private static let alertTrackerKey = "alertTracker"
+    @ObservationIgnored private var expiryNudge = UserDefaults.standard.data(forKey: PoolStore.expiryNudgeKey)
+        .flatMap { try? JSONDecoder().decode(ExpiryNudge.self, from: $0) } ?? ExpiryNudge()
+    private static let expiryNudgeKey = "expiryNudge"
     /// Each pool's public status while it has a problem; empty while all is well or unknown.
     private(set) var incidents: [String: ServiceHealth] = [:]
     @ObservationIgnored private var statusPageReads = StatusPageReads()
@@ -278,6 +281,7 @@ final class PoolStore {
 
     private func saveAlertTracker() {
         UserDefaults.standard.set(try? JSONEncoder().encode(alertTracker), forKey: Self.alertTrackerKey)
+        UserDefaults.standard.set(try? JSONEncoder().encode(expiryNudge), forKey: Self.expiryNudgeKey)
     }
 
     private var delivery: AlertDelivery {
@@ -724,17 +728,23 @@ final class PoolStore {
         }
     }
 
-    /// Run-out and "weekly back" alerts, each once; delivered only if the user wants them.
+    /// Run-out, "weekly back" and "resets unused" alerts, each once; delivered only if the user wants them.
     private func raiseAlerts(_ pools: [String: [PoolAccount]], at now: Date) {
         // Time since boot including sleep: tells a changed clock from a sleeping Mac.
         let uptime = TimeInterval(clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW)) / 1_000_000_000
         var alerts: [PoolAlert] = []
+        let nudgeBefore = expiryNudge
         for (provider, summary) in state.summaries.sorted(by: { $0.key < $1.key }) {
             alerts += alertTracker.alerts(
                 pool: provider, title: ProviderDisplay.title(provider), short: Providers.named(provider)?.shortWindow ?? .fiveHours,
                 summary: summary, forecast: state.forecasts[provider], accounts: pools[provider] ?? [], now: now, uptime: uptime
             )
+            alerts += expiryNudge.alerts(
+                pool: provider, title: ProviderDisplay.title(provider), accounts: pools[provider] ?? [],
+                totalWeight: summary.totalWeight, forecast: state.forecasts[provider]?.weekly, now: now
+            )
         }
+        if expiryNudge != nudgeBefore { saveAlertTracker() }
         guard !alerts.isEmpty else { return }
         saveAlertTracker()
         Task { await delivery.deliver(alerts) }
