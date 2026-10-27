@@ -100,11 +100,11 @@ public enum Diagnostics {
         }
         lines.append("")
         for (provider, pool) in report.pools.sorted(by: { $0.key < $1.key }) {
-            var short = "\(Providers.named(provider)?.shortWindow == .day ? "daily" : "5h") \(percent(pool.session.freePercent)) free"
+            var short = "\(Providers.named(provider)?.shortWindow == .day ? "daily" : "5h") \(percent(pool.session.freePercent)) left"
             if pool.session.lockedPercent > 0 {
                 short += ", \(percent(pool.session.lockedPercent)) locked" + (pool.session.unlocksAt.map { ", unlocks in \(ahead($0, now: now))" } ?? "")
             }
-            lines.append("Pool \(provider): \(short); weekly \(percent(pool.weekly.freePercent)) free")
+            lines.append("Pool \(provider): \(short); weekly \(percent(pool.weekly.freePercent)) left")
         }
         if !report.pools.isEmpty { lines.append("") }
         lines.append("Log")

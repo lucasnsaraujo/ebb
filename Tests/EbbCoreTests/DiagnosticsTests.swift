@@ -68,7 +68,7 @@ import Testing
             "claude": PoolSummary(session: locked, weekly: WindowSummary(freePercent: 41.4, resets: []), isPartial: false),
         ]
         let text = Diagnostics.text(report, now: now)
-        #expect(text.contains("Pool claude: 5h 24% free, 57% locked, unlocks in 26h; weekly 41% free\nPool codex: 5h 80% free; weekly 90% free"))
+        #expect(text.contains("Pool claude: 5h 24% left, 57% locked, unlocks in 26h; weekly 41% left\nPool codex: 5h 80% left; weekly 90% left"))
     }
 
     @Test func logKeepsOnlyTheLastTwentyLines() {
