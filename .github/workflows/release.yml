@@ -12,7 +12,7 @@ jobs:
     # Xcode 27's Swift 6.4 build system is what lets build.sh extract the App Intents metadata.
     runs-on: xcode-27
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           # build.sh numbers each build by its commit count, and Sparkle compares that number.
           fetch-depth: 0
