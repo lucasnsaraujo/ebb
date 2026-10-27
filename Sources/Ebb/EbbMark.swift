@@ -3,7 +3,7 @@ import SwiftUI
 /// The Ebb mark ("Tideline"): a ring holding water whose surface is one sine period.
 ///
 /// Designed on a 16 × 16 pt grid, the status item's slot. Every number below is in grid
-/// points and scales with the rect, so one shape draws the menu bar item and the popover header.
+/// points and scales with the rect, so one shape draws the menu bar item at every size.
 ///
 ///     ring    centre (8, 8), outer radius 7.25, stroke 1.5, so inner radius 5.75
 ///     water   centre (8, 8), radius 4.9: the ring's inner edge less a 0.85 gap
@@ -15,8 +15,6 @@ enum EbbMarkGeometry {
     static let stroke: CGFloat = 1.5
     static let waterGap: CGFloat = 0.85
     static let amplitude: CGFloat = 0.7
-    /// The water level of the brand mark at rest.
-    static let restLevel = 0.52
 
     static var waterRadius: CGFloat { outerRadius - stroke - waterGap }
 }
@@ -97,20 +95,5 @@ struct EbbWater: Shape {
         }
         path.closeSubpath()
         return path
-    }
-}
-
-/// The mark at rest, for the popover header: the ring in the text colour, the water in the
-/// app icon's blue.
-struct EbbMark: View {
-    private static let water = Color(red: 0.14, green: 0.59, blue: 0.80)
-
-    var body: some View {
-        ZStack {
-            EbbRing().fill(.primary, style: FillStyle(eoFill: true))
-            EbbWater(level: EbbMarkGeometry.restLevel).fill(Self.water)
-        }
-        .aspectRatio(1, contentMode: .fit)
-        .accessibilityHidden(true)
     }
 }

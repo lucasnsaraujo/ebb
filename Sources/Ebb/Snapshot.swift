@@ -3,8 +3,8 @@ import EbbCore
 import SwiftUI
 
 /// `--snapshot <dir>`: renders the panel offscreen to PNGs, dark and light, collapsed, expanded
-/// and at Increase Contrast, plus its first-run setup steps, every menu bar style and every
-/// Settings tab, then quits. The windows it draws in are never put on screen.
+/// and at Increase Contrast, plus its first-run setup steps, the panel before a reading, every
+/// menu bar style and every Settings tab, then quits. The windows it draws in are never put on screen.
 @MainActor
 enum Snapshot {
     static func write(store: PoolStore, connection: ProxyConnection, to directory: URL, prefix: String) {
@@ -103,6 +103,17 @@ enum Snapshot {
                 if let data = png(of: panel, scheme: scheme) {
                     try? data.write(to: directory.appending(path: "setup-\(name)-\(scheme == .dark ? "dark" : "light").png"))
                 }
+            }
+        }
+    }
+
+    /// The panel before any account could be read, dark and light.
+    static func writeNoReading(model: AppModel, to directory: URL) {
+        let store = PoolStore(connection: model.connection, summary: nil, details: [], proxyReadAt: nil)
+        for scheme in [ColorScheme.dark, .light] {
+            let panel = PoolPanel(store: store, connection: model.connection, showsAccounts: false)
+            if let data = png(of: panel, scheme: scheme) {
+                try? data.write(to: directory.appending(path: "no-reading-\(scheme == .dark ? "dark" : "light").png"))
             }
         }
     }

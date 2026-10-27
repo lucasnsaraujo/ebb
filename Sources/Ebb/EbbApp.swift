@@ -154,6 +154,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Snapshot.writeMenuBar(to: directory)
             Snapshot.writeSettings(model: model, to: directory)
             Snapshot.writeSetup(model: model, to: directory)
+            Snapshot.writeNoReading(model: model, to: directory)
             exit(0)
         }
         if let appearance = LaunchOptions.appearance { NSApp.appearance = NSAppearance(named: appearance) }

@@ -45,8 +45,12 @@ struct PoolPanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            header
-                .padding(.bottom, 12)
+            // No name or mark up top: the item just clicked says which app this is, as Apple's own
+            // menu bar extras leave it. With one provider, or during setup, the content comes first.
+            if setup == nil, store.state.providers.count > 1 {
+                providerPicker
+                    .padding(.bottom, 12)
+            }
             // With Reduce Motion the swap between the two cross-fades without the height easing along.
             if let setup {
                 ProxySetupView(setup: setup, connection: connection, store: store)
@@ -66,6 +70,9 @@ struct PoolPanel: View {
         .frame(width: 300)
         // The menu bar window sizes itself to this; without it, expanding clips the content.
         .fixedSize(horizontal: false, vertical: true)
+        // The window has no title, so VoiceOver names the panel here.
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(Text(verbatim: "Ebb"))
         .animation(reduceMotion ? nil : .smooth(duration: 0.35), value: setup == nil)
         // Setup just ended, by a key or by skipping it: read at once rather than at the next poll.
         .onChange(of: setup == nil) { _, isDone in
@@ -136,31 +143,21 @@ struct PoolPanel: View {
         }
     }
 
-    /// With pools from more than one provider, a pop-up picks the one on show.
-    private var header: some View {
-        HStack(spacing: 6) {
-            HStack(spacing: 6) {
-                EbbMark()
-                    .frame(width: 14, height: 14)
-                Text(verbatim: "Ebb")
-                    .font(.headline)
-            }
-            .accessibilityElement(children: .combine)
-            if store.state.providers.count > 1 {
-                Spacer(minLength: 0)
-                Picker("Provider", selection: Binding(get: { provider ?? "" }, set: { panelChoice = $0 })) {
-                    ForEach(store.state.providers, id: \.self) { name in
-                        Text(ProviderDisplay.title(name)).tag(name)
-                    }
-                }
-                .pickerStyle(.menu)
-                .buttonStyle(.borderless)
-                .labelsHidden()
-                .fixedSize()
-                .padding(.vertical, -4)
-                .accessibilityLabel("Provider")
+    /// With pools from more than one provider, a pop-up heads the panel and picks the one on show.
+    private var providerPicker: some View {
+        Picker("Provider", selection: Binding(get: { provider ?? "" }, set: { panelChoice = $0 })) {
+            ForEach(store.state.providers, id: \.self) { name in
+                Text(ProviderDisplay.title(name)).tag(name)
             }
         }
+        .pickerStyle(.menu)
+        .buttonStyle(.borderless)
+        .labelsHidden()
+        .fixedSize()
+        // The borderless button insets its title; this lines it up with the window titles below.
+        .padding(.leading, -3)
+        .padding(.vertical, -4)
+        .accessibilityLabel("Provider")
     }
 
     private func showSettings() {

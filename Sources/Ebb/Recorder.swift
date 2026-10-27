@@ -371,7 +371,7 @@ private final class Desk {
         let small = Ink(collapsed, scale: Self.layerScale)
         let width = size(of: collapsed).width
         let rows = small.bands(in: CGRect(origin: .zero, size: size(of: collapsed)), gap: 3)
-        // Header, titles, numbers, meters, pace line, Accounts, divider, footer.
+        // Provider picker, titles, numbers, meters, pace line, Accounts, divider, footer.
         guard let divider = rows.lastIndex(where: { $0.height < 2 }), divider >= 4 else {
             fatalError("Recorder: the collapsed panel no longer has the rows it slices; update measure()")
         }
