@@ -86,4 +86,14 @@ private final class Sandbox {
         let link = try box.installer.install()
         #expect(box.installer.installedLink == link)
     }
+
+    /// A quarantined app opened from Downloads runs from a temporary copy that's gone after it quits.
+    @Test func aTranslocatedCopyIsNeverLinked() throws {
+        let box = try Sandbox()
+        try box.makeDirectory(box.system)
+        let translocated = URL(fileURLWithPath: "/private/var/folders/xy/T/AppTranslocation/0A1B2C3D/d/Ebb.app/Contents/Helpers/ebb")
+        let installer = CommandLineTool(tool: translocated, directories: [box.system, box.user])
+        #expect(throws: CommandLineTool.InstallError.translocated) { try installer.install() }
+        #expect(!FileManager.default.fileExists(atPath: box.system.appending(path: "ebb").path))
+    }
 }

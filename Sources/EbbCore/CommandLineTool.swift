@@ -7,6 +7,8 @@ public struct CommandLineTool: Sendable {
         /// Something that isn't Ebb's link already has the name.
         case occupied(URL)
         case noWritableFolder
+        /// macOS is running Ebb from a temporary copy (App Translocation), which a link would outlive.
+        case translocated
     }
 
     public static let name = "ebb"
@@ -35,6 +37,7 @@ public struct CommandLineTool: Sendable {
     @discardableResult
     public func install() throws -> URL {
         let manager = FileManager.default
+        guard !tool.path.contains("/AppTranslocation/") else { throw InstallError.translocated }
         guard let directory = try writableDirectory() else { throw InstallError.noWritableFolder }
         let link = directory.appending(path: Self.name)
         if let existing = destination(of: link) {

@@ -178,6 +178,8 @@
 	<string>Mais</string>
 	<key>Most Pooled Capacity</key>
 	<string>Maior Capacidade Combinada</string>
+	<key>Move Ebb to Applications and open it from there first</key>
+	<string>Mova o Ebb para Aplicativos e abra-o de lá primeiro</string>
 	<key>Needs the management key.</key>
 	<string>Precisa da chave de gestão.</string>
 	<key>Never</key>
