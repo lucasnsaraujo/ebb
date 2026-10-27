@@ -432,7 +432,9 @@ private struct WindowColumn: View {
 }
 
 /// Free share as a capsule; what comes back soon shows as a lighter segment after it, and what a
-/// spent week locks as a hatched one at the far end. The plain track between them is what's used.
+/// spent week locks is hatched at the far end. The plain track between them is what's used. A week
+/// that resets within the window is both locked and coming back, so its hatch lies over the lighter
+/// segment.
 private struct Meter: View {
     let free: Double
     let comingBack: Double
@@ -449,12 +451,16 @@ private struct Meter: View {
                 GeometryReader { geometry in
                     let width = geometry.size.width
                     let freeWidth = width * min(max(free, 0), 100) / 100
-                    let lockedWidth = min(width * max(locked, 0) / 100, width - freeWidth)
-                    HStack(spacing: 0) {
-                        Rectangle().fill(tint).frame(width: freeWidth)
-                        Rectangle().fill(tint.opacity(contrast == .increased ? 0.5 : 0.28)).frame(width: min(width * comingBack / 100, width - freeWidth - lockedWidth))
-                        Spacer(minLength: 0)
-                        Hatch().fill(contrast.faint).frame(width: lockedWidth).clipped()
+                    ZStack(alignment: .trailing) {
+                        HStack(spacing: 0) {
+                            Rectangle().fill(tint).frame(width: freeWidth)
+                            Rectangle().fill(tint.opacity(contrast == .increased ? 0.5 : 0.28)).frame(width: min(width * comingBack / 100, width - freeWidth))
+                            Spacer(minLength: 0)
+                        }
+                        Hatch()
+                            .fill(contrast == .increased ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
+                            .frame(width: min(width * max(locked, 0) / 100, width - freeWidth))
+                            .clipped()
                     }
                 }
             }

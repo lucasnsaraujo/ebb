@@ -320,6 +320,26 @@ private func todaysAccounts() throws -> [AccountUsage] {
         #expect(summary.session.unlocksAt == at(24 * 60))
     }
 
+    /// The meter draws this share twice: hatched as locked, and in the lighter segment as coming back.
+    @Test func aSpentWeekResettingWithinTheWindowIsBothLockedAndComingBack() throws {
+        let spent = AccountUsage(weight: PlanWeight(5), limits: [session(0), weekly(100, resetsIn: 180)])
+        let team = AccountUsage(weight: PlanWeight(15), limits: [session(40, resetsIn: 60)])
+        let summary = try #require(Pool.summarize([spent, team], at: now))
+
+        expectClose(summary.session.lockedPercent, 25)
+        #expect(summary.session.unlocksAt == at(180))
+        #expect(summary.session.resets.map(\.date) == [at(60), at(180)])
+        expectClose(summary.session.resets.last?.gain, 25)
+    }
+
+    @Test func aPoolWhoseEveryWeekIsSpentIsAllLocked() throws {
+        let spent = AccountUsage(weight: PlanWeight(5), limits: [session(20), weekly(100)])
+        let summary = try #require(Pool.summarize([spent, spent], at: now))
+
+        #expect(summary.session.freePercent == 0)
+        #expect(summary.session.lockedPercent == 100)
+    }
+
     @Test func aPoolWithoutASpentWeekHasNothingLocked() throws {
         let summary = try #require(Pool.summarize([AccountUsage(weight: PlanWeight(5), limits: [session(90), weekly(98)])], at: now))
 
