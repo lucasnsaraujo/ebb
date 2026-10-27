@@ -46,10 +46,15 @@ public struct ClaudeProvider: Provider {
         return tier.hasPrefix("default_claude_") ? String(tier.dropFirst("default_claude_".count)) : tier
     }
 
+    /// Statuses that say the plan is over. Only these count as inactive, since an inactive
+    /// plan gets the login disabled in the proxy; a status Ebb doesn't know, a grace period
+    /// (`past_due`) or a missing value keeps the tier's weight.
+    static let endedStatuses: Set<String> = ["canceled", "cancelled", "expired", "incomplete_expired", "inactive", "ended"]
+
     /// "default_claude_max_20x" weighs 20, "default_claude_max_5x" 5, a paid tier without a
-    /// multiplier (Pro) 1. Anything but an active subscription is inactive.
+    /// multiplier (Pro) 1. A subscription whose status says it ended is inactive.
     public static func plan(rateLimitTier: String?, subscriptionStatus: String?) -> Plan {
-        guard subscriptionStatus == "active" else { return .inactive }
+        if let status = subscriptionStatus?.lowercased(), endedStatuses.contains(status) { return .inactive }
         guard let tier = rateLimitTier?.lowercased(), !tier.isEmpty, !tier.contains("free") else { return .unknown }
         if let match = tier.firstMatch(of: /_(\d+)x$/), let multiplier = Double(match.1), multiplier > 0 {
             return .paid(weight: multiplier)
