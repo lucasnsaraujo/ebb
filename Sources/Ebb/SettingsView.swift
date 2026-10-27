@@ -469,7 +469,7 @@ struct RoutingSettingsPane: View {
                     .foregroundStyle(.secondary)
             }
             Section("Why This Weight") {
-                Text("Plan size × free share × reset urgency. Weekly capacity a login hasn't used by its reset is lost, so in the last two days before that reset its weight rises steadily, up to double. The weight changes only when it moves by more than 10%.")
+                Text("What a login has left × reset urgency. What's left is the rest of its 5-hour window, or of its week when that's less, both counted in 5-hour windows: a Max 5x week holds about 12 of its windows, a Max 20x week about 6. Other providers publish no such count, so there the lower of the two shares counts. Weekly capacity a login hasn't used by its reset is lost, so in the last two days before that reset its weight rises steadily, up to double. The weight changes only when it moves by more than 10%.")
                     .foregroundStyle(.secondary)
                 if balancesSessions, let urgent = store.strongestUrgency {
                     Text(urgent.explanation(now: .now))

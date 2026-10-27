@@ -147,6 +147,76 @@ private func listing() throws -> [ProxyAuthFile] {
     }
 }
 
+/// Routing weighs what a login has left in the window that binds, both windows counted in its
+/// provider's base-plan 5-hour windows.
+@Suite struct BindingWindowTests {
+    private let now = UsageLimit.parseTimestamp("2026-10-26T19:34:00+00:00")!
+    private let max5x = PlanWeight(session: 5, weekly: 3.5)
+    private let max20x = PlanWeight(session: 20, weekly: 7)
+    private var claudeWeek: Double { PlanWeights.weekInWindows(provider: "claude") }
+
+    private func limits(sessionFree: Double?, weeklyFree: Double?) -> [UsageLimit] {
+        [
+            sessionFree.map { UsageLimit(kind: .session, usedPercent: 100 - $0, resetsAt: now.addingTimeInterval(3600)) },
+            weeklyFree.map { UsageLimit(kind: .weeklyAll, usedPercent: 100 - $0, resetsAt: now.addingTimeInterval(3 * 86400)) },
+        ].compactMap { $0 }
+    }
+
+    private func target(_ weight: PlanWeight, sessionFree: Double?, weeklyFree: Double?, week: Double? = nil) -> (BindingWindow, Int) {
+        let binding = BindingWindow.of(weight, limits: limits(sessionFree: sessionFree, weeklyFree: weeklyFree), weekInWindows: week ?? claudeWeek, at: now)
+        return (binding, ProxyWeight.target(planWeight: binding.size, freePercent: binding.freePercent))
+    }
+
+    /// Max 5x's week holds about 11.8 of its own 5-hour windows (Botfarm, Feb 2026); at twice
+    /// Max 5x's week, Max 20x's holds about 5.9 of its own, or 23.6 of Max 5x's (Botfarm: 6.6 and 26).
+    @Test func aClaudeWeekHoldsTheMeasuredNumberOfFiveHourWindows() throws {
+        let fiveX = try #require(PlanWeights.defaultWeight(provider: "claude", plan: "max_5x"))
+        let twentyX = try #require(PlanWeights.defaultWeight(provider: "claude", plan: "max_20x"))
+        #expect(abs(fiveX.weekly * claudeWeek / fiveX.session - 11.8) < 0.01)
+        #expect(abs(twentyX.weekly * claudeWeek / twentyX.session - 5.9) < 0.01)
+        #expect(abs(twentyX.weekly * claudeWeek / fiveX.session - 23.6) < 0.01)
+    }
+
+    @Test func theFiveHourWindowBindsWhileTheWeekHoldsMore() {
+        let (binding, weight) = target(max5x, sessionFree: 95, weeklyFree: 50)
+        #expect(binding.window == .session)
+        #expect(weight == 475)
+    }
+
+    /// 60% of a Max 20x's 5-hour window is 12 Pro windows; 10% of its week is 11.8.
+    @Test func theWeekBindsOnceItHoldsLessThanTheFiveHourWindow() {
+        let (binding, weight) = target(max20x, sessionFree: 60, weeklyFree: 10)
+        #expect(binding.window == .weekly)
+        #expect(weight == 1180)
+    }
+
+    /// Half a Max 5x week is about six of its 5-hour windows: it can serve a whole fresh window.
+    @Test func aHalfSpentWeekNoLongerHalvesTheWeight() {
+        let (_, fresh) = target(max5x, sessionFree: 100, weeklyFree: 100)
+        let (_, halfWeek) = target(max5x, sessionFree: 100, weeklyFree: 50)
+        #expect(fresh == 500)
+        #expect(halfWeek == 500)
+    }
+
+    @Test func aLoginWithOnlyOneWindowIsBoundByIt() {
+        #expect(target(PlanWeight(20), sessionFree: nil, weeklyFree: 30, week: 1).0 == BindingWindow(window: .weekly, size: 20, freePercent: 30))
+        #expect(target(max5x, sessionFree: 40, weeklyFree: nil).0 == BindingWindow(window: .session, size: 5, freePercent: 40))
+        #expect(target(max5x, sessionFree: nil, weeklyFree: nil).0 == BindingWindow(window: .session, size: 5, freePercent: 100))
+    }
+
+    /// Codex publishes no weekly size in 5-hour windows: its week counts as one, so the lower share binds.
+    @Test func withoutAMeasuredWeekTheLowerShareBinds() {
+        #expect(PlanWeights.weekInWindows(provider: "codex") == 1)
+        #expect(target(PlanWeight(1), sessionFree: 75, weeklyFree: 40, week: 1).1 == 40)
+        #expect(target(PlanWeight(1), sessionFree: 30, weeklyFree: 40, week: 1).1 == 30)
+    }
+
+    @Test func modelScopedWeeklyLimitsNeverBind() {
+        let scoped = [UsageLimit(kind: .session, usedPercent: 18, resetsAt: nil), UsageLimit(kind: .weeklyScoped, usedPercent: 100, resetsAt: nil)]
+        #expect(BindingWindow.of(max5x, limits: scoped, weekInWindows: claudeWeek, at: now).window == .session)
+    }
+}
+
 @Suite struct ResetUrgencyTests {
     private let now = UsageLimit.parseTimestamp("2026-10-26T19:34:00+00:00")!
 

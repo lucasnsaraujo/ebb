@@ -140,8 +140,8 @@ public enum Pool {
         )
     }
 
-    /// An account can only spend what its tightest general window allows.
-    /// Used to steer the proxy, never shown as a pool number.
+    /// An account can only spend what its tightest general window allows: nothing once either is
+    /// spent. Says whether a login has room left, never shown as a pool number.
     public static func effectiveFree(_ limits: [UsageLimit], at now: Date) -> Double {
         let used = limits.filter { $0.kind == .session || $0.kind == .weeklyAll }.map { $0.used(at: now) }
         return 100 - (used.max() ?? 0)

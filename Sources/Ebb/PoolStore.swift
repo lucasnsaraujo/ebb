@@ -418,7 +418,7 @@ final class PoolStore {
         await delivery.enable()
     }
 
-    /// Steers new threads toward free capacity: weight = plan size × free percent × reset urgency.
+    /// Steers new threads toward free capacity: weight = what's left in the window that binds × reset urgency.
     private func syncProxyWeights() async {
         guard RoutingSettings.balancesSessions, let endpoint = connection.endpoint else {
             if strongestUrgency != nil { strongestUrgency = nil }
@@ -427,7 +427,7 @@ final class PoolStore {
         let now = Date.now
         var logins: [(name: String, provider: String, planWeight: PlanWeight, limits: [UsageLimit], weight: Int?)] = []
         for account in accounts.values where !isDisabled(account) {
-            guard case let .paid(planWeight) = plans[account.email]?.value,
+            guard case let .paid(planWeight) = claudePlan(account.email),
                   let listed = proxyFiles[account.name],
                   let limits = reading(for: account, at: now)
             else { continue }
@@ -443,11 +443,11 @@ final class PoolStore {
         }
         var urgent: [UrgentLogin] = []
         for login in logins {
-            let free = Pool.effectiveFree(login.limits, at: now)
+            let binding = BindingWindow.of(login.planWeight, limits: login.limits, weekInWindows: PlanWeights.weekInWindows(provider: login.provider), at: now)
             let resetsAt = ResetUrgency.weeklyReset(in: login.limits)
             let urgency = ResetUrgency.factor(weeklyResetsAt: resetsAt, now: now)
-            urgent.append(UrgentLogin(provider: ProviderDisplay.title(login.provider), freePercent: free, factor: urgency, weeklyResetsAt: resetsAt))
-            let target = ProxyWeight.target(planWeight: login.planWeight.session, freePercent: free, urgency: urgency)
+            urgent.append(UrgentLogin(provider: ProviderDisplay.title(login.provider), freePercent: Pool.effectiveFree(login.limits, at: now), factor: urgency, weeklyResetsAt: resetsAt))
+            let target = ProxyWeight.target(planWeight: binding.size, freePercent: binding.freePercent, urgency: urgency)
             guard ProxyWeight.needsUpdate(current: login.weight, target: target) else { continue }
             if await proxy.setWeight(target, for: login.name, endpoint) {
                 proxyFiles[login.name]?.weight = target

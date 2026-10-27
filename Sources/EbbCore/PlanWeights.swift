@@ -65,6 +65,20 @@ public enum PlanWeights {
         ],
     ]
 
+    /// Max 5x's week, in its own 5-hour windows: a full window used 8.2–8.9% of its weekly meter
+    /// (Botfarm, Feb 2026).
+    static let claudeMax5xWeekInWindows = 11.8
+
+    /// How many of the base plan's 5-hour windows its week holds, so routing can tell which
+    /// window a login runs out of first. Claude's comes from Max 5x's measured week: 11.8 of its
+    /// windows, at 5 Pros a session and 3.5 a week, is 11.8 × 5 / 3.5 ≈ 16.9 of Pro's. Max 20x's
+    /// week then holds about 5.9 of its own windows (Botfarm: 6.6). Other providers publish no such
+    /// count, so their week counts as one window: the lower of the two shares binds, as it always did.
+    public static func weekInWindows(provider: String) -> Double {
+        guard provider == ClaudeProvider().proxyName, let max5x = defaultWeight(provider: provider, plan: "max_5x") else { return 1 }
+        return claudeMax5xWeekInWindows * max5x.session / max5x.weekly
+    }
+
     /// `UserDefaults` key of the overrides dictionary.
     public static let overridesKey = "planWeightOverrides"
 
