@@ -254,17 +254,19 @@ public struct BindingWindow: Sendable, Equatable {
         self.freePercent = freePercent
     }
 
-    /// `weekInWindows` is `PlanWeights.weekInWindows` for the login's provider. A window the
-    /// login doesn't have never binds; without either, it's a fresh 5-hour window. Ties go to it too.
+    /// `weekInWindows` is `PlanWeights.weekInWindows` for the login's provider. Without a 5-hour
+    /// reading the login has at most a fresh 5-hour window, so a big week read alone never
+    /// outweighs one; without a weekly reading the week never binds. Ties go to the 5-hour window.
     public static func of(_ weight: PlanWeight, limits: [UsageLimit], weekInWindows: Double, at now: Date) -> BindingWindow {
-        let session = limits.first { $0.kind == .session }.map {
-            BindingWindow(window: .session, size: weight.session, freePercent: 100 - $0.used(at: now))
-        }
+        let session = BindingWindow(
+            window: .session, size: weight.session,
+            freePercent: limits.first { $0.kind == .session }.map { 100 - $0.used(at: now) } ?? 100
+        )
         let weekly = limits.first { $0.kind == .weeklyAll }.map {
             BindingWindow(window: .weekly, size: weight.weekly * weekInWindows, freePercent: 100 - $0.used(at: now))
         }
-        return [session, weekly].compactMap { $0 }.min { $0.size * $0.freePercent < $1.size * $1.freePercent }
-            ?? BindingWindow(window: .session, size: weight.session, freePercent: 100)
+        guard let weekly, weekly.size * weekly.freePercent < session.size * session.freePercent else { return session }
+        return weekly
     }
 }
 

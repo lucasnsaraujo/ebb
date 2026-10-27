@@ -198,6 +198,15 @@ private func listing() throws -> [ProxyAuthFile] {
         #expect(halfWeek == 500)
     }
 
+    /// A Claude login read only for its week still has a 5-hour window, at most a fresh one: a Max
+    /// 20x at 70% of its week weighs as much as a fresh Max 20x window, not 8,260 against 2,000.
+    @Test func aWeekWithoutAFiveHourReadingWeighsNoMoreThanAFreshWindow() {
+        let (binding, weight) = target(max20x, sessionFree: nil, weeklyFree: 70)
+        #expect(binding == BindingWindow(window: .session, size: 20, freePercent: 100))
+        #expect(weight == 2000)
+        #expect(target(max20x, sessionFree: nil, weeklyFree: 5).0.window == .weekly)
+    }
+
     @Test func aLoginWithOnlyOneWindowIsBoundByIt() {
         #expect(target(PlanWeight(20), sessionFree: nil, weeklyFree: 30, week: 1).0 == BindingWindow(window: .weekly, size: 20, freePercent: 30))
         #expect(target(max5x, sessionFree: 40, weeklyFree: nil).0 == BindingWindow(window: .session, size: 5, freePercent: 40))
