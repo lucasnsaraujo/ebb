@@ -26,7 +26,7 @@
   <tr><th></th><th>Light</th><th>Dark</th></tr>
   <tr>
     <td>Panel</td>
-    <td><img src="docs/images/panel-light.png" width="300" alt="Ebb panel in light mode: 43% of the 5-hour limit and 45% of the weekly limit free, about 1 h 50 min left."></td>
+    <td><img src="docs/images/panel-light.png" width="300" alt="Ebb panel in light mode: 43% of the 5-hour limit and 45% of the weekly limit left, running out in about 1 h 50 min."></td>
     <td><img src="docs/images/panel-dark.png" width="300" alt="The same panel in dark mode."></td>
   </tr>
   <tr>
@@ -56,11 +56,11 @@
   </tr>
   <tr>
     <td>Menu bar styles</td>
-    <td colspan="2"><img src="docs/images/menubar-styles.png" width="620" alt="Every menu bar style on a light bar, a dark bar and a red wallpaper, at 88%, 15% and 5% free: default, ring, both windows, stacked, refill time, number only, bars and icon only."></td>
+    <td colspan="2"><img src="docs/images/menubar-styles.png" width="620" alt="Every menu bar style on a light bar, a dark bar and a red wallpaper, at 88%, 15% and 5% left: default, ring, both windows, stacked, refill time, number only, bars and icon only."></td>
   </tr>
 </table>
 
-[CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) (CLI Proxy API) pools several Claude Code, Codex and other coding-agent subscriptions behind one local endpoint. It spreads requests across those accounts but doesn't tell you how much is left. Ebb shows that in the menu bar: the free share of the pool's 5-hour limit and of its weekly limit, each weighted by the plan's size in that window, so a Max 20x account counts four times a Max 5x one in the 5-hour pool and about twice in the weekly one.
+[CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) (CLI Proxy API) pools several Claude Code, Codex and other coding-agent subscriptions behind one local endpoint. It spreads requests across those accounts but doesn't tell you how much is left. Ebb shows that in the menu bar: what's left of the pool's 5-hour limit and of its weekly limit, each weighted by the plan's size in that window, so a Max 20x account counts four times a Max 5x one in the 5-hour pool and about twice in the weekly one.
 
 ## What it shows
 
@@ -143,7 +143,7 @@ The command reads the numbers the app already saved and never touches the networ
 
 ## Shortcuts and Siri
 
-Ebb adds two actions to Shortcuts, Spotlight and Siri. **Get Pool Status** returns a provider's 5-hour (or daily) and weekly free share and its next refill, as separate values; leave the provider empty for the pool the menu bar shows. **Open Ebb** opens the panel. Say "Check my Ebb pool" or "Get Codex pool status in Ebb". Like the command, both use the numbers Ebb already has.
+Ebb adds two actions to Shortcuts, Spotlight and Siri. **Get Pool Status** returns what's left of a provider's 5-hour (or daily) and weekly pools and its next refill, as separate values; leave the provider empty for the pool the menu bar shows. **Open Ebb** opens the panel. Say "Check my Ebb pool" or "Get Codex pool status in Ebb". Like the command, both use the numbers Ebb already has.
 
 ## Privacy
 
@@ -164,7 +164,7 @@ The management key is stored in a file only your user can read, and is never log
 
 **Do the plan weights match what Anthropic and OpenAI actually give?** For Claude's 5-hour window, yes: [Anthropic gives](https://support.claude.com/en/articles/11049741-what-is-the-max-plan) Max 5x and Max 20x 5 and 20 times Pro's usage per session. The week doesn't scale the same way. [Readings from the usage endpoint](https://botfarm.run/blog/claude-max-100-vs-200/) put Max 20x's week at about twice Max 5x's, not four times, so in the weekly pool Claude plans weigh 1, 3.5 and 7. OpenAI and the other providers publish no weekly ratio, so their plans weigh the same in both windows. Settings → Plans lets you change either window's weight if your accounts behave differently.
 
-**How is Ebb different from Quotio or CodexBar?** [Quotio](https://github.com/nguyenphutrong/quotio) manages CLIProxyAPI itself: it runs the proxy and its accounts. [CodexBar](https://github.com/steipete/CodexBar) reads many providers directly, without a proxy. Ebb doesn't run the proxy; it shows how much of the whole pool is free and how long it lasts, and tunes the pool's routing weights.
+**How is Ebb different from Quotio or CodexBar?** [Quotio](https://github.com/nguyenphutrong/quotio) manages CLIProxyAPI itself: it runs the proxy and its accounts. [CodexBar](https://github.com/steipete/CodexBar) reads many providers directly, without a proxy. Ebb doesn't run the proxy; it shows how much of the whole pool is left and how long it lasts, and tunes the pool's routing weights.
 
 **Does Ebb send my usage anywhere?** No. See [Privacy](#privacy).
 

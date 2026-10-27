@@ -16,6 +16,13 @@ struct PoolState: Equatable {
     var forecasts: [String: PoolForecast] = [:]
 }
 
+/// How a refresh asked for from the panel ended, for its button to show.
+struct RefreshOutcome: Equatable {
+    var endedAt: Date
+    /// The proxy didn't answer or refused the key.
+    var failed: Bool
+}
+
 
 /// Keeps the pools fresh while the menu bar item is visible.
 ///
@@ -43,6 +50,8 @@ final class PoolStore {
     /// Why the last poll came back empty; `nil` until a poll has failed.
     private(set) var proxyFailure: ProxyOutage.Failure?
     private(set) var isRefreshing = false
+    /// Set as each `refreshNow()` ends, before `isRefreshing` clears.
+    private(set) var lastRefresh: RefreshOutcome?
     /// The login reset urgency raises most, for Settings → Routing.
     private(set) var strongestUrgency: UrgentLogin?
 
@@ -103,7 +112,8 @@ final class PoolStore {
     @ObservationIgnored private var lastProviderRequest = UserDefaults.standard.object(forKey: "lastProviderRequest") as? Date {
         didSet { UserDefaults.standard.set(lastProviderRequest, forKey: "lastProviderRequest") }
     }
-    @ObservationIgnored private var isPollingProxy = false
+    /// The poll in flight, which any poll asked for meanwhile waits on instead of sending its own.
+    @ObservationIgnored private var proxyPoll: Task<Void, Never>?
     @ObservationIgnored private var loops: [Task<Void, Never>] = []
     @ObservationIgnored private var ledger = DemandLedger()
     @ObservationIgnored private var alertTracker = UserDefaults.standard.data(forKey: PoolStore.alertTrackerKey)
@@ -306,12 +316,17 @@ final class PoolStore {
         Task { await pollProxy() }
     }
 
+    /// Polls the proxy and reads the account due soonest, one refresh at a time. The verdict is
+    /// the proxy's answer alone, taken before the read, which can wait a minute for a provider
+    /// slot; an account that can't be read says so in its own row.
     func refreshNow() {
         guard !loops.isEmpty, !isRefreshing else { return }
         isRefreshing = true
         Task {
             await pollProxy()
+            let failed = proxyReadAt == nil
             if let job = nextJob(usageMinimumAge: 0) { await run(job) }
+            lastRefresh = RefreshOutcome(endedAt: .now, failed: failed)
             isRefreshing = false
         }
     }
@@ -332,10 +347,14 @@ final class PoolStore {
     }
 
     private func pollProxy(syncsWeights: Bool = true) async {
-        guard !isPollingProxy else { return }
-        isPollingProxy = true
-        defer { isPollingProxy = false }
+        if let proxyPoll { return await proxyPoll.value }
+        let poll = Task { await sendProxyPoll(syncsWeights: syncsWeights) }
+        proxyPoll = poll
+        defer { proxyPoll = nil }
+        await poll.value
+    }
 
+    private func sendProxyPoll(syncsWeights: Bool) async {
         let wasReachable = proxyReadAt != nil
         let endpoint = connection.endpoint
         // A refused key isn't sent again until the proxy's lockout would have ended; the last answer stands meanwhile.

@@ -31,19 +31,19 @@
         }
       }
     },
-    "%@, %lld percent free" : {
-      "comment" : "VoiceOver, after \"Ebb\": the window and its free share",
+    "%@, %lld percent left" : {
+      "comment" : "VoiceOver, after \"Ebb\": the window and what's left of it",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@, %2$lld por cento livre"
+            "value" : "%1$@, %2$lld por cento restante"
           }
         }
       }
     },
     "%@: %@" : {
-      "comment" : "A title and its value: \"Claude: degraded performance\", \"Weekly: 29 percent free\"",
+      "comment" : "A title and its value: \"Claude: degraded performance\", \"Weekly: 29 percent left\"",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
@@ -53,12 +53,12 @@
         }
       }
     },
-    "%@: %lld%% of the %@ and %lld%% of the %@ are free." : {
+    "%@: %lld%% of the %@ and %lld%% of the %@ are left." : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@: %2$lld%% da %3$@ e %4$lld%% da %5$@ estão livres."
+            "value" : "%1$@: restam %2$lld%% da %3$@ e %4$lld%% da %5$@."
           }
         }
       }
@@ -299,22 +299,22 @@
         }
       }
     },
-    "%lld percent free" : {
+    "%lld percent left" : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld por cento livre"
+            "value" : "%lld por cento restante"
           }
         }
       }
     },
-    "%lld percent free, %lld percent coming back" : {
+    "%lld percent left, %lld percent coming back" : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lld por cento livre, %2$lld por cento voltando"
+            "value" : "%1$lld por cento restante, %2$lld por cento voltando"
           }
         }
       }
@@ -362,12 +362,12 @@
         }
       }
     },
-    "%lld%% of the weekly pool is free." : {
+    "%lld%% of the weekly pool is left." : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld%% da cota semanal está livre."
+            "value" : "Restam %lld%% da cota semanal."
           }
         }
       }
@@ -495,13 +495,24 @@
         }
       }
     },
-    "About %@ left" : {
-      "comment" : "Under the 5-hour meter, 124 pt wide",
+    "< 10 min" : {
+      "comment" : "Under the 5-hour meter, 124 pt wide; VoiceOver reads \"Under 10 min left\" instead",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Restam ~%@"
+            "value" : "< 10 min"
+          }
+        }
+      }
+    },
+    "About %@ left" : {
+      "comment" : "VoiceOver's reading of the \"~2 h 10 min\" line under the 5-hour meter",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerca de %@ restantes"
           }
         }
       }
@@ -537,7 +548,7 @@
       }
     },
     "As of %@" : {
-      "comment" : "How old the numbers are: \"As of 3 min ago\"",
+      "comment" : "How old the numbers are, shown once they are stale: \"As of 12 min ago\"",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
@@ -1000,6 +1011,17 @@
         }
       }
     },
+    "Runs out around %@" : {
+      "comment" : "VoiceOver's reading of the \"Runs out ~Thu 14:00\" line under the weekly meter",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acaba por volta de %@"
+          }
+        }
+      }
+    },
     "Runs out around %@ at this pace" : {
       "localizations" : {
         "pt-BR" : {
@@ -1102,12 +1124,12 @@
       }
     },
     "Under 10 min left" : {
-      "comment" : "Under the 5-hour meter, 124 pt wide",
+      "comment" : "VoiceOver's reading of the \"< 10 min\" line under the 5-hour meter",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Restam < 10 min"
+            "value" : "Menos de 10 min restantes"
           }
         }
       }
@@ -1334,6 +1356,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "cota semanal"
+          }
+        }
+      }
+    },
+    "~%@" : {
+      "comment" : "Under the 5-hour meter, 124 pt wide: \"~2 h 10 min\"; VoiceOver reads \"About 2 h 10 min left\" instead",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "~%@"
           }
         }
       }

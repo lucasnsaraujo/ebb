@@ -1,7 +1,7 @@
 import Foundation
 
-/// The small print under a hover card: how old the numbers are, what's left out of them,
-/// and, for the 5-hour window, accounts whose spent week takes them out of it.
+/// The small print under a hover card: how old the numbers are once that's worth saying, what's
+/// left out of them, and, for the 5-hour window, accounts whose spent week takes them out of it.
 public enum PoolNotes {
     /// A locked share under this many points stays off the meter's lines.
     public static let lockedShownFrom = 5.0
@@ -27,7 +27,9 @@ public enum PoolNotes {
                 ? Localization.text("Its only account is at its weekly limit", locale: locale)
                 : Localization.text("\(summary.weeklyLimitedAccounts) of \(summary.readAccounts) accounts at their weekly limit", locale: locale))
         }
-        if let oldest = summary.oldestReadingAt {
+        // The accounts footer says when the proxy last answered, so the age is repeated only once
+        // the menu bar would dim for it; see `MenuBarItem.staleAfter`.
+        if let oldest = summary.oldestReadingAt, now.timeIntervalSince(oldest) > MenuBarItem.staleAfter {
             lines.append(Localization.text("As of \(age(of: oldest, now: now, locale: locale))", locale: locale))
         }
         if summary.unreadAccounts > 0 {

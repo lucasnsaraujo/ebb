@@ -3,19 +3,19 @@ import Foundation
 /// What VoiceOver says for the panel's meters and account rows. Percentages are spelled out,
 /// so a row never reads as a string of bare numbers.
 public enum AccessibilityText {
-    /// "88 percent free", with what comes back within the window when something does, and
+    /// "88 percent left", with what comes back within the window when something does, and
     /// what a spent week locks.
     public static func meter(freePercent: Int, comingBackPercent: Int, lockedPercent: Int = 0, locale: Locale = .autoupdatingCurrent) -> String {
         let free = comingBackPercent > 0
-            ? Localization.text("\(freePercent) percent free, \(comingBackPercent) percent coming back", locale: locale)
-            : Localization.text("\(freePercent) percent free", locale: locale)
+            ? Localization.text("\(freePercent) percent left, \(comingBackPercent) percent coming back", locale: locale)
+            : Localization.text("\(freePercent) percent left", locale: locale)
         guard lockedPercent > 0 else { return free }
         return "\(free), " + Localization.text("\(lockedPercent) percent locked", locale: locale)
     }
 
-    /// An account's window: its free share, or why there's no bar to read.
+    /// An account's window: what's left of it, or why there's no bar to read.
     public static func miniMeter(freePercent: Int?, isUncapped: Bool, locale: Locale = .autoupdatingCurrent) -> String {
-        if let freePercent { return Localization.text("\(freePercent) percent free", locale: locale) }
+        if let freePercent { return Localization.text("\(freePercent) percent left", locale: locale) }
         return Localization.text(isUncapped ? "no weekly limit" : "no reading", locale: locale)
     }
 

@@ -18,8 +18,8 @@ struct PoolReading: TransientAppEntity {
 
     @Property(title: "Provider") var provider: String
     @Property(title: "Short Window") var shortWindow: String
-    @Property(title: "Short Window Free (%)") var shortWindowFree: Int
-    @Property(title: "Weekly Free (%)") var weeklyFree: Int
+    @Property(title: "Short Window Left (%)") var shortWindowFree: Int
+    @Property(title: "Weekly Left (%)") var weeklyFree: Int
     @Property(title: "Next Refill") var nextRefill: Date?
     @Property(title: "Next Refill Window") var nextRefillWindow: String?
     @Property(title: "Next Refill Gain (%)") var nextRefillGain: Int?
@@ -69,7 +69,7 @@ enum PoolIntentError: Error, CustomLocalizedStringResourceConvertible {
 
 struct GetPoolStatus: AppIntent {
     static let title: LocalizedStringResource = "Get Pool Status"
-    static let description = IntentDescription("How much of a provider's 5-hour (or daily) and weekly pools is free, and when capacity next comes back. Uses the numbers Ebb already has, without asking any provider.")
+    static let description = IntentDescription("How much of a provider's 5-hour (or daily) and weekly pools is left, and when capacity next comes back. Uses the numbers Ebb already has, without asking any provider.")
 
     @Parameter(title: "Provider", description: "Leave empty for the pool the menu bar shows.")
     var provider: PoolProvider?
@@ -107,7 +107,7 @@ struct EbbShortcuts: AppShortcutsProvider {
             intent: GetPoolStatus(),
             phrases: [
                 "Get pool status in \(.applicationName)",
-                "How much is free in \(.applicationName)",
+                "How much is left in \(.applicationName)",
                 "Check my \(.applicationName) pool",
                 "Get \(\.$provider) pool status in \(.applicationName)",
             ],

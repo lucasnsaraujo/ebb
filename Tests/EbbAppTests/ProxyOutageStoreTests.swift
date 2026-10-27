@@ -14,7 +14,8 @@ import Testing
 @Suite(.serialized, .enabled(if: ProcessInfo.processInfo.environment["EBB_APP_TESTS"] == "1")) struct ProxyOutageStoreTests {
     private static let accountFile = "claude-1-a@example.com.json"
 
-    private func makeStore(proxy: FakeProxy) throws -> PoolStore {
+    /// Without `hasLogin` the folder holds only the key, so the store never asks a provider for anything.
+    private func makeStore(proxy: FakeProxy, hasLogin: Bool = true) throws -> PoolStore {
         let home = "/tmp/ebbhome"
         try #require(ProcessInfo.processInfo.environment["CLIPROXY_CONFIG"] == "\(home)/.cli-proxy-api/config.yaml")
         try #require([EbbPaths.home, EbbPaths.cacheDirectory, EbbPaths.applicationSupport].allSatisfy { $0.path.hasPrefix(home) })
@@ -25,9 +26,23 @@ import Testing
         try fileManager.createDirectory(at: EbbPaths.home.appending(path: ".cli-proxy-api"), withIntermediateDirectories: true)
         try "port: \(proxy.port)\nauth-dir: \(auth.path)\n".write(to: EbbPaths.home.appending(path: ".cli-proxy-api/config.yaml"), atomically: true, encoding: .utf8)
         try "fake-key".write(to: auth.appending(path: ".management-key"), atomically: true, encoding: .utf8)
-        try #"{"type":"claude","email":"a@example.com","access_token":"fake"}"#.write(to: auth.appending(path: Self.accountFile), atomically: true, encoding: .utf8)
-        EbbPaths.writeCache(try JSONEncoder().encode(PlanProfile(plan: .paid(weight: PlanWeight(5)), tier: "default_claude_max_5x")), to: EbbPaths.planCache(for: "a@example.com"))
+        try? fileManager.removeItem(at: auth.appending(path: Self.accountFile))
+        if hasLogin {
+            try #"{"type":"claude","email":"a@example.com","access_token":"fake"}"#.write(to: auth.appending(path: Self.accountFile), atomically: true, encoding: .utf8)
+            EbbPaths.writeCache(try JSONEncoder().encode(PlanProfile(plan: .paid(weight: PlanWeight(5)), tier: "default_claude_max_5x")), to: EbbPaths.planCache(for: "a@example.com"))
+        }
         return PoolStore(connection: ProxyConnection(), savesStatus: false)
+    }
+
+    /// Refreshes from the panel, waiting for the one in flight to end.
+    private func refresh(_ store: PoolStore) async throws -> RefreshOutcome? {
+        store.refreshNow()
+        #expect(store.isRefreshing)
+        for _ in 0..<200 where store.isRefreshing {
+            try await Task.sleep(for: .milliseconds(25))
+        }
+        #expect(!store.isRefreshing)
+        return store.lastRefresh
     }
 
     private func listing(readAt: Date) -> Data {
@@ -63,6 +78,31 @@ import Testing
         #expect(!store.isProxyUnreachable)
         #expect(store.proxyFailure == nil)
         #expect(store.state.summaries["claude"]?.session.freePercent == 60)
+    }
+
+    /// The refresh button shakes only for a refresh that got nothing: a proxy that didn't answer
+    /// or refused the key. One that answered ends with a checkmark.
+    @Test func aRefreshFromThePanelSaysWhetherTheProxyAnswered() async throws {
+        let proxy = FakeProxy(listing: listing(readAt: .now))
+        let store = try makeStore(proxy: proxy, hasLogin: false)
+        store.setActive(true)
+        defer { store.setActive(false) }
+
+        let down = try await refresh(store)
+        #expect(down?.failed == true)
+        #expect(store.proxyFailure == .unreachable)
+
+        try proxy.start()
+        let up = try await refresh(store)
+        #expect(up?.failed == false)
+        #expect(up != down)
+        #expect(store.proxyFailure == nil)
+
+        proxy.refusesKeys = true
+        let refused = try await refresh(store)
+        #expect(refused?.failed == true)
+        #expect(store.proxyFailure == .refused)
+        proxy.stop()
     }
 
     /// Five refusals lock this Mac out for 30 minutes, after which even the right key is refused.

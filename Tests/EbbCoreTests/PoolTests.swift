@@ -387,10 +387,19 @@ private func todaysAccounts() throws -> [AccountUsage] {
         #expect(PoolNotes.locked(WindowSummary(freePercent: 50, resets: [])) == nil)
     }
 
-    @Test func bothCardsSayHowOldTheNumbersAreAndWhatIsLeftOut() {
+    /// The accounts footer already says when the proxy last answered, so a fresh card leaves the age out.
+    @Test func bothCardsSayWhatIsLeftOutAndNotHowOldFreshNumbersAre() {
         let lines = PoolNotes.lines(summary(read: 3, unread: 2, oldest: at(-3)), window: .weekly, now: now)
-        #expect(lines == ["As of 3 min ago", "2 accounts can't be read right now"])
-        #expect(PoolNotes.lines(summary(read: 3, unread: 1, oldest: at(-0.2)), window: .session, now: now) == ["As of 12 s ago", "1 account can't be read right now"])
+        #expect(lines == ["2 accounts can't be read right now"])
+        #expect(PoolNotes.lines(summary(read: 3, unread: 1, oldest: at(-0.2)), window: .session, now: now) == ["1 account can't be read right now"])
+    }
+
+    /// Past the menu bar's own threshold the age comes back, ahead of what's left out.
+    @Test func aStaleReadingSaysHowOldTheNumbersAre() {
+        #expect(PoolNotes.lines(summary(read: 3, oldest: at(-11)), window: .weekly, now: now) == ["As of 11 min ago"])
+        #expect(PoolNotes.lines(summary(read: 3, unread: 1, oldest: at(-11)), window: .session, now: now) == ["As of 11 min ago", "1 account can't be read right now"])
+        #expect(PoolNotes.lines(summary(read: 3, oldest: now - MenuBarItem.staleAfter), window: .weekly, now: now).isEmpty)
+        #expect(PoolNotes.lines(summary(read: 3, oldest: now - MenuBarItem.staleAfter - 1), window: .weekly, now: now) == ["As of 10 min ago"])
     }
 }
 

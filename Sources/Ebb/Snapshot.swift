@@ -29,7 +29,52 @@ enum Snapshot {
             if let data = png(of: panel, scheme: scheme) {
                 try? data.write(to: directory.appending(path: "\(prefix)-\(appearance)-contrast.png"))
             }
+            for (name, material) in [("menu", NSVisualEffectView.Material.menu), ("popover", .popover)] {
+                if let data = png(of: PoolPanel(store: store, connection: connection, showsAccounts: false), scheme: scheme, material: material) {
+                    try? data.write(to: directory.appending(path: "\(prefix)-\(appearance)-\(name).png"))
+                }
+            }
         }
+    }
+
+    /// The collapsed panel on a menu bar window's material over a saturated red, the wallpaper
+    /// that made the meters' segments blur together. The material tints the vibrant colours here
+    /// as it does on screen, but the window server's blending doesn't reach an offscreen window,
+    /// so vibrant fills and text come out dimmer than they would over a bright desktop.
+    private static func png(of panel: some View, scheme: ColorScheme, material materialKind: NSVisualEffectView.Material) -> Data? {
+        let host = NSHostingView(rootView: panel.environment(\.colorScheme, scheme).transaction { $0.disablesAnimations = true })
+        let window = NSWindow(contentRect: NSRect(x: -10_000, y: -10_000, width: 300, height: 600), styleMask: .borderless, backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        window.appearance = NSAppearance(named: scheme == .dark ? .darkAqua : .aqua)
+        let root = NSView(frame: window.contentView?.bounds ?? .zero)
+        root.wantsLayer = true
+        root.layer?.backgroundColor = CGColor(srgbRed: 0.85, green: 0.1, blue: 0.1, alpha: 1)
+        let material = NSVisualEffectView(frame: root.bounds)
+        material.material = materialKind
+        material.state = .active
+        material.blendingMode = .withinWindow
+        material.autoresizingMask = [.width, .height]
+        host.autoresizingMask = [.width, .height]
+        material.addSubview(host)
+        root.addSubview(material)
+        window.contentView = root
+        settle(host)
+        let size = host.fittingSize
+        window.setContentSize(size)
+        material.frame = NSRect(origin: .zero, size: size)
+        host.frame = material.bounds
+        settle(host)
+
+        let bounds = root.bounds
+        guard let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: Int(bounds.width * 2), pixelsHigh: Int(bounds.height * 2),
+            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+            colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
+        ) else { return nil }
+        rep.size = bounds.size
+        root.cacheDisplay(in: bounds, to: rep)
+        window.close()
+        return rep.representation(using: .png, properties: [:])
     }
 
     /// The hover card of each window that has one, as the panel would show it.

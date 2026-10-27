@@ -182,18 +182,7 @@ struct PoolPanel: View {
 
     private var footer: some View {
         HStack(spacing: 6) {
-            Button {
-                store.refreshNow()
-            } label: {
-                Image(systemName: "arrow.clockwise")
-                    .symbolEffect(.rotate.byLayer, options: .repeat(.continuous), isActive: store.isRefreshing && !reduceMotion)
-                    .symbolEffect(.pulse, options: .repeat(.continuous), isActive: store.isRefreshing && reduceMotion)
-                    .frame(width: 22, height: 22)
-                    .contentShape(.rect)
-            }
-            .buttonStyle(.borderless)
-            .help("Refresh")
-            .accessibilityLabel("Refresh")
+            RefreshButton(store: store)
 
             if summary?.isPartial == true {
                 Label("Partial", systemImage: "exclamationmark.circle")
@@ -228,6 +217,110 @@ struct PoolPanel: View {
             .accessibilityLabel("More")
         }
         .foregroundStyle(.secondary)
+    }
+}
+
+/// The footer's refresh arrow. A tap starts the symbol's continuous rotation, which runs for at
+/// least a turn and as long as the refresh does, then settles on its own; a refresh that got
+/// through swaps in a checkmark for a second, one that got nothing shakes the arrow. Under
+/// Reduce Motion the arrow pulses instead of turning, the checkmark cross-fades, and the
+/// shake is a blink. The panel closing cuts all of it short.
+private struct RefreshButton: View {
+    let store: PoolStore
+
+    @State private var isSpinning = false
+    @State private var showsCheckmark = false
+    @State private var isBlinking = false
+    @State private var shakes = 0
+    @State private var spunAt = Date.distantPast
+    @State private var ending: Task<Void, Never>?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// A tap shows at least this much of the turn, even when the proxy answers at once.
+    private static let shortestSpin: Duration = .milliseconds(800)
+    /// Lets the rotation's outro settle before the arrow becomes a checkmark or shakes.
+    private static let settle: Duration = .milliseconds(300)
+    private static let checkmarkHold: Duration = .seconds(1)
+
+    var body: some View {
+        Button(action: tap) {
+            Image(systemName: showsCheckmark ? "checkmark" : "arrow.clockwise")
+                .contentTransition(reduceMotion ? .opacity : .symbolEffect(.replace))
+                .symbolEffect(.rotate.byLayer, options: .repeat(.continuous), isActive: isSpinning && !reduceMotion)
+                .symbolEffect(.pulse, options: .repeat(.continuous), isActive: isSpinning && reduceMotion)
+                .symbolEffect(.wiggle.left, value: reduceMotion ? 0 : shakes)
+                .opacity(isBlinking ? 0.25 : 1)
+                .frame(width: 22, height: 22)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.borderless)
+        .help("Refresh")
+        .accessibilityLabel("Refresh")
+        // A refresh the setup steps start spins the arrow too.
+        .onChange(of: store.isRefreshing) { _, inFlight in
+            if inFlight { begin() }
+        }
+        .onChange(of: store.lastRefresh) { _, outcome in
+            if let outcome { end(failed: outcome.failed) }
+        }
+        .onDisappear(perform: reset)
+    }
+
+    /// A second tap mid-flight starts nothing: the store refuses it, and the arrow is already turning.
+    private func tap() {
+        store.refreshNow()
+        if store.isRefreshing { begin() }
+    }
+
+    private func begin() {
+        ending?.cancel()
+        withAnimation(.default) { showsCheckmark = false }
+        guard !isSpinning else { return }
+        spunAt = .now
+        isSpinning = true
+    }
+
+    /// Only for a refresh this button is showing: one that ended while the panel was closed has
+    /// nothing to finish. A sleep that ran out just as `reset()` cancelled the task resumes
+    /// normally, so each step checks the cancellation itself.
+    private func end(failed: Bool) {
+        guard isSpinning else { return }
+        ending?.cancel()
+        ending = Task {
+            let remaining = Self.shortestSpin - .seconds(Date.now.timeIntervalSince(spunAt))
+            guard (try? await Task.sleep(for: max(remaining, .zero))) != nil, !Task.isCancelled else { return }
+            isSpinning = false
+            guard (try? await Task.sleep(for: Self.settle)) != nil, !Task.isCancelled else { return }
+            if failed {
+                if reduceMotion { await blink() } else { shakes += 1 }
+                return
+            }
+            withAnimation(.default) { showsCheckmark = true }
+            guard (try? await Task.sleep(for: Self.checkmarkHold)) != nil, !Task.isCancelled else { return }
+            withAnimation(.default) { showsCheckmark = false }
+        }
+    }
+
+    /// Two dips in place of the shake.
+    private func blink() async {
+        for _ in 0..<2 {
+            withAnimation(.easeInOut(duration: 0.12)) { isBlinking = true }
+            guard (try? await Task.sleep(for: .milliseconds(140))) != nil, !Task.isCancelled else { return }
+            withAnimation(.easeInOut(duration: 0.12)) { isBlinking = false }
+            guard (try? await Task.sleep(for: .milliseconds(140))) != nil, !Task.isCancelled else { return }
+        }
+    }
+
+    private func reset() {
+        ending?.cancel()
+        ending = nil
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            isSpinning = false
+            showsCheckmark = false
+            isBlinking = false
+        }
     }
 }
 
@@ -379,9 +472,13 @@ private struct WindowColumn: View {
     var budget: WeeklyBudget?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.self) private var environment
 
     var body: some View {
         let level = PoolLevel(freePercent)
+        // Resolved, not `.primary` itself: a `.primary` fill blends into the panel's material and
+        // comes out grey beside the number, which Text draws as the solid label colour.
+        let tint = level.warningTint ?? Color(Color.primary.resolve(in: environment))
         VStack(alignment: .leading, spacing: 0) {
             // One element for the title, the number and the meter, so VoiceOver reads the share once.
             VStack(alignment: .leading, spacing: 0) {
@@ -394,11 +491,11 @@ private struct WindowColumn: View {
                         .monospacedDigit()
                         .contentTransition(reduceMotion ? .identity : .numericText(value: Double(level.percent)))
                         .foregroundStyle(level.warningTint ?? .primary)
-                    Text("free")
+                    Text("left")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
-                Meter(free: freePercent, comingBack: Double(line?.points ?? 0), locked: lockedPercent, tint: level.warningTint ?? .primary)
+                Meter(free: freePercent, comingBack: Double(line?.points ?? 0), locked: lockedPercent, tint: tint)
                     .frame(height: 6)
                     .padding(.top, 5)
             }
@@ -490,6 +587,7 @@ private struct GainLabel: View {
     @State private var isHovering = false
     @State private var showsBreakdown = false
     @State private var pendingOpen: Task<Void, Never>?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Shown only when there's nothing else to say under the meter.
     var inlineNote: String?
@@ -499,9 +597,20 @@ private struct GainLabel: View {
         forecast.flatMap { PaceText.inline($0, window: window, now: now) }
     }
 
+    /// The run-out in words, since VoiceOver would read the line's "~" and "<" as symbols.
+    private var spokenRunOut: String? {
+        forecast.flatMap { PaceText.spoken($0, window: window, now: now) }
+    }
+
     private var isUrgent: Bool {
         guard window == .session, case let .runsOut(_, within) = forecast?.outlook else { return false }
         return within.lowerBound < Self.urgentRunOut
+    }
+
+    /// What the line's digits count, so a refresh rolls them the right way: the run-out's time, else the gain.
+    private var number: Double {
+        if case let .runsOut(time, _) = forecast?.outlook { return time }
+        return Double(line?.points ?? 0)
     }
 
     var body: some View {
@@ -509,6 +618,9 @@ private struct GainLabel: View {
             Text(text)
                 .font(.callout)
                 .monospacedDigit()
+                // A refresh rolls the digits the way the big number's roll.
+                .contentTransition(reduceMotion ? .identity : .numericText(value: number))
+                .animation(reduceMotion ? nil : .smooth, value: text)
                 .foregroundStyle(isUrgent ? AnyShapeStyle(.orange) : AnyShapeStyle(.secondary))
                 .underline(isHovering, pattern: .dot, color: .secondary)
                 .lineLimit(1)
@@ -523,7 +635,7 @@ private struct GainLabel: View {
                 }
                 // The hover card's content, without hovering: read as the value, or opened by name.
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel(text)
+                .accessibilityLabel(spokenRunOut ?? text)
                 .accessibilityValue(details)
                 .accessibilityAction(named: showsBreakdown ? Text("Hide Details") : Text("Show Details")) { showsBreakdown.toggle() }
         } else {
@@ -583,7 +695,7 @@ struct GainBreakdown: View {
     let forecast: Pace.Forecast?
     /// A daily share that lasts until the capped accounts reset; weekly only, see `WeeklyBudget`.
     var budget: WeeklyBudget?
-    /// How old the numbers are and what's left out of them; see `PoolNotes`.
+    /// What's left out of the numbers, and how old they are once that's stale; see `PoolNotes`.
     var notes: [String] = []
     let now: Date
 
@@ -977,7 +1089,7 @@ private struct MiniMeter: View {
                         }
                     }
                     .frame(height: 4)
-                    .help(String(localized: "\(window.title(short)): \(level.percent)% free"))
+                    .help(String(localized: "\(window.title(short)): \(level.percent)% left"))
                     .animation(reduceMotion ? nil : .smooth, value: free)
             } else if isUncapped {
                 Text(verbatim: "∞")

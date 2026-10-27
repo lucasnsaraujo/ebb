@@ -39,10 +39,10 @@ public struct PoolAnswer: Sendable, Equatable {
         self.now = now
     }
 
-    /// "Claude: 88% of the 5-hour pool and 45% of the weekly pool are free. Next refill: +12% of the 5-hour pool at 8:05 PM."
+    /// "Claude: 88% of the 5-hour pool and 45% of the weekly pool are left. Next refill: +12% of the 5-hour pool at 8:05 PM."
     public func sentence(timeZone: TimeZone = .current, locale: Locale = .autoupdatingCurrent) -> String {
         var text = Localization.text(
-            "\(provider): \(shortWindowFree)% of the \(poolName(.session, locale: locale)) and \(weeklyFree)% of the \(poolName(.weekly, locale: locale)) are free.",
+            "\(provider): \(shortWindowFree)% of the \(poolName(.session, locale: locale)) and \(weeklyFree)% of the \(poolName(.weekly, locale: locale)) are left.",
             locale: locale
         )
         if let nextRefill {

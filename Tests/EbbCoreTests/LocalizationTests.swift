@@ -62,15 +62,31 @@ private func summary(read: Int, weeklyLimited: Int = 0, unread: Int = 0) -> Pool
         let single = Pace.Forecast(outlook: .runsOut(in: 130 * 60), basis: 45 * 60)
         let soon = Pace.Forecast(outlook: .runsOut(in: 5 * 60), basis: 45 * 60)
         let range = Pace.Forecast(outlook: .runsOut(in: 80 * 60, within: (60 * 60)...(110 * 60)), basis: 45 * 60)
-        #expect(PaceText.inline(single, window: .session, now: now, locale: english) == "About 2 h 10 min left")
+        #expect(PaceText.inline(single, window: .session, now: now, locale: english) == "~2 h 10 min")
         #expect(PaceText.sentence(single, window: .session, short: .fiveHours, now: now, locale: english) == "About 2 h 10 min left at this pace")
         #expect(PaceText.sentence(single, window: .session, short: .fiveHours, now: now, locale: brazil) == "Cerca de 2 h 10 min restantes neste ritmo")
-        // The line under the meter has 124 pt; "Cerca de 2 h 10 min restantes" needs 171.
-        #expect(PaceText.inline(single, window: .session, now: now, locale: brazil) == "Restam ~2 h 10 min")
-        #expect(PaceText.inline(soon, window: .session, now: now, locale: brazil) == "Restam < 10 min")
-        #expect(PaceText.inline(range, window: .session, now: now, locale: brazil) == "Restam ~1 h 30 min")
+        #expect(PaceText.inline(single, window: .session, now: now, locale: brazil) == "~2 h 10 min")
+        #expect(PaceText.inline(soon, window: .session, now: now, locale: brazil) == "< 10 min")
+        #expect(PaceText.inline(range, window: .session, now: now, locale: brazil) == "~1 h 30 min")
         #expect(PaceText.sentence(range, window: .session, short: .fiveHours, now: now, locale: brazil) == "Cerca de 1 h 30 min restantes neste ritmo")
         #expect(PaceText.basis(single, window: .session, locale: brazil) == "Com base em 45 min de atividade")
+    }
+
+    /// VoiceOver gets the line in words, never the "~" or "<" the screen shows.
+    @Test func runOutLinesAreSpokenInWordsInBothLanguages() {
+        let single = Pace.Forecast(outlook: .runsOut(in: 130 * 60), basis: 45 * 60)
+        let soon = Pace.Forecast(outlook: .runsOut(in: 5 * 60), basis: 45 * 60)
+        let weekly = Pace.Forecast(outlook: .runsOut(in: 3.6 * 86400), basis: 5 * 86400)
+        #expect(PaceText.spoken(single, window: .session, now: now, locale: english) == "About 2 h 10 min left")
+        #expect(PaceText.spoken(soon, window: .session, now: now, locale: english) == "Under 10 min left")
+        #expect(PaceText.spoken(single, window: .session, now: now, locale: brazil) == "Cerca de 2 h 10 min restantes")
+        #expect(PaceText.spoken(soon, window: .session, now: now, locale: brazil) == "Menos de 10 min restantes")
+        #expect(PaceText.spoken(weekly, window: .weekly, now: now, timeZone: utc, locale: english) == "Runs out around Fri 10:00\u{202F}AM")
+        #expect(PaceText.spoken(weekly, window: .weekly, now: now, timeZone: utc, locale: brazil) == "Acaba por volta de sex. 10:00")
+        #expect(PaceText.spoken(Pace.Forecast(outlook: .lasts, basis: 45 * 60), window: .session, now: now, locale: english) == nil)
+        for text in [PaceText.spoken(single, window: .session, now: now, locale: brazil), PaceText.spoken(weekly, window: .weekly, now: now, locale: english)] {
+            #expect(text?.contains("~") == false && text?.contains("<") == false)
+        }
     }
 
     @Test func weeklyPaceUsesTheLocalesDayAndTime() {
@@ -96,10 +112,16 @@ private func summary(read: Int, weeklyLimited: Int = 0, unread: Int = 0) -> Pool
         #expect(PoolNotes.lines(summary(read: 3), window: .weekly, now: now, locale: english).isEmpty)
         var fresh = summary(read: 3)
         fresh.oldestReadingAt = now - 12
-        #expect(PoolNotes.lines(fresh, window: .weekly, now: now, locale: english) == ["As of 12 s ago"])
-        #expect(PoolNotes.lines(fresh, window: .weekly, now: now, locale: brazil) == ["Atualizado há 12 s"])
+        #expect(PoolNotes.lines(fresh, window: .weekly, now: now, locale: english).isEmpty)
+        #expect(PoolNotes.lines(fresh, window: .weekly, now: now, locale: brazil).isEmpty)
         fresh.oldestReadingAt = now - 3 * 60
-        #expect(PoolNotes.lines(fresh, window: .weekly, now: now, locale: brazil) == ["Atualizado há 3 min"])
+        #expect(PoolNotes.lines(fresh, window: .weekly, now: now, locale: brazil).isEmpty)
+        var stale = summary(read: 3)
+        stale.oldestReadingAt = now - 11 * 60
+        #expect(PoolNotes.lines(stale, window: .weekly, now: now, locale: english) == ["As of 11 min ago"])
+        #expect(PoolNotes.lines(stale, window: .weekly, now: now, locale: brazil) == ["Atualizado há 11 min"])
+        stale.oldestReadingAt = now - 2 * 3600
+        #expect(PoolNotes.lines(stale, window: .weekly, now: now, locale: brazil) == ["Atualizado há 2 h"])
     }
 }
 
@@ -145,8 +167,8 @@ private func summary(read: Int, weeklyLimited: Int = 0, unread: Int = 0) -> Pool
         )
         let status = PoolStatus(updatedAt: now, menuBarProvider: "claude", providers: [claude])
         let answer = try #require(PoolAnswer(status, provider: nil, now: now))
-        #expect(answer.sentence(timeZone: utc, locale: english) == "Claude: 88% of the 5-hour pool and 45% of the weekly pool are free. Next refill: +12% of the 5-hour pool at 8:04\u{202F}PM.")
-        #expect(answer.sentence(timeZone: utc, locale: brazil) == "Claude: 88% da cota de 5 horas e 45% da cota semanal estão livres. Próxima renovação: +12% da cota de 5 horas às 20:04.")
+        #expect(answer.sentence(timeZone: utc, locale: english) == "Claude: 88% of the 5-hour pool and 45% of the weekly pool are left. Next refill: +12% of the 5-hour pool at 8:04\u{202F}PM.")
+        #expect(answer.sentence(timeZone: utc, locale: brazil) == "Claude: restam 88% da cota de 5 horas e 45% da cota semanal. Próxima renovação: +12% da cota de 5 horas às 20:04.")
     }
 }
 

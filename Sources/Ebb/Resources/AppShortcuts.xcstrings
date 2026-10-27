@@ -49,18 +49,18 @@
         }
       }
     },
-    "How much is free in ${applicationName}" : {
+    "How much is left in ${applicationName}" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "How much is free in ${applicationName}"
+            "value" : "How much is left in ${applicationName}"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Quanto está livre no ${applicationName}"
+            "value" : "Quanto resta no ${applicationName}"
           }
         }
       }

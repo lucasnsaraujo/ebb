@@ -43,7 +43,7 @@
       }
     },
     "%@: %lld%% %@, %lld%% weekly" : {
-      "comment" : "Shortcuts: provider, short window free, short window name, weekly free",
+      "comment" : "Shortcuts: provider, short window left, short window name, weekly left",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
@@ -53,12 +53,12 @@
         }
       }
     },
-    "%@: %lld%% free" : {
+    "%@: %lld%% left" : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@: %2$lld%% livre"
+            "value" : "%1$@: %2$lld%% restante"
           }
         }
       }
@@ -718,12 +718,12 @@
         }
       }
     },
-    "How much of a provider's 5-hour (or daily) and weekly pools is free, and when capacity next comes back. Uses the numbers Ebb already has, without asking any provider." : {
+    "How much of a provider's 5-hour (or daily) and weekly pools is left, and when capacity next comes back. Uses the numbers Ebb already has, without asking any provider." : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Quanto das cotas de 5 horas (ou diária) e semanal de um provedor está livre, e quando a capacidade volta. Usa os números que o Ebb já tem, sem consultar nenhum provedor."
+            "value" : "Quanto resta das cotas de 5 horas (ou diária) e semanal de um provedor, e quando a capacidade volta. Usa os números que o Ebb já tem, sem consultar nenhum provedor."
           }
         }
       }
@@ -1483,12 +1483,12 @@
         }
       }
     },
-    "Short Window Free (%)" : {
+    "Short Window Left (%)" : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Janela Curta Livre (%)"
+            "value" : "Janela Curta Restante (%)"
           }
         }
       }
@@ -1825,12 +1825,12 @@
         }
       }
     },
-    "Weekly Free (%)" : {
+    "Weekly Left (%)" : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Semanal Livre (%)"
+            "value" : "Semanal Restante (%)"
           }
         }
       }
@@ -1908,17 +1908,6 @@
         }
       }
     },
-    "free" : {
-      "comment" : "After the big number: \"88% free\"",
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "livre"
-          }
-        }
-      }
-    },
     "in %lld h" : {
       "localizations" : {
         "pt-BR" : {
@@ -1956,6 +1945,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "em até %lld min"
+          }
+        }
+      }
+    },
+    "left" : {
+      "comment" : "After the big number: \"88% left\"",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "restante"
           }
         }
       }

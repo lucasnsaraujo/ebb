@@ -169,7 +169,7 @@ public struct AlertTracker: Codable, Sendable, Equatable {
             alerts.append(PoolAlert(
                 id: "weekly.\(pool).\(Int(now.timeIntervalSince1970))",
                 title: Localization.text("\(title) weekly back +\(points)%", locale: locale),
-                body: Localization.text("\(Int(summary.weekly.freePercent.rounded()))% of the weekly pool is free.", locale: locale)
+                body: Localization.text("\(Int(summary.weekly.freePercent.rounded()))% of the weekly pool is left.", locale: locale)
             ))
         }
         return alerts

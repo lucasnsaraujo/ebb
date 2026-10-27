@@ -8,12 +8,12 @@
 	<string>Cota diária do %@ prestes a acabar</string>
 	<key>%@ weekly back +%lld%%</key>
 	<string>%1$@: +%2$lld%% na cota semanal</string>
-	<key>%@, %lld percent free</key>
-	<string>%1$@, %2$lld por cento livre</string>
+	<key>%@, %lld percent left</key>
+	<string>%1$@, %2$lld por cento restante</string>
 	<key>%@: %@</key>
 	<string>%1$@: %2$@</string>
-	<key>%@: %lld%% of the %@ and %lld%% of the %@ are free.</key>
-	<string>%1$@: %2$lld%% da %3$@ e %4$lld%% da %5$@ estão livres.</string>
+	<key>%@: %lld%% of the %@ and %lld%% of the %@ are left.</key>
+	<string>%1$@: restam %2$lld%% da %3$@ e %4$lld%% da %5$@.</string>
 	<key>%@: %lld%% of this week's pool resets unused %@</key>
 	<string>%1$@: %2$lld%% da cota desta semana expira sem uso %3$@</string>
 	<key>%@: a %@ account is back in the pool</key>
@@ -46,10 +46,10 @@
 	<string>%1$lld de %2$lld contas prontas</string>
 	<key>%lld of %lld at weekly limit</key>
 	<string>%1$lld de %2$lld no limite semanal</string>
-	<key>%lld percent free</key>
-	<string>%lld por cento livre</string>
-	<key>%lld percent free, %lld percent coming back</key>
-	<string>%1$lld por cento livre, %2$lld por cento voltando</string>
+	<key>%lld percent left</key>
+	<string>%lld por cento restante</string>
+	<key>%lld percent left, %lld percent coming back</key>
+	<string>%1$lld por cento restante, %2$lld por cento voltando</string>
 	<key>%lld percent locked</key>
 	<string>%lld por cento bloqueado</string>
 	<key>%lld s ago</key>
@@ -58,8 +58,8 @@
 	<string>%1$lld%% bloqueado até %2$@</string>
 	<key>%lld%% locked until the weekly reset</key>
 	<string>%lld%% bloqueado até a renovação semanal</string>
-	<key>%lld%% of the weekly pool is free.</key>
-	<string>%lld%% da cota semanal está livre.</string>
+	<key>%lld%% of the weekly pool is left.</key>
+	<string>Restam %lld%% da cota semanal.</string>
 	<key>%lldd</key>
 	<string>%lldd</string>
 	<key>%lldd %lldh</key>
@@ -84,8 +84,10 @@
 	<string>cota de 5 horas</string>
 	<key>7,168 requests a week (CodexBar's Kimi notes).</key>
 	<string>7.168 solicitações por semana (notas do CodexBar sobre o Kimi).</string>
+	<key>&lt; 10 min</key>
+	<string>&lt; 10 min</string>
 	<key>About %@ left</key>
-	<string>Restam ~%@</string>
+	<string>Cerca de %@ restantes</string>
 	<key>About %@ left at this pace</key>
 	<string>Cerca de %@ restantes neste ritmo</string>
 	<key>About %lld%% a day lasts until %@</key>
@@ -176,6 +178,8 @@
 	<string>Informado em %@. As sessões podem falhar ou ficar lentas até ser resolvido.</string>
 	<key>Ring</key>
 	<string>Anel</string>
+	<key>Runs out around %@</key>
+	<string>Acaba por volta de %@</string>
 	<key>Runs out around %@ at this pace</key>
 	<string>Acaba por volta de %@ neste ritmo</string>
 	<key>Runs out ~%@</key>
@@ -189,7 +193,7 @@
 	<key>Under 10 min</key>
 	<string>Menos de 10 min</string>
 	<key>Under 10 min left</key>
-	<string>Restam &lt; 10 min</string>
+	<string>Menos de 10 min restantes</string>
 	<key>Under 10 min left at this pace</key>
 	<string>Menos de 10 min restantes neste ritmo</string>
 	<key>Use https: over plain http the management key would cross the internet in the clear.</key>
@@ -234,5 +238,7 @@
 	<string>semanal</string>
 	<key>weekly pool</key>
 	<string>cota semanal</string>
+	<key>~%@</key>
+	<string>~%@</string>
 </dict>
 </plist>

@@ -1,7 +1,7 @@
 import Foundation
 
 /// What the `ebb` command prints from the app's saved status. Numbers are worked out at `now`:
-/// resets that landed since the app wrote the file count as free. Always English: scripts and
+/// resets that landed since the app wrote the file count toward what's left. Always English: scripts and
 /// Claude Code's status line parse it.
 public enum StatusReport {
     private static let english = Locale(identifier: "en")
@@ -32,7 +32,7 @@ public enum StatusReport {
             if pool.isPartial { heading += " (partial: some accounts can't be read, so they're left out)" }
             lines.append(heading)
             for (title, window) in [(pool.shortWindow.title(locale: english), pool.session), ("Weekly", pool.weekly)] {
-                var line = "  " + title.padding(toLength: 6, withPad: " ", startingAt: 0) + "  \(whole(window.free(at: now)))% free"
+                var line = "  " + title.padding(toLength: 6, withPad: " ", startingAt: 0) + "  \(whole(window.free(at: now)))% left"
                 if let refill = window.nextRefill(at: now) {
                     line += "  +\(whole(refill.gain))% \(moment(refill.date, now: now, timeZone: timeZone, locale: locale))"
                 }
