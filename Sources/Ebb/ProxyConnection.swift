@@ -43,6 +43,7 @@ final class ProxyConnection {
     /// Shared with the store: one log for everything Copy Diagnostics reports.
     let diagnostics: DiagnosticLog
 
+    @ObservationIgnored private var isDemo = false
     @ObservationIgnored private var key: ManagementKey?
     /// A key read from the logins folder, saved only once the proxy accepts it.
     @ObservationIgnored private var unsavedKey: ManagementKey?
@@ -236,7 +237,15 @@ final class ProxyConnection {
     }
 
     func refreshRoutingStrategy() async {
+        guard !isDemo else { return }
         routingStrategy = if let endpoint { await client.routingStrategy(endpoint) } else { nil }
+    }
+
+    /// `--demo`: looks connected to a proxy on weighted round robin, with no key and no network.
+    func showDemoConnection() {
+        isDemo = true
+        keyState = .valid
+        routingStrategy = ProxyClient.weightedRoundRobin
     }
 
     /// Only ever called from the button in Settings: Ebb never changes proxy config on its own.

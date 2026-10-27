@@ -41,6 +41,8 @@ final class AppModel {
     private init() {
         if LaunchOptions.isDemo {
             store = DemoData.store(connection: connection)
+            connection.showDemoConnection()
+            visibility.showAlwaysForDemo()
             visibility.onVisibilityChange = { [store] isVisible in store.setActive(isVisible) }
             return
         }

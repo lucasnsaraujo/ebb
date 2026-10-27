@@ -50,6 +50,11 @@ final class Visibility {
         update { $0.mode = newMode }
     }
 
+    /// `--demo`: shows the item without writing the mode file.
+    func showAlwaysForDemo() {
+        update { $0.mode = .always }
+    }
+
     func setWatchedApps(_ bundleIdentifiers: [String]) {
         UserDefaults.standard.set(bundleIdentifiers, forKey: Self.watchedAppsKey)
         update {
