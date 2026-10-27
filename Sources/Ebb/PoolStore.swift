@@ -443,11 +443,10 @@ final class PoolStore {
         }
         var urgent: [UrgentLogin] = []
         for login in logins {
-            let binding = BindingWindow.of(login.planWeight, limits: login.limits, weekInWindows: PlanWeights.weekInWindows(provider: login.provider), at: now)
             let resetsAt = ResetUrgency.weeklyReset(in: login.limits)
             let urgency = ResetUrgency.factor(weeklyResetsAt: resetsAt, now: now)
             urgent.append(UrgentLogin(provider: ProviderDisplay.title(login.provider), freePercent: Pool.effectiveFree(login.limits, at: now), factor: urgency, weeklyResetsAt: resetsAt))
-            let target = ProxyWeight.target(planWeight: binding.size, freePercent: binding.freePercent, urgency: urgency)
+            let target = ProxyWeight.target(login.planWeight, limits: login.limits, provider: login.provider, at: now)
             guard ProxyWeight.needsUpdate(current: login.weight, target: target) else { continue }
             if await proxy.setWeight(target, for: login.name, endpoint) {
                 proxyFiles[login.name]?.weight = target

@@ -218,6 +218,13 @@ public enum ProxyWeight {
         max(1, Int((planWeight * freePercent * urgency).rounded()))
     }
 
+    /// A login's weight: what's left in the window that binds, times reset urgency.
+    public static func target(_ weight: PlanWeight, limits: [UsageLimit], provider: String, at now: Date) -> Int {
+        let binding = BindingWindow.of(weight, limits: limits, weekInWindows: PlanWeights.weekInWindows(provider: provider), at: now)
+        let urgency = ResetUrgency.factor(weeklyResetsAt: ResetUrgency.weeklyReset(in: limits), now: now)
+        return target(planWeight: binding.size, freePercent: binding.freePercent, urgency: urgency)
+    }
+
     /// Each login's share of new threads, in percent of the summed weights.
     public static func shares<Key: Hashable>(_ weights: [Key: Int]) -> [Key: Double] {
         let total = weights.values.reduce(0) { $0 + max($1, 0) }

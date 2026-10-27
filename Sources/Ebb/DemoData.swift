@@ -58,8 +58,7 @@ enum DemoData {
             let member = isPooled ? PoolMember(plan: plan, signals: limits.isEmpty ? nil : DatedLimits(limits: limits, date: now - 150), usage: nil) : nil
             providerLogins.append(ProviderLogin(provider: login.provider, member: member))
             if !limits.isEmpty {
-                let binding = BindingWindow.of(plan.weight, limits: limits, weekInWindows: PlanWeights.weekInWindows(provider: login.provider), at: now)
-                routing[login.email] = ProxyWeight.target(planWeight: binding.size, freePercent: binding.freePercent)
+                routing[login.email] = ProxyWeight.target(plan.weight, limits: limits, provider: login.provider, at: now)
             }
             let isClaude = login.provider == ClaudeProvider().proxyName
             var detail = AccountDetail(

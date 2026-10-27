@@ -217,6 +217,41 @@ private func listing() throws -> [ProxyAuthFile] {
     }
 }
 
+/// A login's routing weight end to end: the window that binds, then reset urgency, once.
+@Suite struct LoginTargetTests {
+    private let now = UsageLimit.parseTimestamp("2026-10-26T19:34:00+00:00")!
+
+    private func hours(_ value: Double) -> Date {
+        now.addingTimeInterval(value * 3600)
+    }
+
+    /// 10% of a Max 20x week is 1,180 against 1,200 left in its 5-hour window, and with the week
+    /// resetting in 12 hours urgency is ×1.75: 2,065.
+    @Test func aClaudeLoginWhoseWeekBindsNearItsResetGetsUrgencyOnce() {
+        let limits = [
+            UsageLimit(kind: .session, usedPercent: 40, resetsAt: hours(2)),
+            UsageLimit(kind: .weeklyAll, usedPercent: 90, resetsAt: hours(12)),
+        ]
+        #expect(ProxyWeight.target(PlanWeight(session: 20, weekly: 7), limits: limits, provider: "claude", at: now) == 2065)
+    }
+
+    @Test func aWeeklyOnlyLoginIsWeighedByItsWeek() {
+        let weeklyOnly = [UsageLimit(kind: .weeklyAll, usedPercent: 70, resetsAt: hours(24))]
+        #expect(ProxyWeight.target(PlanWeight(20), limits: weeklyOnly, provider: "codex", at: now) == 900)
+    }
+
+    /// No weekly window means no weekly reset to hurry toward.
+    @Test func aFiveHourOnlyLoginGetsNoUrgency() {
+        let fiveHourOnly = [UsageLimit(kind: .session, usedPercent: 60, resetsAt: hours(1))]
+        #expect(ProxyWeight.target(PlanWeight(session: 5, weekly: 3.5), limits: fiveHourOnly, provider: "claude", at: now) == 200)
+    }
+
+    @Test func aSpentLoginKeepsTheMinimalWeight() {
+        let spent = [UsageLimit(kind: .session, usedPercent: 0, resetsAt: hours(1)), UsageLimit(kind: .weeklyAll, usedPercent: 100, resetsAt: hours(1))]
+        #expect(ProxyWeight.target(PlanWeight(session: 20, weekly: 7), limits: spent, provider: "claude", at: now) == 1)
+    }
+}
+
 @Suite struct ResetUrgencyTests {
     private let now = UsageLimit.parseTimestamp("2026-10-26T19:34:00+00:00")!
 
