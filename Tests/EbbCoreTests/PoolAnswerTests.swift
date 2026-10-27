@@ -60,11 +60,11 @@ private let status = PoolStatus(
 
     @Test func saysBothWindowsApartInOneSentence() throws {
         let answer = try #require(PoolAnswer(status, provider: "claude", now: at(1)))
-        #expect(answer.sentence(timeZone: utc, locale: english) == "Claude: 88% of the 5-hour pool and 45% of the weekly pool are free. Next refill: +12% of the 5-hour pool at 8:05\u{202F}PM.")
+        #expect(answer.sentence(timeZone: utc, locale: english) == "Claude: 88% of the 5-hour pool and 45% of the weekly pool are left. Next refill: +12% of the 5-hour pool at 8:05\u{202F}PM.")
         let codex = try #require(PoolAnswer(status, provider: "codex", now: at(1)))
-        #expect(codex.sentence(timeZone: utc, locale: english) == "Codex: 15% of the 5-hour pool and 63% of the weekly pool are free. Next refill: +20% of the weekly pool on Tue 5:34\u{202F}AM.")
+        #expect(codex.sentence(timeZone: utc, locale: english) == "Codex: 15% of the 5-hour pool and 63% of the weekly pool are left. Next refill: +20% of the weekly pool on Tue 5:34\u{202F}AM.")
         let devin = try #require(PoolAnswer(status, provider: "devin", now: at(1)))
-        #expect(devin.sentence(timeZone: utc, locale: english).hasPrefix("Devin: 70% of the daily pool and 40% of the weekly pool are free."))
+        #expect(devin.sentence(timeZone: utc, locale: english).hasPrefix("Devin: 70% of the daily pool and 40% of the weekly pool are left."))
     }
 
     @Test func oldNumbersSaySo() throws {

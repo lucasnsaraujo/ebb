@@ -140,7 +140,7 @@ private struct AlertRun {
 
         let landed = run.alerts(weeklyFree: 99)
         #expect(landed.map(\.title) == ["Claude weekly back +40%"])
-        #expect(landed.first?.body == "99% of the weekly pool is free.")
+        #expect(landed.first?.body == "99% of the weekly pool is left.")
         run.tick(30)
         #expect(run.alerts(weeklyFree: 99).isEmpty)
     }

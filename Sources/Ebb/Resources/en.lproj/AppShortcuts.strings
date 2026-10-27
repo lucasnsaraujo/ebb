@@ -8,8 +8,8 @@
 	<string>Get ${provider} pool status in ${applicationName}</string>
 	<key>Get pool status in ${applicationName}</key>
 	<string>Get pool status in ${applicationName}</string>
-	<key>How much is free in ${applicationName}</key>
-	<string>How much is free in ${applicationName}</string>
+	<key>How much is left in ${applicationName}</key>
+	<string>How much is left in ${applicationName}</string>
 	<key>Open ${applicationName}</key>
 	<string>Open ${applicationName}</string>
 	<key>Show ${applicationName}</key>

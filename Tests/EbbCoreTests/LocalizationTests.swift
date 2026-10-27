@@ -151,8 +151,8 @@ private func summary(read: Int, weeklyLimited: Int = 0, unread: Int = 0) -> Pool
         )
         let status = PoolStatus(updatedAt: now, menuBarProvider: "claude", providers: [claude])
         let answer = try #require(PoolAnswer(status, provider: nil, now: now))
-        #expect(answer.sentence(timeZone: utc, locale: english) == "Claude: 88% of the 5-hour pool and 45% of the weekly pool are free. Next refill: +12% of the 5-hour pool at 8:04\u{202F}PM.")
-        #expect(answer.sentence(timeZone: utc, locale: brazil) == "Claude: 88% da cota de 5 horas e 45% da cota semanal estão livres. Próxima renovação: +12% da cota de 5 horas às 20:04.")
+        #expect(answer.sentence(timeZone: utc, locale: english) == "Claude: 88% of the 5-hour pool and 45% of the weekly pool are left. Next refill: +12% of the 5-hour pool at 8:04\u{202F}PM.")
+        #expect(answer.sentence(timeZone: utc, locale: brazil) == "Claude: restam 88% da cota de 5 horas e 45% da cota semanal. Próxima renovação: +12% da cota de 5 horas às 20:04.")
     }
 }
 

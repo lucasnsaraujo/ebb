@@ -18,11 +18,11 @@ ebb --uninstall-data [--yes]
 
 ```text
 Claude (menu bar)
-  5-hour  88% free  +12% at 20:05
-  Weekly  45% free  +30% Tue 22:00
+  5-hour  88% left  +12% at 20:05
+  Weekly  45% left  +30% Tue 22:00
 Codex
-  5-hour  15% free
-  Weekly  63% free
+  5-hour  15% left
+  Weekly  63% left
 Updated 1m ago.
 ```
 
@@ -30,7 +30,7 @@ The words are always English; the clock follows your Mac's language and 12- or 2
 
 `ebb statusline` prints one line, such as `5h 88% · W 45%`. When the pool's newest reading is more than 10 minutes old, the same rule that dims the menu bar item, it adds the age: `5h 88% · W 45% · 25m old`, or `· stale` when there's no reading at all (the proxy isn't answering). Readings go old when the proxy stops answering, when Ebb quits, or when its menu bar item is hidden.
 
-Both work the numbers out at the moment you run them, so a reset that landed after Ebb saved the file already counts as free.
+Both work the numbers out at the moment you run them, so a reset that landed after Ebb saved the file already counts toward what's left.
 
 ## Removing Ebb's data
 

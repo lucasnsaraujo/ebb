@@ -77,14 +77,14 @@ private let pools = PoolStatus(
         status.providers[2].isPartial = true
         #expect(StatusReport.text(status, now: at(1), timeZone: utc, locale: english) == """
         Claude
-          5-hour  88% free  +12% at 8:05\u{202F}PM
-          Weekly  45% free  +30% Tue 10:00\u{202F}PM
+          5-hour  88% left  +12% at 8:05\u{202F}PM
+          Weekly  45% left  +30% Tue 10:00\u{202F}PM
         Codex (menu bar)
-          5-hour  15% free
-          Weekly  63% free
+          5-hour  15% left
+          Weekly  63% left
         Devin (partial: some accounts can't be read, so they're left out)
-          Daily   70% free
-          Weekly  40% free
+          Daily   70% left
+          Weekly  40% left
         Updated 1m ago.
         """)
     }

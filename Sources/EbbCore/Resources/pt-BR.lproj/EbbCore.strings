@@ -8,12 +8,12 @@
 	<string>Cota diária do %@ prestes a acabar</string>
 	<key>%@ weekly back +%lld%%</key>
 	<string>%1$@: +%2$lld%% na cota semanal</string>
-	<key>%@, %lld percent free</key>
-	<string>%1$@, %2$lld por cento livre</string>
+	<key>%@, %lld percent left</key>
+	<string>%1$@, %2$lld por cento restante</string>
 	<key>%@: %@</key>
 	<string>%1$@: %2$@</string>
-	<key>%@: %lld%% of the %@ and %lld%% of the %@ are free.</key>
-	<string>%1$@: %2$lld%% da %3$@ e %4$lld%% da %5$@ estão livres.</string>
+	<key>%@: %lld%% of the %@ and %lld%% of the %@ are left.</key>
+	<string>%1$@: restam %2$lld%% da %3$@ e %4$lld%% da %5$@.</string>
 	<key>%@: %lld%% of this week's pool resets unused %@</key>
 	<string>%1$@: %2$lld%% da cota desta semana expira sem uso %3$@</string>
 	<key>%@: a %@ account is back in the pool</key>
@@ -46,10 +46,10 @@
 	<string>%1$lld de %2$lld contas prontas</string>
 	<key>%lld of %lld at weekly limit</key>
 	<string>%1$lld de %2$lld no limite semanal</string>
-	<key>%lld percent free</key>
-	<string>%lld por cento livre</string>
-	<key>%lld percent free, %lld percent coming back</key>
-	<string>%1$lld por cento livre, %2$lld por cento voltando</string>
+	<key>%lld percent left</key>
+	<string>%lld por cento restante</string>
+	<key>%lld percent left, %lld percent coming back</key>
+	<string>%1$lld por cento restante, %2$lld por cento voltando</string>
 	<key>%lld percent locked</key>
 	<string>%lld por cento bloqueado</string>
 	<key>%lld s ago</key>
@@ -58,8 +58,8 @@
 	<string>%1$lld%% bloqueado até %2$@</string>
 	<key>%lld%% locked until the weekly reset</key>
 	<string>%lld%% bloqueado até a renovação semanal</string>
-	<key>%lld%% of the weekly pool is free.</key>
-	<string>%lld%% da cota semanal está livre.</string>
+	<key>%lld%% of the weekly pool is left.</key>
+	<string>Restam %lld%% da cota semanal.</string>
 	<key>%lldd</key>
 	<string>%lldd</string>
 	<key>%lldd %lldh</key>

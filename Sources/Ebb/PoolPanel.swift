@@ -491,7 +491,7 @@ private struct WindowColumn: View {
                         .monospacedDigit()
                         .contentTransition(reduceMotion ? .identity : .numericText(value: Double(level.percent)))
                         .foregroundStyle(level.warningTint ?? .primary)
-                    Text("free")
+                    Text("left")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
@@ -1084,7 +1084,7 @@ private struct MiniMeter: View {
                         }
                     }
                     .frame(height: 4)
-                    .help(String(localized: "\(window.title(short)): \(level.percent)% free"))
+                    .help(String(localized: "\(window.title(short)): \(level.percent)% left"))
                     .animation(reduceMotion ? nil : .smooth, value: free)
             } else if isUncapped {
                 Text(verbatim: "∞")

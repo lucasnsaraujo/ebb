@@ -12,8 +12,8 @@
 	<string>%1$@ · API de uso · %2$@</string>
 	<key>%@: %lld%% %@, %lld%% weekly</key>
 	<string>%1$@: %2$lld%% %3$@, %4$lld%% semanal</string>
-	<key>%@: %lld%% free</key>
-	<string>%1$@: %2$lld%% livre</string>
+	<key>%@: %lld%% left</key>
+	<string>%1$@: %2$lld%% restante</string>
 	<key>%lld h ago</key>
 	<string>há %lld h</string>
 	<key>%lld min ago</key>
@@ -144,8 +144,8 @@
 	<string>Ocultar Detalhes</string>
 	<key>Hide accounts</key>
 	<string>Ocultar contas</string>
-	<key>How much of a provider's 5-hour (or daily) and weekly pools is free, and when capacity next comes back. Uses the numbers Ebb already has, without asking any provider.</key>
-	<string>Quanto das cotas de 5 horas (ou diária) e semanal de um provedor está livre, e quando a capacidade volta. Usa os números que o Ebb já tem, sem consultar nenhum provedor.</string>
+	<key>How much of a provider's 5-hour (or daily) and weekly pools is left, and when capacity next comes back. Uses the numbers Ebb already has, without asking any provider.</key>
+	<string>Quanto resta das cotas de 5 horas (ou diária) e semanal de um provedor, e quando a capacidade volta. Usa os números que o Ebb já tem, sem consultar nenhum provedor.</string>
 	<key>If your shell can't find ebb, add ~/.local/bin to your PATH.</key>
 	<string>Se o shell não encontrar o ebb, adicione ~/.local/bin ao PATH.</string>
 	<key>Install CLIProxyAPI</key>
@@ -296,8 +296,8 @@
 	<string>Parcela das novas conversas que o proxy envia a cada conta</string>
 	<key>Short Window</key>
 	<string>Janela Curta</string>
-	<key>Short Window Free (%)</key>
-	<string>Janela Curta Livre (%)</string>
+	<key>Short Window Left (%)</key>
+	<string>Janela Curta Restante (%)</string>
 	<key>Show Config File</key>
 	<string>Mostrar Arquivo de Configuração</string>
 	<key>Show Details</key>
@@ -364,8 +364,8 @@
 	<string>Sem.</string>
 	<key>Weekly</key>
 	<string>Semanal</string>
-	<key>Weekly Free (%)</key>
-	<string>Semanal Livre (%)</string>
+	<key>Weekly Left (%)</key>
+	<string>Semanal Restante (%)</string>
 	<key>Weights only take effect with weighted round robin. The proxy uses %@ now.</key>
 	<string>Os pesos só valem com round robin ponderado. O proxy usa %@ agora.</string>
 	<key>What a login has left × reset urgency. What's left is the rest of its 5-hour window, or of its week when that's less, both counted in 5-hour windows: a Max 5x week holds about 12 of its windows, a Max 20x week about 6. Other providers publish no such count, so there the lower of the two shares counts. Weekly capacity a login hasn't used by its reset is lost, so in the last two days before that reset its weight rises steadily, up to double. The weight changes only when it moves by more than 10%.</key>
@@ -376,8 +376,6 @@
 	<string>Por Que Este Peso</string>
 	<key>Working; this provider reports no usage windows</key>
 	<string>Funcionando; este provedor não informa janelas de uso</string>
-	<key>free</key>
-	<string>livre</string>
 	<key>in %lld h</key>
 	<string>em %lld h</string>
 	<key>in %lld min</key>
@@ -386,6 +384,8 @@
 	<string>em até %lld h</string>
 	<key>in next %lld min</key>
 	<string>em até %lld min</string>
+	<key>left</key>
+	<string>restante</string>
 	<key>the status page</key>
 	<string>a página de status</string>
 	<key>weekly</key>

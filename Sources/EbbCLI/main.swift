@@ -6,7 +6,7 @@ import Foundation
 
 let usage = """
 Usage:
-  ebb status [--json] [--provider NAME]   Each pool's 5-hour (or daily) and weekly free share
+  ebb status [--json] [--provider NAME]   What's left of each pool's 5-hour (or daily) and weekly limit
   ebb statusline [--provider NAME]        One line, such as "5h 88% · W 45%"
   ebb --uninstall-data [--yes]            Remove Ebb's settings, caches, key and command link; asks first
 

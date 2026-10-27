@@ -281,9 +281,9 @@ public struct MenuBarItem: Sendable, Equatable {
         isStale = pool.lastReadAt.map { now.timeIntervalSince($0) > Self.staleAfter } ?? true
         if isStale { parts = parts.map(\.untinted) }
 
-        // "Ebb, 5-hour, 88 percent free": the window the Limit setting picks, or both for the two-window styles.
+        // "Ebb, 5-hour, 88 percent left": the window the Limit setting picks, or both for the two-window styles.
         let spoken = style.showsBothWindows ? windows : [shown]
-        var pieces = ["Ebb"] + spoken.map { Localization.text("\($0.spokenTitle(locale: locale)), \($0.percent) percent free", locale: locale) }
+        var pieces = ["Ebb"] + spoken.map { Localization.text("\($0.spokenTitle(locale: locale)), \($0.percent) percent left", locale: locale) }
         if style == .refillTime || shown.percent == 0, !style.showsBothWindows, let date = shown.refillsAt {
             pieces.append(Localization.text("more in \(RefillText.until(date, now: now, locale: locale))", locale: locale))
         }
