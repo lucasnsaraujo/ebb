@@ -121,7 +121,7 @@ private func runOut(_ forecast: Pace.Forecast?) -> TimeInterval? {
         }
         #expect(within.upperBound / within.lowerBound >= Pace.bracketRatio)
         #expect(within.contains(time))
-        #expect(PaceText.inline(forecast, window: .session, now: run.now) == "About 3 h 30 min left")
+        #expect(PaceText.inline(forecast, window: .session, now: run.now) == "~3 h 30 min")
     }
 
     @Test func useUnderOnePoolPointIsBelowTheEvidenceFloor() {
@@ -348,7 +348,7 @@ private func runOut(_ forecast: Pace.Forecast?) -> TimeInterval? {
     @Test func disagreeingPacesShowOneCoarserEstimate() {
         let now = ledgerStart
         let forecast = Pace.Forecast(outlook: .runsOut(in: 3.1 * 3600, within: (2.3 * 3600)...(5 * 3600)), basis: 2700)
-        #expect(PaceText.inline(forecast, window: .session, now: now) == "About 3 h left")
+        #expect(PaceText.inline(forecast, window: .session, now: now) == "~3 h")
         #expect(PaceText.sentence(forecast, window: .session, short: .fiveHours, now: now) == "About 3 h left at this pace")
     }
 
@@ -357,8 +357,8 @@ private func runOut(_ forecast: Pace.Forecast?) -> TimeInterval? {
         let now = ledgerStart
         let fortyMinutes = Pace.Forecast(outlook: .runsOut(in: 40 * 60, within: (30 * 60)...(70 * 60)), basis: 2700)
         let twelveMinutes = Pace.Forecast(outlook: .runsOut(in: 12 * 60, within: (8 * 60)...(20 * 60)), basis: 2700)
-        #expect(PaceText.inline(fortyMinutes, window: .session, now: now) == "About 45 min left")
-        #expect(PaceText.inline(twelveMinutes, window: .session, now: now) == "About 15 min left")
+        #expect(PaceText.inline(fortyMinutes, window: .session, now: now) == "~45 min")
+        #expect(PaceText.inline(twelveMinutes, window: .session, now: now) == "~15 min")
     }
 
     @Test func sessionLinesSayAboutOrUnder() {
@@ -367,11 +367,11 @@ private func runOut(_ forecast: Pace.Forecast?) -> TimeInterval? {
         let soon = Pace.Forecast(outlook: .runsOut(in: 300), basis: 2700)
         let range = Pace.Forecast(outlook: .runsOut(in: 5500, within: 4000...7000), basis: 2700)
 
-        #expect(PaceText.inline(single, window: .session, now: now) == "About 2 h 10 min left")
-        #expect(PaceText.inline(soon, window: .session, now: now) == "Under 10 min left")
-        #expect(PaceText.inline(range, window: .session, now: now) == "About 1 h 30 min left")
+        #expect(PaceText.inline(single, window: .session, now: now) == "~2 h 10 min")
+        #expect(PaceText.inline(soon, window: .session, now: now) == "< 10 min")
+        #expect(PaceText.inline(range, window: .session, now: now) == "~1 h 30 min")
         let nearAnHour = Pace.Forecast(outlook: .runsOut(in: 3500, within: 3500...7000), basis: 2700)
-        #expect(PaceText.inline(nearAnHour, window: .session, now: now) == "About 1 h left")
+        #expect(PaceText.inline(nearAnHour, window: .session, now: now) == "~1 h")
         #expect(PaceText.sentence(range, window: .session, short: .fiveHours, now: now) == "About 1 h 30 min left at this pace")
         #expect(PaceText.basis(single, window: .session) == "Based on 45 min of activity")
     }

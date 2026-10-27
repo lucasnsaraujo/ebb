@@ -597,6 +597,11 @@ private struct GainLabel: View {
         forecast.flatMap { PaceText.inline($0, window: window, now: now) }
     }
 
+    /// The run-out in words, since VoiceOver would read the line's "~" and "<" as symbols.
+    private var spokenRunOut: String? {
+        forecast.flatMap { PaceText.spoken($0, window: window, now: now) }
+    }
+
     private var isUrgent: Bool {
         guard window == .session, case let .runsOut(_, within) = forecast?.outlook else { return false }
         return within.lowerBound < Self.urgentRunOut
@@ -630,7 +635,7 @@ private struct GainLabel: View {
                 }
                 // The hover card's content, without hovering: read as the value, or opened by name.
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel(text)
+                .accessibilityLabel(spokenRunOut ?? text)
                 .accessibilityValue(details)
                 .accessibilityAction(named: showsBreakdown ? Text("Hide Details") : Text("Show Details")) { showsBreakdown.toggle() }
         } else {

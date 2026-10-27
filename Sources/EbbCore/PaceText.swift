@@ -4,15 +4,29 @@ import Foundation
 /// stands alone, since the next burst can change it.
 public enum PaceText {
     /// The line under the meter, which takes the place of the "+N%" line. Only a run-out
-    /// earns it: "About 2 h 10 min left", "Under 10 min left", "Runs out ~Thu 14:00".
+    /// earns it: "~2 h 10 min", "< 10 min", "Runs out ~Thu 14:00". The 5-hour line skips
+    /// "left", which already follows the number above it.
     public static func inline(_ forecast: Pace.Forecast, window: PoolWindow, now: Date, timeZone: TimeZone = .autoupdatingCurrent, locale: Locale = .autoupdatingCurrent) -> String? {
+        guard case let .runsOut(time, within) = forecast.outlook else { return nil }
+        switch window {
+        case .session:
+            guard let text = estimate(time, within: within, locale: locale) else { return Localization.text("< 10 min", locale: locale) }
+            return Localization.text("~\(text)", locale: locale)
+        case .weekly:
+            return Localization.text("Runs out ~\(dayAndTime(now + time, timeZone: timeZone, locale: locale))", locale: locale)
+        }
+    }
+
+    /// `inline` in words, for VoiceOver, which would read its "~" and "<" as symbols:
+    /// "About 2 h 10 min left", "Under 10 min left", "Runs out around Thu 14:00".
+    public static func spoken(_ forecast: Pace.Forecast, window: PoolWindow, now: Date, timeZone: TimeZone = .autoupdatingCurrent, locale: Locale = .autoupdatingCurrent) -> String? {
         guard case let .runsOut(time, within) = forecast.outlook else { return nil }
         switch window {
         case .session:
             guard let text = estimate(time, within: within, locale: locale) else { return Localization.text("Under 10 min left", locale: locale) }
             return Localization.text("About \(text) left", locale: locale)
         case .weekly:
-            return Localization.text("Runs out ~\(dayAndTime(now + time, timeZone: timeZone, locale: locale))", locale: locale)
+            return Localization.text("Runs out around \(dayAndTime(now + time, timeZone: timeZone, locale: locale))", locale: locale)
         }
     }
 

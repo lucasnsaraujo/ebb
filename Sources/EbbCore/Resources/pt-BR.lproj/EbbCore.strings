@@ -84,8 +84,10 @@
 	<string>cota de 5 horas</string>
 	<key>7,168 requests a week (CodexBar's Kimi notes).</key>
 	<string>7.168 solicitações por semana (notas do CodexBar sobre o Kimi).</string>
+	<key>&lt; 10 min</key>
+	<string>&lt; 10 min</string>
 	<key>About %@ left</key>
-	<string>Restam ~%@</string>
+	<string>Cerca de %@ restantes</string>
 	<key>About %@ left at this pace</key>
 	<string>Cerca de %@ restantes neste ritmo</string>
 	<key>About %lld%% a day lasts until %@</key>
@@ -176,6 +178,8 @@
 	<string>Informado em %@. As sessões podem falhar ou ficar lentas até ser resolvido.</string>
 	<key>Ring</key>
 	<string>Anel</string>
+	<key>Runs out around %@</key>
+	<string>Acaba por volta de %@</string>
 	<key>Runs out around %@ at this pace</key>
 	<string>Acaba por volta de %@ neste ritmo</string>
 	<key>Runs out ~%@</key>
@@ -189,7 +193,7 @@
 	<key>Under 10 min</key>
 	<string>Menos de 10 min</string>
 	<key>Under 10 min left</key>
-	<string>Restam &lt; 10 min</string>
+	<string>Menos de 10 min restantes</string>
 	<key>Under 10 min left at this pace</key>
 	<string>Menos de 10 min restantes neste ritmo</string>
 	<key>Use https: over plain http the management key would cross the internet in the clear.</key>
@@ -234,5 +238,7 @@
 	<string>semanal</string>
 	<key>weekly pool</key>
 	<string>cota semanal</string>
+	<key>~%@</key>
+	<string>~%@</string>
 </dict>
 </plist>

@@ -495,13 +495,24 @@
         }
       }
     },
-    "About %@ left" : {
-      "comment" : "Under the 5-hour meter, 124 pt wide",
+    "< 10 min" : {
+      "comment" : "Under the 5-hour meter, 124 pt wide; VoiceOver reads \"Under 10 min left\" instead",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Restam ~%@"
+            "value" : "< 10 min"
+          }
+        }
+      }
+    },
+    "About %@ left" : {
+      "comment" : "VoiceOver's reading of the \"~2 h 10 min\" line under the 5-hour meter",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerca de %@ restantes"
           }
         }
       }
@@ -1000,6 +1011,17 @@
         }
       }
     },
+    "Runs out around %@" : {
+      "comment" : "VoiceOver's reading of the \"Runs out ~Thu 14:00\" line under the weekly meter",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acaba por volta de %@"
+          }
+        }
+      }
+    },
     "Runs out around %@ at this pace" : {
       "localizations" : {
         "pt-BR" : {
@@ -1102,12 +1124,12 @@
       }
     },
     "Under 10 min left" : {
-      "comment" : "Under the 5-hour meter, 124 pt wide",
+      "comment" : "VoiceOver's reading of the \"< 10 min\" line under the 5-hour meter",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Restam < 10 min"
+            "value" : "Menos de 10 min restantes"
           }
         }
       }
@@ -1334,6 +1356,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "cota semanal"
+          }
+        }
+      }
+    },
+    "~%@" : {
+      "comment" : "Under the 5-hour meter, 124 pt wide: \"~2 h 10 min\"; VoiceOver reads \"About 2 h 10 min left\" instead",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "~%@"
           }
         }
       }
