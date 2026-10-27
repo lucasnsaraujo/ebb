@@ -38,13 +38,14 @@ final class FakeProxy: @unchecked Sendable {
         let listener = try NWListener(using: parameters, on: NWEndpoint.Port(rawValue: port)!)
         let listing = listing
         listener.newConnectionHandler = { [weak self] connection in
+            let proxy = self
             connection.start(queue: .global())
             connection.receive(minimumIncompleteLength: 1, maximumLength: 65_536) { data, _, _, _ in
                 let request = String(decoding: data ?? Data(), as: UTF8.self)
                 let isManagement = request.split(separator: " ").dropFirst().first?.hasPrefix("/v0/management/") == true
-                if isManagement { self?.countManagementCall() }
+                if isManagement { proxy?.countManagementCall() }
                 let isListing = request.hasPrefix("GET /v0/management/auth-files")
-                let isRefusing = self?.refusesKeys ?? false
+                let isRefusing = proxy?.refusesKeys ?? false
                 let status = isManagement && isRefusing ? 401 : isListing || request.hasPrefix("GET /v0/management/config") ? 200 : 404
                 let payload = status == 200 ? listing : Data()
                 let head = "HTTP/1.1 \(status) X\r\nContent-Type: application/json\r\nContent-Length: \(payload.count)\r\nConnection: close\r\n\r\n"
