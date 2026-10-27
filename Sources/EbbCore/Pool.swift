@@ -38,6 +38,11 @@ public struct WindowSummary: Sendable, Equatable {
     public var resets: [Restoration]
     /// The part of `freePercent` that can't be used up: accounts with no cap on this window.
     public var uncappedPercent = 0.0
+    /// The 5-hour share held by accounts whose week is spent: neither free nor used, it waits
+    /// for their weekly reset. Always 0 for the weekly window.
+    public var lockedPercent = 0.0
+    /// The soonest weekly reset among those accounts, when some of `lockedPercent` comes back.
+    public var unlocksAt: Date?
 }
 
 public struct PoolSummary: Sendable, Equatable {
@@ -93,14 +98,19 @@ public enum Pool {
             let total = totalWeight[keyPath: size]
             var free = 0.0
             var uncapped = 0.0
+            var locked = 0.0
+            var unlocksAt: Date?
             var resets: [Restoration] = []
             for account in readable {
                 let weight = account.weight[keyPath: size]
                 let limit = account.limits.first { $0.kind == kind }
                 if kind == .session, isWeekSpent(account) {
+                    locked += weight * 100
+                    let weekReset = account.limits.first { $0.kind == .weeklyAll }?.resetsAt
+                    if let weekReset { unlocksAt = min(unlocksAt ?? weekReset, weekReset) }
                     // Its 5-hour capacity comes back with the week, if that's within the window,
                     // and what its 5-hour window still holds then comes back at that window's reset.
-                    if let weekReset = account.limits.first(where: { $0.kind == .weeklyAll })?.resetsAt, isWithin(horizon, weekReset) {
+                    if let weekReset, isWithin(horizon, weekReset) {
                         let usedThen = limit?.used(at: weekReset) ?? 0
                         if usedThen < 100 {
                             resets.append(Restoration(date: weekReset, gain: weight * (100 - usedThen) / total))
@@ -118,7 +128,7 @@ public enum Pool {
                     resets.append(Restoration(date: date, gain: weight * used / total))
                 }
             }
-            return WindowSummary(freePercent: free / total, resets: merge(resets), uncappedPercent: uncapped / total)
+            return WindowSummary(freePercent: free / total, resets: merge(resets), uncappedPercent: uncapped / total, lockedPercent: locked / total, unlocksAt: unlocksAt)
         }
 
         func hasWeeklyOnly(_ account: AccountUsage) -> Bool {

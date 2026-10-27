@@ -295,6 +295,38 @@ private func todaysAccounts() throws -> [AccountUsage] {
         expectClose(resets.first?.gain, 20 * 100 / 25.0)
     }
 
+    /// Lucas's pool: three Max 5x at 55% free and a Max 20x whose week is spent reads 25% free,
+    /// and 57% of it is locked until that week resets.
+    @Test func aSpentWeeksShareOfTheFiveHourPoolIsLockedUntilItResets() throws {
+        let max5x = AccountUsage(weight: PlanWeight(session: 5, weekly: 3.5), limits: [session(45), weekly(40)])
+        let spent = AccountUsage(weight: PlanWeight(session: 20, weekly: 7), limits: [session(0), weekly(100, resetsIn: 26 * 60)])
+        let summary = try #require(Pool.summarize([max5x, max5x, max5x, spent], at: now))
+
+        expectClose(summary.session.freePercent, 15 * 55 / 35.0)
+        expectClose(summary.session.lockedPercent, 20 * 100 / 35.0)
+        #expect(summary.session.unlocksAt == at(26 * 60))
+        #expect(summary.weekly.lockedPercent == 0)
+        #expect(summary.weekly.unlocksAt == nil)
+    }
+
+    @Test func theEarliestSpentWeekSetsTheUnlock() throws {
+        let later = AccountUsage(weight: PlanWeight(5), limits: [session(0), weekly(99.5, resetsIn: 3 * 24 * 60)])
+        let sooner = AccountUsage(weight: PlanWeight(5), limits: [session(0), weekly(100, resetsIn: 24 * 60)])
+        let undated = AccountUsage(weight: PlanWeight(5), limits: [session(0), UsageLimit(kind: .weeklyAll, usedPercent: 100, resetsAt: nil)])
+        let team = AccountUsage(weight: PlanWeight(5), limits: [session(40), weekly(98)])
+        let summary = try #require(Pool.summarize([later, sooner, undated, team], at: now))
+
+        expectClose(summary.session.lockedPercent, 75)
+        #expect(summary.session.unlocksAt == at(24 * 60))
+    }
+
+    @Test func aPoolWithoutASpentWeekHasNothingLocked() throws {
+        let summary = try #require(Pool.summarize([AccountUsage(weight: PlanWeight(5), limits: [session(90), weekly(98)])], at: now))
+
+        #expect(summary.session.lockedPercent == 0)
+        #expect(summary.session.unlocksAt == nil)
+    }
+
     @Test func unreadAccountsAreCountedForTheHoverCard() throws {
         let read = AccountUsage(weight: PlanWeight(5), limits: [session(10)], readAt: at(-3))
         let older = AccountUsage(weight: PlanWeight(5), limits: [session(10)], readAt: at(-7))
