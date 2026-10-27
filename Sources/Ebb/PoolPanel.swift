@@ -361,7 +361,8 @@ private struct WindowPair: View {
                     line: GainLine.weekly(summary.weekly.resets.filter { $0.date > now }),
                     forecast: forecast?.weekly,
                     notes: PoolNotes.lines(summary, window: .weekly, now: now),
-                    now: now
+                    now: now,
+                    budget: summary.weeklyBudget
                 )
             }
         }
@@ -377,6 +378,8 @@ private struct WindowColumn: View {
     let notes: [String]
     let now: Date
     var inlineNote: String?
+    /// The weekly window's daily share; see `WeeklyBudget`.
+    var budget: WeeklyBudget?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -405,7 +408,7 @@ private struct WindowColumn: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(window.title(short))
             .accessibilityValue(AccessibilityText.meter(freePercent: level.percent, comingBackPercent: line?.points ?? 0))
-            GainLabel(window: window, short: short, line: line, forecast: forecast, notes: notes, now: now, inlineNote: inlineNote)
+            GainLabel(window: window, short: short, line: line, forecast: forecast, notes: notes, now: now, inlineNote: inlineNote, budget: budget)
                 .padding(.top, 7)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -460,6 +463,7 @@ private struct GainLabel: View {
 
     /// Shown only when there's nothing else to say under the meter.
     var inlineNote: String?
+    var budget: WeeklyBudget?
 
     private var runOut: String? {
         forecast.flatMap { PaceText.inline($0, window: window, now: now) }
@@ -482,7 +486,7 @@ private struct GainLabel: View {
                 .contentShape(.rect)
                 .onHover(perform: hover)
                 .popover(isPresented: $showsBreakdown, arrowEdge: .bottom) {
-                    GainBreakdown(window: window, short: short, line: line, forecast: forecast, notes: notes, now: now)
+                    GainBreakdown(window: window, short: short, line: line, forecast: forecast, budget: budget, notes: notes, now: now)
                 }
                 .onAppear {
                     if LaunchOptions.demo == .hover, window == .session { openSoon() }
@@ -505,12 +509,15 @@ private struct GainLabel: View {
         }
     }
 
-    /// Everything the card says, in its order: the resets, the pace and its basis, the notes.
+    /// Everything the card says, in its order: the resets, the daily share, the pace and its basis, the notes.
     private var details: String {
         var lines: [String] = []
         if let line {
             lines.append(String(localized: "\(window.title(short)) resets"))
             lines += (line.items + line.later).map { "+\($0.points)% \(window == .session ? TimeText.soon($0.date, now: now) : TimeText.later($0.date, now: now))" }
+        }
+        if let budget, let text = PaceText.budget(budget, now: now) {
+            lines.append(text)
         }
         if let forecast {
             lines.append(PaceText.sentence(forecast, window: window, short: short, now: now))
@@ -538,17 +545,20 @@ private struct GainLabel: View {
     }
 }
 
-/// The resets behind the gain line, then the pace sentence and what it rests on.
+/// The resets behind the gain line, the weekly window's daily share, then the pace sentence and what it rests on.
 struct GainBreakdown: View {
     let window: PoolWindow
     let short: ShortWindow
     let line: GainLine?
     let forecast: Pace.Forecast?
+    /// A daily share that lasts until the capped accounts reset; weekly only, see `WeeklyBudget`.
+    var budget: WeeklyBudget?
     /// How old the numbers are and what's left out of them; see `PoolNotes`.
     var notes: [String] = []
     let now: Date
 
     var body: some View {
+        let budgetLine = budget.flatMap { PaceText.budget($0, now: now) }
         VStack(alignment: .leading, spacing: 5) {
             if let line {
                 Text("\(window.title(short)) resets")
@@ -567,11 +577,17 @@ struct GainBreakdown: View {
                     .accessibilityElement(children: .combine)
                 }
             }
+            if let budgetLine {
+                Text(budgetLine)
+                    .monospacedDigit()
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, line == nil ? 0 : 6)
+            }
             if let forecast {
                 Text("Pace")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
-                    .padding(.top, line == nil ? 0 : 6)
+                    .padding(.top, line == nil && budgetLine == nil ? 0 : 6)
                     .padding(.bottom, 1)
                 Text(PaceText.sentence(forecast, window: window, short: short, now: now))
                     .fixedSize(horizontal: false, vertical: true)

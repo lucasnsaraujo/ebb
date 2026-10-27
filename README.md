@@ -65,7 +65,7 @@
 ## What it shows
 
 - **5-hour and weekly limits, in one number each.** Per provider, never added across providers: a Claude 5-hour share and a Codex one are different allowances. An account that has spent its week counts as no 5-hour capacity, since it can't serve any.
-- **When it runs out, Battery style.** "About 2 h left" for the 5-hour window, "Runs out ~Thu 14:00" for the weekly one, only when the pool is draining faster than it refills. Hovering shows the pace, including "Lasts until reset". The 5-hour pace is your recent rate while you work, idle time left out; the weekly pace is your usual rhythm over the last week.
+- **When it runs out, Battery style.** "About 2 h left" for the 5-hour window, "Runs out ~Thu 14:00" for the weekly one, only when the pool is draining faster than it refills. Hovering shows the pace, including "Lasts until reset". The 5-hour pace is your recent rate while you work, idle time left out; the weekly pace is your usual rhythm over the last week. The weekly card also gives a daily share that lasts until the next meaningful reset: "About 14% a day lasts until Tue 22:00".
 - **What comes back, and when.** A refill line under each meter, such as "+14% · in 3 h" for the weekly window, and an optional notification when weekly capacity returns ("Claude weekly back +55%").
 - **A nudge before capacity goes to waste.** A notification once per weekly reset, when a fifth or more of a pool is about to reset unused within a day: "Claude: 40% of this week's pool resets unused tomorrow 22:00".
 - **Every account in the pool.** The accounts list shows each login's 5-hour and weekly bars, plan badge and share of the pool, plus health-only logins (API keys, providers without quota data) with their status and cooldown.
@@ -75,7 +75,7 @@
 
 Ebb sets each login's routing weight in CLIProxyAPI to plan size × free share × reset urgency, so new sessions go where capacity is left and each provider's accounts drain evenly. Weekly capacity a login hasn't used by its reset is lost, so in the last two days before that reset its weight rises steadily, up to double. Weights only take effect with the proxy's weighted round robin strategy; Settings → Routing shows the strategy, switches it with one click, and turns balancing off.
 
-With a management key, Ebb also disables a login in CLIProxyAPI once its provider answers twice in a row that the plan has ended, and enables it again when the plan renews. It only touches logins it disabled itself; one you disabled by hand stays as you left it.
+With a management key, Ebb also disables a login in CLIProxyAPI once its provider answers twice in a row that the plan has ended, and enables it again when the plan renews. It only touches logins it disabled itself; one you disabled by hand stays as you left it. Each change comes with a pool alert, as does a new login the first time it counts, named by plan only: "Claude: a Max 20x account left the pool", "Codex: a new Team account joined the pool".
 
 When CLIProxyAPI still holds an account in cooldown although a fresh reading shows its quota is back, the accounts panel says so, with a Copy Fix button for the proxy's documented `reset-quota` call. Ebb never changes that state itself.
 

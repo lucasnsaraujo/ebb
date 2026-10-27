@@ -94,6 +94,88 @@
         }
       }
     },
+    "%@: a %@ account is back in the pool" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: uma conta %2$@ voltou à cota"
+          }
+        }
+      }
+    },
+    "%@: a %@ account left the pool" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: uma conta %2$@ saiu da cota"
+          }
+        }
+      }
+    },
+    "%@: a new %@ account joined the pool" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: uma nova conta %2$@ entrou na cota"
+          }
+        }
+      }
+    },
+    "%@: a new account joined the pool" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: uma nova conta entrou na cota"
+          }
+        }
+      }
+    },
+    "%@: an %@ account is back in the pool" : {
+      "comment" : "English article for a plan starting with a vowel: \"an Edu account\"",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: uma conta %2$@ voltou à cota"
+          }
+        }
+      }
+    },
+    "%@: an %@ account left the pool" : {
+      "comment" : "English article for a plan starting with a vowel: \"an Edu account\"",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: uma conta %2$@ saiu da cota"
+          }
+        }
+      }
+    },
+    "%@: an account is back in the pool" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: uma conta voltou à cota"
+          }
+        }
+      }
+    },
+    "%@: an account left the pool" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: uma conta saiu da cota"
+          }
+        }
+      }
+    },
     "%lld accounts can't be read right now" : {
       "localizations" : {
         "en" : {
@@ -432,6 +514,16 @@
         }
       }
     },
+    "About %lld%% a day lasts until %@" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerca de %1$lld%% por dia dura até %2$@"
+          }
+        }
+      }
+    },
     "Any plan" : {
       "localizations" : {
         "pt-BR" : {
@@ -744,6 +836,26 @@
         }
       }
     },
+    "Its plan ended, so Ebb disabled it in the proxy. It's enabled again if the plan renews." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O plano acabou, então o Ebb a desativou no proxy. Ela volta a ser ativada se o plano for renovado."
+          }
+        }
+      }
+    },
+    "Its plan is active again, so Ebb enabled it in the proxy." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O plano está ativo de novo, então o Ebb a reativou no proxy."
+          }
+        }
+      }
+    },
     "Last read %@ ago." : {
       "localizations" : {
         "pt-BR" : {
@@ -923,6 +1035,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "O endereço precisa de um nome de host."
+          }
+        }
+      }
+    },
+    "The pool now has %lld accounts." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "The pool now has %lld account."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "The pool now has %lld accounts."
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "A cota agora tem %lld conta."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "A cota agora tem %lld contas."
+                }
+              }
+            }
           }
         }
       }

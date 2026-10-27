@@ -1228,12 +1228,12 @@
         }
       }
     },
-    "Pool alerts: when a 5-hour pool is about to run out at the current pace, when weekly capacity comes back, and once per weekly reset when a meaningful share is about to reset unused. Provider incidents: when Claude's or OpenAI's status page reports a problem with what your pools run on." : {
+    "Pool alerts: when a 5-hour pool is about to run out at the current pace, when weekly capacity comes back, once per weekly reset when a meaningful share is about to reset unused, and when an account joins the pool, leaves it because its plan ended, or comes back. Provider incidents: when Claude's or OpenAI's status page reports a problem with what your pools run on." : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alertas de cota: quando uma cota de 5 horas está prestes a acabar no ritmo atual, quando a capacidade semanal volta e, uma vez por renovação semanal, quando uma parte relevante está prestes a expirar sem uso. Incidentes do provedor: quando a página de status da Claude ou da OpenAI informa um problema no que suas cotas dependem."
+            "value" : "Alertas de cota: quando uma cota de 5 horas está prestes a acabar no ritmo atual, quando a capacidade semanal volta, uma vez por renovação semanal quando uma parte relevante está prestes a expirar sem uso, e quando uma conta entra na cota, sai dela porque o plano acabou ou volta. Incidentes do provedor: quando a página de status da Claude ou da OpenAI informa um problema no que suas cotas dependem."
           }
         }
       }

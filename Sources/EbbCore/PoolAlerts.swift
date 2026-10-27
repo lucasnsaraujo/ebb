@@ -177,7 +177,7 @@ public struct AlertTracker: Codable, Sendable, Equatable {
 
     /// Pool points of weekly capacity that came back since the last call, across accounts.
     private mutating func weeklyReturn(pool: String, accounts: [PoolAccount], totalWeight: Double, now: Date, isClockChanged: Bool) -> Double {
-        let keys = Dictionary(accounts.map { ("\(pool)/\(Self.hashed($0.id))", $0) }) { first, _ in first }
+        let keys = Dictionary(accounts.map { ("\(pool)/\(AccountKey.hashed($0.id))", $0) }) { first, _ in first }
         for key in weeks.keys where key.hasPrefix("\(pool)/") && keys[key] == nil {
             let missed = (weeks[key]?.missedPolls ?? 0) + 1
             // An account that left starts over when it comes back, so rejoining is never a refill.
@@ -262,8 +262,11 @@ public struct AlertTracker: Codable, Sendable, Equatable {
         week.readAt = reading.readAt
         return back
     }
+}
 
-    private static func hashed(_ id: String) -> String {
+/// An account's id as the trackers save it: hashed, so no email ever lands in UserDefaults.
+enum AccountKey {
+    static func hashed(_ id: String) -> String {
         SHA256.hash(data: Data(id.utf8)).prefix(12).map { String(format: "%02x", $0) }.joined()
     }
 }

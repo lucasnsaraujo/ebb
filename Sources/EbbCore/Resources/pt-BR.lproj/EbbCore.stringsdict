@@ -50,5 +50,21 @@
 			<string>O CLIProxyAPI ainda mantém %lld contas em espera.</string>
 		</dict>
 	</dict>
+	<key>The pool now has %lld accounts.</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@value@</string>
+		<key>value</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>A cota agora tem %lld conta.</string>
+			<key>other</key>
+			<string>A cota agora tem %lld contas.</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

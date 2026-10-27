@@ -246,8 +246,8 @@
 	<string>Status da Cota</string>
 	<key>Pool alerts</key>
 	<string>Alertas de cota</string>
-	<key>Pool alerts: when a 5-hour pool is about to run out at the current pace, when weekly capacity comes back, and once per weekly reset when a meaningful share is about to reset unused. Provider incidents: when Claude's or OpenAI's status page reports a problem with what your pools run on.</key>
-	<string>Alertas de cota: quando uma cota de 5 horas está prestes a acabar no ritmo atual, quando a capacidade semanal volta e, uma vez por renovação semanal, quando uma parte relevante está prestes a expirar sem uso. Incidentes do provedor: quando a página de status da Claude ou da OpenAI informa um problema no que suas cotas dependem.</string>
+	<key>Pool alerts: when a 5-hour pool is about to run out at the current pace, when weekly capacity comes back, once per weekly reset when a meaningful share is about to reset unused, and when an account joins the pool, leaves it because its plan ended, or comes back. Provider incidents: when Claude's or OpenAI's status page reports a problem with what your pools run on.</key>
+	<string>Alertas de cota: quando uma cota de 5 horas está prestes a acabar no ritmo atual, quando a capacidade semanal volta, uma vez por renovação semanal quando uma parte relevante está prestes a expirar sem uso, e quando uma conta entra na cota, sai dela porque o plano acabou ou volta. Incidentes do provedor: quando a página de status da Claude ou da OpenAI informa um problema no que suas cotas dependem.</string>
 	<key>Prints the pools in Terminal and in Claude Code's status line, from numbers Ebb already has. Installs into /usr/local/bin if you can write to it, otherwise ~/.local/bin, so no admin password is needed.</key>
 	<string>Mostra as cotas no Terminal e na linha de status do Claude Code, a partir dos números que o Ebb já tem. Instala em /usr/local/bin se você puder gravar lá; senão em ~/.local/bin, sem precisar de senha de administrador.</string>
 	<key>Provider</key>

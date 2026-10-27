@@ -60,6 +60,8 @@ public struct PoolSummary: Sendable, Equatable {
     /// False when every read account has a weekly window and no short one (Codex plans without a
     /// 5-hour cap): the short window then counts as free but isn't a cap, so it isn't worth showing.
     public var hasShortWindow = true
+    /// A daily share that lasts until the capped accounts reset; `nil` without one.
+    public var weeklyBudget: WeeklyBudget?
 }
 
 public enum Pool {
@@ -130,7 +132,8 @@ public enum Pool {
             unreadAccounts: accounts.filter { $0 == nil }.count,
             weeklyLimitedAccounts: readable.filter(isWeekSpent).count,
             oldestReadingAt: readable.compactMap(\.readAt).min(),
-            hasShortWindow: !readable.allSatisfy(hasWeeklyOnly)
+            hasShortWindow: !readable.allSatisfy(hasWeeklyOnly),
+            weeklyBudget: WeeklyBudget.of(readable, totalWeight: totalWeight, now: now)
         )
     }
 

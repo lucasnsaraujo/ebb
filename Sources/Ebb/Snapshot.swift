@@ -40,7 +40,7 @@ enum Snapshot {
             )),
             ("weekly", GainBreakdown(
                 window: .weekly, short: short, line: GainLine.weekly(summary.weekly.resets), forecast: forecast?.weekly,
-                notes: PoolNotes.lines(summary, window: .weekly, now: now), now: now
+                budget: summary.weeklyBudget, notes: PoolNotes.lines(summary, window: .weekly, now: now), now: now
             )),
         ]
         return cards.filter { $0.1.line != nil || $0.1.forecast != nil }

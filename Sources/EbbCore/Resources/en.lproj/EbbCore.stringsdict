@@ -34,5 +34,21 @@
 			<string>CLIProxyAPI is still holding %lld accounts in cooldown.</string>
 		</dict>
 	</dict>
+	<key>The pool now has %lld accounts.</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@value@</string>
+		<key>value</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>The pool now has %lld account.</string>
+			<key>other</key>
+			<string>The pool now has %lld accounts.</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

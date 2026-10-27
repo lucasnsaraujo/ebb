@@ -112,6 +112,9 @@ final class PoolStore {
     @ObservationIgnored private var expiryNudge = UserDefaults.standard.data(forKey: PoolStore.expiryNudgeKey)
         .flatMap { try? JSONDecoder().decode(ExpiryNudge.self, from: $0) } ?? ExpiryNudge()
     private static let expiryNudgeKey = "expiryNudge"
+    @ObservationIgnored private var membership = UserDefaults.standard.data(forKey: PoolStore.membershipKey)
+        .flatMap { try? JSONDecoder().decode(MembershipTracker.self, from: $0) } ?? MembershipTracker()
+    static let membershipKey = "poolMembership"
     /// Each pool's public status while it has a problem; empty while all is well or unknown.
     private(set) var incidents: [String: ServiceHealth] = [:]
     @ObservationIgnored private var statusPageReads = StatusPageReads()
@@ -280,6 +283,10 @@ final class PoolStore {
         proxyFiles = [:]
         proxyReadAt = nil
         proxyFailure = nil
+        // Another proxy has other logins, and a Claude login goes by email here but by file name
+        // through a remote proxy: the next listing is a baseline, not a wave of joins.
+        membership = MembershipTracker()
+        saveAlertTracker()
         callStates = [:]
         callPlanStates = [:]
         callReadings = [:]
@@ -368,6 +375,7 @@ final class PoolStore {
     private func saveAlertTracker() {
         UserDefaults.standard.set(try? JSONEncoder().encode(alertTracker), forKey: Self.alertTrackerKey)
         UserDefaults.standard.set(try? JSONEncoder().encode(expiryNudge), forKey: Self.expiryNudgeKey)
+        UserDefaults.standard.set(try? JSONEncoder().encode(membership), forKey: Self.membershipKey)
     }
 
     private var delivery: AlertDelivery {
@@ -579,7 +587,8 @@ final class PoolStore {
         switch result {
         case let .success(profile, cacheData):
             plans[email] = Dated(value: profile.plan, date: .now)
-            tiers[email] = profile.tier
+            // A lapsed profile names no useful tier; the last paid one still names the retired login.
+            if profile.plan != .inactive { tiers[email] = profile.tier }
             profileStates[email]?.failures = 0
             profileStates[email]?.retryNotBefore = nil
             EbbPaths.writeCache(cacheData, to: EbbPaths.planCache(for: email))
@@ -649,12 +658,36 @@ final class PoolStore {
 
     /// Recorded only after the proxy accepts, so the list never claims a login we didn't touch.
     private func apply(_ action: Retirement.Action, toFileNamed name: String) async {
-        guard action != .keep, proxyFiles[name] != nil, let endpoint = connection.endpoint,
-              await proxy.setDisabled(action == .retire, for: name, endpoint)
-        else { return }
+        guard action != .keep, proxyFiles[name] != nil, let endpoint = connection.endpoint else { return }
+        let accepted = await proxy.setDisabled(action == .retire, for: name, endpoint)
+        if let member = rosterAccount(forFileNamed: name),
+           let alert = membership.alert(after: action, accepted: accepted, pool: member.pool, title: ProviderDisplay.title(member.pool), account: member.account, now: .now) {
+            saveAlertTracker()
+            Task { await delivery.deliver([alert]) }
+        }
+        guard accepted else { return }
         proxyFiles[name]?.isDisabled = action == .retire
         try? retiredAccounts.record(action, name: name)
         reloadAccounts()
+    }
+
+    /// A login's pool and membership id, by auth file name: the email of a Claude login read from disk.
+    private func rosterAccount(forFileNamed name: String) -> (pool: String, account: PoolRoster.Account)? {
+        if let file = proxyFiles[name], file.isReadThroughProxy(isRemote: connection.isRemote) {
+            return (file.provider, PoolRoster.Account(id: name, plan: planTitle(provider: file.provider, plan: callPlans[name] ?? file.planName)))
+        }
+        guard let account = accounts.values.first(where: { $0.name == name }) else { return nil }
+        return (ClaudeProvider().proxyName, PoolRoster.Account(id: account.email, plan: claudePlanTitle(account.email)))
+    }
+
+    /// The plan's name for a membership alert, "Max 20x" or "Team"; `nil` for one the weight table doesn't name.
+    private func planTitle(provider: String, plan: String?) -> String? {
+        guard let plan = plan?.lowercased() else { return nil }
+        return PlanWeights.defaults[provider]?.first { $0.plan == plan }?.title
+    }
+
+    private func claudePlanTitle(_ email: String) -> String? {
+        planTitle(provider: ClaudeProvider().proxyName, plan: tiers[email].flatMap(ClaudeProvider.planName(rateLimitTier:)))
     }
 
     private static func backOff(_ states: inout [String: FetchState], _ email: String, retryAfter: TimeInterval?) {
@@ -907,12 +940,15 @@ final class PoolStore {
         }
     }
 
-    /// Run-out, "weekly back" and "resets unused" alerts, each once; delivered only if the user wants them.
+    /// Run-out, "weekly back", "resets unused" and "joined the pool" alerts, each once; delivered only if the user wants them.
     private func raiseAlerts(_ pools: [String: [PoolAccount]], at now: Date) {
         // Time since boot including sleep: tells a changed clock from a sleeping Mac.
         let uptime = TimeInterval(clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW)) / 1_000_000_000
         var alerts: [PoolAlert] = []
         let nudgeBefore = expiryNudge
+        let membershipBefore = membership
+        // Only with a fresh listing: while the proxy is down, who's in the pool can't be told.
+        if proxyReadAt != nil { alerts += membership.alerts(rosters: rosters(counted: pools)) }
         for (provider, summary) in state.summaries.sorted(by: { $0.key < $1.key }) {
             alerts += alertTracker.alerts(
                 pool: provider, title: ProviderDisplay.title(provider), short: Providers.named(provider)?.shortWindow ?? .fiveHours,
@@ -923,10 +959,36 @@ final class PoolStore {
                 totalWeight: summary.totalWeight, forecast: state.forecasts[provider]?.weekly, now: now
             )
         }
-        if expiryNudge != nudgeBefore { saveAlertTracker() }
+        if expiryNudge != nudgeBefore || membership != membershipBefore { saveAlertTracker() }
         guard !alerts.isEmpty else { return }
         saveAlertTracker()
         Task { await delivery.deliver(alerts) }
+    }
+
+    /// Every pool's logins for the membership alerts: all of them, the counted ones by plan, and Ebb's retirements.
+    private func rosters(counted pools: [String: [PoolAccount]]) -> [PoolRoster] {
+        let claude = ClaudeProvider().proxyName
+        var present: [String: [String]] = [:]
+        var retiredByEbb: [String: [String]] = [:]
+        var plans: [String: [String: String]] = [:]
+        for account in accounts.values + disabledByUser {
+            present[claude, default: []].append(account.email)
+            plans[claude, default: [:]][account.email] = claudePlanTitle(account.email)
+            if isDisabled(account), retired.contains(account.name) { retiredByEbb[claude, default: []].append(account.email) }
+        }
+        for file in listedFiles where file.hasUsageWindows {
+            present[file.provider, default: []].append(file.name)
+            plans[file.provider, default: [:]][file.name] = planTitle(provider: file.provider, plan: callPlans[file.name] ?? file.planName)
+            if file.isDisabled, retired.contains(file.name) { retiredByEbb[file.provider, default: []].append(file.name) }
+        }
+        return Providers.all.map(\.proxyName).compactMap { provider in
+            guard let ids = present[provider] else { return nil }
+            return PoolRoster(
+                pool: provider, title: ProviderDisplay.title(provider), present: ids,
+                counted: (pools[provider] ?? []).map { PoolRoster.Account(id: $0.id, plan: plans[provider]?[$0.id]) },
+                retired: retiredByEbb[provider] ?? []
+            )
+        }
     }
 
     private func makeDetails(at now: Date) -> [AccountDetail] {

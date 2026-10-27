@@ -104,7 +104,7 @@ struct GeneralSettings: View {
                     if areAlertsBlocked && (sendsAlerts || sendsIncidentAlerts) {
                         Text("Notifications for Ebb are off in System Settings → Notifications.")
                     } else {
-                        Text("Pool alerts: when a 5-hour pool is about to run out at the current pace, when weekly capacity comes back, and once per weekly reset when a meaningful share is about to reset unused. Provider incidents: when Claude's or OpenAI's status page reports a problem with what your pools run on.")
+                        Text("Pool alerts: when a 5-hour pool is about to run out at the current pace, when weekly capacity comes back, once per weekly reset when a meaningful share is about to reset unused, and when an account joins the pool, leaves it because its plan ended, or comes back. Provider incidents: when Claude's or OpenAI's status page reports a problem with what your pools run on.")
                     }
                 }
                 .font(.caption)

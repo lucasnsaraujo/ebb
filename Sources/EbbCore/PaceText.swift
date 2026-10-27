@@ -37,6 +37,13 @@ public enum PaceText {
         }
     }
 
+    /// The weekly card's budget line: "About 14% a day lasts until Tue 10:00 PM". `nil` while
+    /// there's nothing to pace; see `WeeklyBudget`.
+    public static func budget(_ budget: WeeklyBudget, now: Date, timeZone: TimeZone = .autoupdatingCurrent, locale: Locale = .autoupdatingCurrent) -> String? {
+        guard let percent = budget.percentPerDay(at: now) else { return nil }
+        return Localization.text("About \(percent)% a day lasts until \(ClockText.weekdayAndTime(budget.resetsAt, locale: locale, timeZone: timeZone))", locale: locale)
+    }
+
     /// What the pace rests on: "Based on 45 min of activity", "Based on the last 5 days".
     public static func basis(_ forecast: Pace.Forecast, window: PoolWindow, locale: Locale = .autoupdatingCurrent) -> String {
         switch window {

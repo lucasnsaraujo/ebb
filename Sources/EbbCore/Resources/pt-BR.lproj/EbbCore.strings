@@ -20,6 +20,22 @@
 	<string>%1$@: %2$lld%% da %3$@ e %4$lld%% da %5$@ estão livres.</string>
 	<key>%@: %lld%% of this week's pool resets unused %@</key>
 	<string>%1$@: %2$lld%% da cota desta semana expira sem uso %3$@</string>
+	<key>%@: a %@ account is back in the pool</key>
+	<string>%1$@: uma conta %2$@ voltou à cota</string>
+	<key>%@: a %@ account left the pool</key>
+	<string>%1$@: uma conta %2$@ saiu da cota</string>
+	<key>%@: a new %@ account joined the pool</key>
+	<string>%1$@: uma nova conta %2$@ entrou na cota</string>
+	<key>%@: a new account joined the pool</key>
+	<string>%@: uma nova conta entrou na cota</string>
+	<key>%@: an %@ account is back in the pool</key>
+	<string>%1$@: uma conta %2$@ voltou à cota</string>
+	<key>%@: an %@ account left the pool</key>
+	<string>%1$@: uma conta %2$@ saiu da cota</string>
+	<key>%@: an account is back in the pool</key>
+	<string>%@: uma conta voltou à cota</string>
+	<key>%@: an account left the pool</key>
+	<string>%@: uma conta saiu da cota</string>
 	<key>%lld h</key>
 	<string>%lld h</string>
 	<key>%lld h %lld min</key>
@@ -72,6 +88,8 @@
 	<string>Restam ~%@</string>
 	<key>About %@ left at this pace</key>
 	<string>Cerca de %@ restantes neste ritmo</string>
+	<key>About %lld%% a day lasts until %@</key>
+	<string>Cerca de %1$lld%% por dia dura até %2$@</string>
 	<key>Any plan</key>
 	<string>Qualquer plano</string>
 	<key>As of %@</key>
@@ -126,6 +144,10 @@
 	<string>Só ícone</string>
 	<key>Its only account is at its weekly limit</key>
 	<string>A única conta está no limite semanal</string>
+	<key>Its plan ended, so Ebb disabled it in the proxy. It's enabled again if the plan renews.</key>
+	<string>O plano acabou, então o Ebb a desativou no proxy. Ela volta a ser ativada se o plano for renovado.</string>
+	<key>Its plan is active again, so Ebb enabled it in the proxy.</key>
+	<string>O plano está ativo de novo, então o Ebb a reativou no proxy.</string>
 	<key>Last read %@ ago.</key>
 	<string>Última leitura há %@.</string>
 	<key>Lasts through the next %lld hours at this pace</key>
