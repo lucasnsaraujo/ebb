@@ -21,6 +21,7 @@ enum DemoData {
         Login(provider: "claude", email: "work@example.com", plan: "max_20x", sessionUsed: 64, sessionResetIn: 132 * 60, weeklyUsed: 71),
         Login(provider: "claude", email: "research@example.com", plan: "max_5x", sessionUsed: 12, sessionResetIn: 41 * 60),
         Login(provider: "claude", email: "side@example.com", plan: "max_5x", sessionUsed: 30, sessionResetIn: 250 * 60),
+        Login(provider: "claude", email: "lab@example.com", plan: "max_5x", sessionUsed: 20, sessionResetIn: 70 * 60, weeklyUsed: 100, weeklyResetIn: 3 * 3600),
         Login(provider: "codex", email: "plus@example.com", plan: "plus", sessionUsed: 25, sessionResetIn: 95 * 60, weeklyUsed: 60, weeklyResetIn: 4 * 86400),
         Login(provider: "codex", email: "pro@example.com", plan: "pro", sessionUsed: 10, sessionResetIn: 200 * 60, weeklyUsed: 34, weeklyResetIn: 2 * 86400),
         Login(provider: "devin", email: "dev@example.com", plan: "pro", sessionUsed: 27, sessionResetIn: 9 * 3600, weeklyUsed: 60, weeklyResetIn: 6 * 86400),

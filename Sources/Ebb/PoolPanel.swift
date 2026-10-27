@@ -225,7 +225,9 @@ private struct WindowPair: View {
                     freePercent: summary.session.freePercent,
                     line: GainLine.session(summary.session.resets.filter { $0.date > now }),
                     forecast: forecast?.session,
-                    now: now
+                    notes: PoolNotes.lines(summary, window: .session, now: now),
+                    now: now,
+                    inlineNote: PoolNotes.inline(summary)
                 )
                 WindowColumn(
                     window: .weekly,
@@ -233,6 +235,7 @@ private struct WindowPair: View {
                     freePercent: summary.weekly.freePercent,
                     line: GainLine.weekly(summary.weekly.resets.filter { $0.date > now }),
                     forecast: forecast?.weekly,
+                    notes: PoolNotes.lines(summary, window: .weekly, now: now),
                     now: now
                 )
             }
@@ -246,7 +249,9 @@ private struct WindowColumn: View {
     let freePercent: Double
     let line: GainLine?
     let forecast: Pace.Forecast?
+    let notes: [String]
     let now: Date
+    var inlineNote: String?
 
     var body: some View {
         let level = PoolLevel(freePercent)
@@ -267,7 +272,7 @@ private struct WindowColumn: View {
             Meter(free: freePercent, comingBack: Double(line?.points ?? 0), tint: level.warningTint ?? .primary)
                 .frame(height: 6)
                 .padding(.top, 5)
-            GainLabel(window: window, short: short, line: line, forecast: forecast, now: now)
+            GainLabel(window: window, short: short, line: line, forecast: forecast, notes: notes, now: now, inlineNote: inlineNote)
                 .padding(.top, 7)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -308,6 +313,7 @@ private struct GainLabel: View {
     let short: ShortWindow
     let line: GainLine?
     let forecast: Pace.Forecast?
+    let notes: [String]
     let now: Date
 
     /// Under this, a 5-hour run-out is tinted.
@@ -316,6 +322,9 @@ private struct GainLabel: View {
     @State private var isHovering = false
     @State private var showsBreakdown = false
     @State private var pendingOpen: Task<Void, Never>?
+
+    /// Shown only when there's nothing else to say under the meter.
+    var inlineNote: String?
 
     private var runOut: String? {
         forecast.flatMap { PaceText.inline($0, window: window, now: now) }
@@ -327,7 +336,7 @@ private struct GainLabel: View {
     }
 
     var body: some View {
-        if let text = runOut ?? line.map(text(for:)) {
+        if let text = runOut ?? line.map(text(for:)) ?? (notes.isEmpty ? nil : inlineNote) {
             Text(text)
                 .font(.callout)
                 .monospacedDigit()
@@ -338,7 +347,7 @@ private struct GainLabel: View {
                 .contentShape(.rect)
                 .onHover(perform: hover)
                 .popover(isPresented: $showsBreakdown, arrowEdge: .bottom) {
-                    GainBreakdown(window: window, short: short, line: line, forecast: forecast, now: now)
+                    GainBreakdown(window: window, short: short, line: line, forecast: forecast, notes: notes, now: now)
                 }
                 .onAppear {
                     if LaunchOptions.demo == .hover, window == .session { openSoon() }
@@ -388,6 +397,8 @@ struct GainBreakdown: View {
     let short: ShortWindow
     let line: GainLine?
     let forecast: Pace.Forecast?
+    /// How old the numbers are and what's left out of them; see `PoolNotes`.
+    var notes: [String] = []
     let now: Date
 
     var body: some View {
@@ -419,6 +430,17 @@ struct GainBreakdown: View {
                 Text(PaceText.basis(forecast, window: window))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+            if !notes.isEmpty {
+                VStack(alignment: .leading, spacing: 2) {
+                    ForEach(notes, id: \.self) { note in
+                        Text(note)
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 6)
             }
         }
         .frame(maxWidth: 220, alignment: .leading)

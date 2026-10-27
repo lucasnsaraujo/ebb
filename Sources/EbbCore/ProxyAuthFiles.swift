@@ -179,9 +179,9 @@ public struct PoolMember: Sendable {
         members.compactMap { member -> AccountUsage?? in
             if member.plan == .inactive { return .none }
             guard case let .paid(weight) = member.plan,
-                  let limits = ReadingChoice.best(signals: member.signals, usage: member.usage, now: now)
+                  let reading = ReadingChoice.choose(signals: member.signals, usage: member.usage, now: now)?.reading
             else { return .some(nil) }
-            return .some(AccountUsage(weight: weight, limits: limits))
+            return .some(AccountUsage(weight: weight, limits: reading.limits, readAt: reading.date))
         }
     }
 }

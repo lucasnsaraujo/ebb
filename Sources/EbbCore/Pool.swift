@@ -4,10 +4,13 @@ import Foundation
 public struct AccountUsage: Sendable, Equatable {
     public var weight: Double
     public var limits: [UsageLimit]
+    /// When the limits were read.
+    public var readAt: Date?
 
-    public init(weight: Double, limits: [UsageLimit]) {
+    public init(weight: Double, limits: [UsageLimit], readAt: Date? = nil) {
         self.weight = weight
         self.limits = limits
+        self.readAt = readAt
     }
 }
 
@@ -47,6 +50,13 @@ public struct PoolSummary: Sendable, Equatable {
     public var totalWeight = 0.0
     /// Share of the accounts that could be read, 0–1.
     public var readableShare = 1.0
+    public var readAccounts = 0
+    /// Accounts left out because they have no usable reading.
+    public var unreadAccounts = 0
+    /// Read accounts whose weekly window is spent, so their 5-hour capacity counts as none.
+    public var weeklyLimitedAccounts = 0
+    /// The oldest reading behind the numbers: they're as fresh as this.
+    public var oldestReadingAt: Date?
 }
 
 public enum Pool {
@@ -54,6 +64,9 @@ public enum Pool {
     public static let mergeWindow: TimeInterval = 5 * 60
     /// The session window's length; its resets all fall within it.
     public static let sessionHorizon: TimeInterval = 5 * 60 * 60
+    /// An account this far into its weekly window, or blocked, can't serve its 5-hour capacity:
+    /// that counts as none until the week resets. A partly used week counts in full.
+    public static let weeklySpentAt = 99.0
 
     /// Summarizes the pool. `nil` entries are accounts without a usable reading.
     /// `sessionHorizon` bounds the short window's resets: five hours, or a day for Devin.
@@ -62,16 +75,38 @@ public enum Pool {
         let totalWeight = readable.reduce(0) { $0 + $1.weight }
         guard totalWeight > 0 else { return nil }
 
+        func isWeekSpent(_ account: AccountUsage) -> Bool {
+            (account.limits.first { $0.kind == .weeklyAll }?.used(at: now) ?? 0) >= weeklySpentAt
+        }
+
+        func isWithin(_ horizon: TimeInterval?, _ date: Date) -> Bool {
+            date > now && (horizon.map { date.timeIntervalSince(now) <= $0 } ?? true)
+        }
+
         func window(_ kind: UsageLimit.Kind, horizon: TimeInterval?) -> WindowSummary {
             var free = 0.0
             var uncapped = 0.0
             var resets: [Restoration] = []
             for account in readable {
                 let limit = account.limits.first { $0.kind == kind }
+                if kind == .session, isWeekSpent(account) {
+                    // Its 5-hour capacity comes back with the week, if that's within the window,
+                    // and what its 5-hour window still holds then comes back at that window's reset.
+                    if let weekReset = account.limits.first(where: { $0.kind == .weeklyAll })?.resetsAt, isWithin(horizon, weekReset) {
+                        let usedThen = limit?.used(at: weekReset) ?? 0
+                        if usedThen < 100 {
+                            resets.append(Restoration(date: weekReset, gain: account.weight * (100 - usedThen) / totalWeight))
+                        }
+                        if usedThen > 0, let sessionReset = limit?.resetsAt, sessionReset > weekReset, isWithin(horizon, sessionReset) {
+                            resets.append(Restoration(date: sessionReset, gain: account.weight * usedThen / totalWeight))
+                        }
+                    }
+                    continue
+                }
                 let used = limit?.used(at: now) ?? 0
                 free += account.weight * (100 - used)
                 if limit == nil, kind == .weeklyAll { uncapped += account.weight * 100 }
-                if let date = limit?.resetsAt, date > now, used > 0, horizon.map({ date.timeIntervalSince(now) <= $0 }) ?? true {
+                if let date = limit?.resetsAt, used > 0, isWithin(horizon, date) {
                     resets.append(Restoration(date: date, gain: account.weight * used / totalWeight))
                 }
             }
@@ -83,7 +118,11 @@ public enum Pool {
             weekly: window(.weeklyAll, horizon: nil),
             isPartial: accounts.contains(nil),
             totalWeight: totalWeight,
-            readableShare: Double(readable.count) / Double(accounts.count)
+            readableShare: Double(readable.count) / Double(accounts.count),
+            readAccounts: readable.count,
+            unreadAccounts: accounts.filter { $0 == nil }.count,
+            weeklyLimitedAccounts: readable.filter(isWeekSpent).count,
+            oldestReadingAt: readable.compactMap(\.readAt).min()
         )
     }
 

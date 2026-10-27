@@ -34,8 +34,14 @@ enum Snapshot {
         let short = ProviderDisplay.shortWindow(provider)
         let forecast = store.state.forecasts[provider]
         let cards = [
-            ("session", GainBreakdown(window: .session, short: short, line: GainLine.session(summary.session.resets), forecast: forecast?.session, now: now)),
-            ("weekly", GainBreakdown(window: .weekly, short: short, line: GainLine.weekly(summary.weekly.resets), forecast: forecast?.weekly, now: now)),
+            ("session", GainBreakdown(
+                window: .session, short: short, line: GainLine.session(summary.session.resets), forecast: forecast?.session,
+                notes: PoolNotes.lines(summary, window: .session, now: now), now: now
+            )),
+            ("weekly", GainBreakdown(
+                window: .weekly, short: short, line: GainLine.weekly(summary.weekly.resets), forecast: forecast?.weekly,
+                notes: PoolNotes.lines(summary, window: .weekly, now: now), now: now
+            )),
         ]
         return cards.filter { $0.1.line != nil || $0.1.forecast != nil }
     }

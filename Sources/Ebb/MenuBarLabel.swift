@@ -47,6 +47,6 @@ extension AccountDetail {
     /// Counted in the pool with room left in both windows: a filled dot in the Ring.
     var canTakeWork: Bool {
         guard status == .active || status == .stale, let sessionFree, sessionFree.rounded() > 0 else { return false }
-        return (weeklyFree ?? 100).rounded() > 0
+        return 100 - (weeklyFree ?? 100) < Pool.weeklySpentAt
     }
 }

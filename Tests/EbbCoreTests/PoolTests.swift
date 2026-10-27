@@ -257,3 +257,100 @@ private func todaysAccounts() throws -> [AccountUsage] {
         #expect(RefreshPlan.isStillDue(nil, chosenAt: chosenAt))
     }
 }
+
+@Suite struct HonestPoolTests {
+    @Test func anAccountAtItsWeeklyLimitCountsNothingInTheFiveHourPool() throws {
+        let spent = AccountUsage(weight: 20, limits: [session(10), weekly(99.5)])
+        let team = AccountUsage(weight: 5, limits: [session(40)])
+        let summary = try #require(Pool.summarize([spent, team], at: now))
+
+        expectClose(summary.session.freePercent, 5 * 60 / 25.0)
+        #expect(summary.weeklyLimitedAccounts == 1)
+        #expect(summary.readAccounts == 2)
+    }
+
+    @Test func aPartlyUsedWeekStillCountsInFull() throws {
+        let busy = AccountUsage(weight: 20, limits: [session(10), weekly(98)])
+        let team = AccountUsage(weight: 5, limits: [session(40)])
+        let summary = try #require(Pool.summarize([busy, team], at: now))
+
+        expectClose(summary.session.freePercent, (20 * 90 + 5 * 60) / 25.0)
+        #expect(summary.weeklyLimitedAccounts == 0)
+    }
+
+    @Test func aSpentWeekKeepsItsFiveHourResetOutOfTheLine() throws {
+        let spent = AccountUsage(weight: 20, limits: [session(30, resetsIn: 30), UsageLimit(kind: .weeklyAll, usedPercent: 100, resetsAt: at(3 * 24 * 60))])
+        let team = AccountUsage(weight: 5, limits: [session(40, resetsIn: 60)])
+        let resets = try #require(Pool.summarize([spent, team], at: now)).session.resets
+
+        #expect(resets.map(\.date) == [at(60)])
+    }
+
+    @Test func theWeeklyResetBringsTheFiveHourCapacityBack() throws {
+        let spent = AccountUsage(weight: 20, limits: [session(30, resetsIn: 30), UsageLimit(kind: .weeklyAll, usedPercent: 100, resetsAt: at(120))])
+        let team = AccountUsage(weight: 5, limits: [session(0)])
+        let resets = try #require(Pool.summarize([spent, team], at: now)).session.resets
+
+        #expect(resets.map(\.date) == [at(120)])
+        expectClose(resets.first?.gain, 20 * 100 / 25.0)
+    }
+
+    @Test func unreadAccountsAreCountedForTheHoverCard() throws {
+        let read = AccountUsage(weight: 5, limits: [session(10)], readAt: at(-3))
+        let older = AccountUsage(weight: 5, limits: [session(10)], readAt: at(-7))
+        let summary = try #require(Pool.summarize([read, older, nil], at: now))
+
+        #expect(summary.unreadAccounts == 1)
+        #expect(summary.oldestReadingAt == at(-7))
+    }
+}
+
+@Suite struct PoolNotesTests {
+    private func summary(read: Int, unread: Int = 0, weeklyLimited: Int = 0, oldest: Date? = nil) -> PoolSummary {
+        PoolSummary(
+            session: WindowSummary(freePercent: 50, resets: []), weekly: WindowSummary(freePercent: 50, resets: []),
+            isPartial: unread > 0, readAccounts: read, unreadAccounts: unread, weeklyLimitedAccounts: weeklyLimited, oldestReadingAt: oldest
+        )
+    }
+
+    @Test func theFiveHourCardSaysHowManyAccountsAreAtTheirWeeklyLimit() {
+        #expect(PoolNotes.lines(summary(read: 4, weeklyLimited: 1), window: .session, now: now) == ["1 of 4 accounts at their weekly limit"])
+        #expect(PoolNotes.lines(summary(read: 1, weeklyLimited: 1), window: .session, now: now) == ["Its only account is at its weekly limit"])
+        #expect(PoolNotes.lines(summary(read: 4, weeklyLimited: 1), window: .weekly, now: now).isEmpty)
+    }
+
+    @Test func bothCardsSayHowOldTheNumbersAreAndWhatIsLeftOut() {
+        let lines = PoolNotes.lines(summary(read: 3, unread: 2, oldest: at(-3)), window: .weekly, now: now)
+        #expect(lines == ["As of 3 min ago", "2 accounts can't be read right now"])
+        #expect(PoolNotes.lines(summary(read: 3, unread: 1, oldest: at(-0.2)), window: .session, now: now) == ["As of 12 s ago", "1 account can't be read right now"])
+    }
+}
+
+@Suite struct SpentWeekResetTests {
+    @Test func aFiveHourResetAfterTheWeeklyOneStillComesBack() throws {
+        let spent = AccountUsage(weight: 20, limits: [session(30, resetsIn: 120), weekly(100, resetsIn: 60)])
+        let team = AccountUsage(weight: 5, limits: [session(0)])
+        let resets = try #require(Pool.summarize([spent, team], at: now)).session.resets
+
+        #expect(resets.map(\.date) == [at(60), at(120)])
+        expectClose(resets.first?.gain, 20 * 70 / 25.0)
+        expectClose(resets.last?.gain, 20 * 30 / 25.0)
+    }
+
+    @Test func aWeeklyResetThatBringsNothingBackIsNotListed() throws {
+        let spent = AccountUsage(weight: 20, limits: [session(100, resetsIn: 180), weekly(100, resetsIn: 60)])
+        let team = AccountUsage(weight: 5, limits: [session(0)])
+        let resets = try #require(Pool.summarize([spent, team], at: now)).session.resets
+
+        #expect(resets.map(\.date) == [at(180)])
+        expectClose(resets.first?.gain, 20 * 100 / 25.0)
+    }
+}
+
+@Suite struct PoolNotesInlineTests {
+    @Test func aPoolEmptiedByWeeklyLimitsSaysWhyUnderTheMeter() throws {
+        let spent = AccountUsage(weight: 20, limits: [session(0), weekly(100)])
+        let summary = try #require(Pool.summarize([spent, AccountUsage(weight: 5, limits: [session(100, resetsIn: 600)])], at: now))
+        #expect(PoolNotes.inline(summary) == "1 of 2 at weekly limit")
+    }
+}
