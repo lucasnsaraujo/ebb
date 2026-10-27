@@ -340,8 +340,6 @@ private struct WindowPair: View {
     let forecast: PoolForecast?
     let short: ShortWindow
 
-    @Environment(\.colorSchemeContrast) private var contrast
-
     var body: some View {
         TimelineView(.periodic(from: .now, by: 30)) { context in
             let now = context.date
@@ -376,7 +374,7 @@ private struct WindowPair: View {
                     Text(locked)
                         .font(.caption)
                         .monospacedDigit()
-                        .foregroundStyle(contrast.faint)
+                        .foregroundStyle(.secondary)
                         .padding(.top, 5)
                 }
             }
