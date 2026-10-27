@@ -31,20 +31,47 @@ enum DemoData {
         Login(provider: "gemini", email: "Gemini key", status: .health(.ok)),
     ]
 
-    /// A Claude 5-hour pool that runs out before its big reset, and a Codex week that runs out
-    /// on Thursday-ish; the other windows last, so their pace shows only on hover.
-    private static let forecasts = [
-        "claude": PoolForecast(
-            session: Pace.Forecast(outlook: .runsOut(within: (110 * 60)...(110 * 60)), basis: 40 * 60),
-            weekly: nil
-        ),
-        "codex": PoolForecast(
-            session: Pace.Forecast(outlook: .lasts, basis: 35 * 60),
-            weekly: Pace.Forecast(outlook: .runsOut(within: (3.6 * 86400)...(3.6 * 86400)), basis: 5 * 86400)
-        ),
+    /// `--demo locked`: three Max 5x logins with over half their window free beside a Max 20x
+    /// whose week is spent, so the 5-hour pool reads 24% free with 57% locked until the next evening.
+    private static let lockedLogins = [
+        Login(provider: "claude", email: "work@example.com", plan: "max_20x", sessionUsed: 30, sessionResetIn: 100 * 60, weeklyUsed: 100, weeklyResetIn: 26 * 3600),
+        Login(provider: "claude", email: "research@example.com", plan: "max_5x", sessionUsed: 45, sessionResetIn: 41 * 60, weeklyUsed: 40),
+        Login(provider: "claude", email: "ops@example.com", plan: "max_5x", sessionUsed: 45, sessionResetIn: 150 * 60, weeklyUsed: 40),
+        Login(provider: "claude", email: "lab@example.com", plan: "max_5x", sessionUsed: 45, sessionResetIn: 250 * 60, weeklyUsed: 40),
     ]
 
+    private static var shownLogins: [Login] {
+        switch LaunchOptions.demo {
+        case .locked, .lockedLasts: lockedLogins
+        default: logins
+        }
+    }
+
+    /// A Claude 5-hour pool that runs out before its big reset, and a Codex week that runs out
+    /// on Thursday-ish; the other windows last, so their pace shows only on hover. The locked
+    /// pool runs out in about two hours, or lasts, so the line under its meter shows both ways.
+    private static var forecasts: [String: PoolForecast] {
+        switch LaunchOptions.demo {
+        case .locked:
+            ["claude": PoolForecast(session: Pace.Forecast(outlook: .runsOut(within: (130 * 60)...(130 * 60)), basis: 40 * 60))]
+        case .lockedLasts:
+            ["claude": PoolForecast(session: Pace.Forecast(outlook: .lasts, basis: 40 * 60))]
+        default:
+            [
+                "claude": PoolForecast(
+                    session: Pace.Forecast(outlook: .runsOut(within: (110 * 60)...(110 * 60)), basis: 40 * 60),
+                    weekly: nil
+                ),
+                "codex": PoolForecast(
+                    session: Pace.Forecast(outlook: .lasts, basis: 35 * 60),
+                    weekly: Pace.Forecast(outlook: .runsOut(within: (3.6 * 86400)...(3.6 * 86400)), basis: 5 * 86400)
+                ),
+            ]
+        }
+    }
+
     static func store(connection: ProxyConnection, now: Date = .now) -> PoolStore {
+        let logins = shownLogins
         var providerLogins: [ProviderLogin] = []
         var details: [AccountDetail] = []
         var routing: [String: Int] = [:]

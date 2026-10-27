@@ -2,9 +2,9 @@ import AppKit
 import EbbCore
 import SwiftUI
 
-/// `--snapshot <dir>`: renders the panel offscreen to PNGs, dark and light, collapsed and
-/// expanded, plus its first-run setup steps, every menu bar style and Settings → General, then
-/// quits. The windows it draws in are never put on screen.
+/// `--snapshot <dir>`: renders the panel offscreen to PNGs, dark and light, collapsed, expanded
+/// and at Increase Contrast, plus its first-run setup steps, every menu bar style and
+/// Settings → General, then quits. The windows it draws in are never put on screen.
 @MainActor
 enum Snapshot {
     static func write(store: PoolStore, connection: ProxyConnection, visibility: Visibility, to directory: URL, prefix: String) {
@@ -23,7 +23,25 @@ enum Snapshot {
                     try? data.write(to: directory.appending(path: "\(prefix)-\(appearance)-hover-\(window).png"))
                 }
             }
+            // Increase Contrast, collapsed: the tracks, the faint text and the hatch step up a level.
+            let panel = PoolPanel(store: store, visibility: visibility, connection: connection, showsAccounts: false)
+            if let data = withIncreasedContrast({ png(of: panel, scheme: scheme) }) {
+                try? data.write(to: directory.appending(path: "\(prefix)-\(appearance)-contrast.png"))
+            }
         }
+    }
+
+    /// SwiftUI takes `colorSchemeContrast` from this getter as a hosting view is made, and the
+    /// high-contrast appearances fold back into the plain ones while the setting is off. So for
+    /// one render the getter says yes, then answers for the setting again.
+    private static func withIncreasedContrast<T>(_ render: () -> T) -> T {
+        let selector = #selector(getter: NSWorkspace.accessibilityDisplayShouldIncreaseContrast)
+        guard let method = class_getInstanceMethod(NSWorkspace.self, selector) else { return render() }
+        let setting = method_getImplementation(method)
+        let yes: @convention(block) (NSWorkspace) -> Bool = { _ in true }
+        method_setImplementation(method, imp_implementationWithBlock(yes))
+        defer { method_setImplementation(method, setting) }
+        return render()
     }
 
     /// The hover card of each window that has one, as the panel would show it.
