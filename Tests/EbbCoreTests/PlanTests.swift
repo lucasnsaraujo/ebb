@@ -12,10 +12,18 @@ import Testing
         #expect(ClaudeProvider.plan(rateLimitTier: "default_claude_pro", subscriptionStatus: "active") == .paid(weight: 1))
     }
 
-    @Test func subscriptionThatIsNotActiveIsInactive() {
-        #expect(ClaudeProvider.plan(rateLimitTier: "default_claude_max_20x", subscriptionStatus: "canceled") == .inactive)
-        #expect(ClaudeProvider.plan(rateLimitTier: "default_claude_max_20x", subscriptionStatus: nil) == .inactive)
+    @Test func anEndedSubscriptionIsInactive() {
+        for status in ["canceled", "cancelled", "expired", "incomplete_expired", "inactive", "Canceled"] {
+            #expect(ClaudeProvider.plan(rateLimitTier: "default_claude_max_20x", subscriptionStatus: status) == .inactive, "\(status)")
+        }
         #expect(ClaudeProvider.plan(rateLimitTier: "default_claude_max_20x", subscriptionStatus: "canceled").weight == 0)
+    }
+
+    /// Auto-retire disables the login in the proxy, so only a status that says the plan ended may lead there.
+    @Test func aStatusThatDoesNotSayThePlanEndedKeepsTheTiersWeight() {
+        for status in [nil, "past_due", "trialing", "unpaid_grace", ""] as [String?] {
+            #expect(ClaudeProvider.plan(rateLimitTier: "default_claude_max_20x", subscriptionStatus: status) == .paid(weight: 20), "\(String(describing: status))")
+        }
     }
 
     @Test func activePlanWithUnreadableOrFreeTierIsUnknownAndWeighsNothing() {
