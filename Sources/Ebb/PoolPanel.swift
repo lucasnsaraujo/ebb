@@ -58,7 +58,8 @@ struct PoolPanel: View {
                     isOffline: store.isOffline,
                     hasManagementKey: connection.endpoint != nil,
                     proxyReadAt: store.proxyReadAt,
-                    usageAPIReadAt: provider.flatMap { store.state.usageAPIReadAt[$0] }
+                    usageAPIReadAt: provider.flatMap { store.state.usageAPIReadAt[$0] },
+                    proxyURL: connection.config.baseURL
                 )
                     .padding(.top, 4)
                     .transition(.opacity)
@@ -505,6 +506,7 @@ private struct AccountsSection: View {
     let hasManagementKey: Bool
     let proxyReadAt: Date?
     let usageAPIReadAt: Date?
+    let proxyURL: URL
 
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
@@ -517,6 +519,12 @@ private struct AccountsSection: View {
                 .frame(height: CGFloat(Self.visibleRows) * Self.rowPitch)
             } else {
                 rows
+            }
+            let held = details.filter(\.isStuckInCooldown)
+            if !held.isEmpty {
+                StuckCooldownLine(count: held.count, command: StuckCooldown.resetCommand(baseURL: proxyURL, authIndexes: held.compactMap(\.authIndex)))
+                    .padding(.top, 2)
+                    .cascadeIn(index: details.count + healthOnly.count + 1)
             }
             TimelineView(.periodic(from: .now, by: 1)) { context in
                 Text(freshness(now: context.date))
@@ -573,6 +581,32 @@ private struct AccountsSection: View {
     }
 }
 
+/// Accounts the proxy keeps skipping though their quota is back. Ebb never resets them itself.
+private struct StuckCooldownLine: View {
+    let count: Int
+    /// Empty when no held login has a usable auth index.
+    let command: String
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Text(StuckCooldown.line(count: count))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            if !command.isEmpty {
+                Spacer(minLength: 0)
+                Button("Copy Fix") {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(command, forType: .string)
+                }
+                .buttonStyle(.borderless)
+                .font(.caption)
+                .help("Copies the curl command for CLIProxyAPI's reset-quota call. Set MANAGEMENT_KEY to your management key before running it.")
+            }
+        }
+    }
+}
+
 /// The provider's status page reports a problem with what this pool runs on.
 private struct IncidentLine: View {
     let text: String
@@ -626,7 +660,7 @@ private struct AccountRow: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .help(detail.extraUsage.map { "\(detail.email)\n\($0.text)" } ?? detail.email)
+            .help(([detail.email, detail.extraUsage?.text] + (detail.isStuckInCooldown ? ["Still held in cooldown by CLIProxyAPI, though its quota is back"] : [])).compactMap { $0 }.joined(separator: "\n"))
             if let note {
                 Text(note)
                     .font(.caption)

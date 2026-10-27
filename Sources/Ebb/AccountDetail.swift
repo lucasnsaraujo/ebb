@@ -37,6 +37,10 @@ struct AccountDetail: Identifiable, Equatable {
     var healthMessage: String?
     /// Paid usage past the plan's limits, shown on hover only.
     var extraUsage: ExtraUsage?
+    /// The proxy holds it in cooldown though a fresh reading shows quota.
+    var isStuckInCooldown = false
+    /// The proxy's key for the login, for its `reset-quota` call.
+    var authIndex: String?
 
     var id: String { provider == ClaudeProvider().proxyName ? email : "\(provider)/\(fileName ?? email)" }
 

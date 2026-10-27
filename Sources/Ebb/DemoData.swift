@@ -73,6 +73,11 @@ enum DemoData {
                 planTitle: isClaude ? nil : PlanWeights.defaults[login.provider]?.first { $0.plan == login.plan }?.title
             )
             detail.healthMessage = login.message
+            // One Claude login the proxy still skips though its quota is back.
+            if login.email == "side@example.com" {
+                detail.isStuckInCooldown = true
+                detail.authIndex = "4"
+            }
             details.append(detail)
         }
         for provider in Set(logins.map(\.provider)) {

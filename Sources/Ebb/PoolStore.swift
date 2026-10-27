@@ -772,7 +772,11 @@ final class PoolStore {
                 weeklyFree: free(.weeklyAll),
                 share: shares[account.email],
                 readAt: reading?.reading.date,
-                extraUsage: proxyFiles[account.name]?.extraUsage(at: now)
+                extraUsage: proxyFiles[account.name]?.extraUsage(at: now),
+                isStuckInCooldown: proxyFiles[account.name].map {
+                    StuckCooldown.isStuck(health: $0.health, usage: usageReadings[account.email], signalsObservedAt: $0.signalsObservedAt, now: now)
+                } ?? false,
+                authIndex: proxyFiles[account.name]?.authIndex
             )
         }
         let userDisabled = disabledByUser.map { AccountDetail(email: $0.email, plan: plans[$0.email]?.value, status: .disabledByUser) }
@@ -820,7 +824,9 @@ final class PoolStore {
                 provider: file.provider,
                 fileName: file.name,
                 planTitle: title,
-                extraUsage: file.extraUsage(at: now)
+                extraUsage: file.extraUsage(at: now),
+                isStuckInCooldown: StuckCooldown.isStuck(health: file.health, usage: callReadings[file.name], signalsObservedAt: file.signalsObservedAt, now: now),
+                authIndex: file.authIndex
             )
         }
     }
