@@ -350,12 +350,45 @@
         }
       }
     },
+    "%lld percent locked" : {
+      "comment" : "VoiceOver, after the meter's free share: the part a spent week locks.",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld por cento bloqueado"
+          }
+        }
+      }
+    },
     "%lld s ago" : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "há %lld s"
+          }
+        }
+      }
+    },
+    "%lld%% locked until %@" : {
+      "comment" : "Under the 5-hour meter: the share of the pool whose accounts spent their week, and the weekday and time the first of those weeks resets.",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld%% bloqueado até %2$@"
+          }
+        }
+      }
+    },
+    "%lld%% locked until the weekly reset" : {
+      "comment" : "Under the 5-hour meter, when the spent weeks' reset time isn't known.",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld%% bloqueado até a renovação semanal"
           }
         }
       }

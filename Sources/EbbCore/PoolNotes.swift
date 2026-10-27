@@ -3,6 +3,18 @@ import Foundation
 /// The small print under a hover card: how old the numbers are, what's left out of them,
 /// and, for the 5-hour window, accounts whose spent week takes them out of it.
 public enum PoolNotes {
+    /// A locked share under this many points stays off the meter's lines.
+    public static let lockedShownFrom = 5.0
+
+    /// Why the 5-hour meter reads lower than its accounts: "57% locked until Tue 10:00 PM".
+    /// `nil` while less than `lockedShownFrom` is locked.
+    public static func locked(_ window: WindowSummary, timeZone: TimeZone = .autoupdatingCurrent, locale: Locale = .autoupdatingCurrent) -> String? {
+        guard window.lockedPercent >= lockedShownFrom else { return nil }
+        let percent = Int(window.lockedPercent.rounded())
+        guard let unlocksAt = window.unlocksAt else { return Localization.text("\(percent)% locked until the weekly reset", locale: locale) }
+        return Localization.text("\(percent)% locked until \(ClockText.weekdayAndTime(unlocksAt, locale: locale, timeZone: timeZone))", locale: locale)
+    }
+
     /// What stands in for an empty "+N%" line under the 5-hour meter: why the pool is low.
     public static func inline(_ summary: PoolSummary, locale: Locale = .autoupdatingCurrent) -> String? {
         summary.weeklyLimitedAccounts > 0 ? Localization.text("\(summary.weeklyLimitedAccounts) of \(summary.readAccounts) at weekly limit", locale: locale) : nil

@@ -56,8 +56,14 @@
 	<string>%lld por cento livre</string>
 	<key>%lld percent free, %lld percent coming back</key>
 	<string>%1$lld por cento livre, %2$lld por cento voltando</string>
+	<key>%lld percent locked</key>
+	<string>%lld por cento bloqueado</string>
 	<key>%lld s ago</key>
 	<string>há %lld s</string>
+	<key>%lld%% locked until %@</key>
+	<string>%1$lld%% bloqueado até %2$@</string>
+	<key>%lld%% locked until the weekly reset</key>
+	<string>%lld%% bloqueado até a renovação semanal</string>
 	<key>%lld%% of the weekly pool is free.</key>
 	<string>%lld%% da cota semanal está livre.</string>
 	<key>%lldd</key>
