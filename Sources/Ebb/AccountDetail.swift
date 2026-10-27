@@ -63,3 +63,19 @@ struct AccountDetail: Identifiable, Equatable {
         if case .health = status { true } else { false }
     }
 }
+
+extension AccountDetail.Status {
+    /// The word Copy Diagnostics uses.
+    var diagnosticsName: String {
+        switch self {
+        case .active: "active"
+        case .stale: "stale"
+        case .retired: "retired"
+        case .disabledByUser, .health(.disabled): "disabled"
+        case .limitsUnavailable: "limits unavailable"
+        case .health(.ok): "health ok"
+        case .health(.coolingDown): "cooling down"
+        case .health(.failing): "failing"
+        }
+    }
+}

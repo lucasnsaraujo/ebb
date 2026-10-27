@@ -102,6 +102,12 @@ public struct ProxyAuthFile: Sendable, Equatable {
         email ?? label ?? name
     }
 
+    /// Whether Ebb reads this login through the proxy's listing and `api-call`: every provider
+    /// but Claude, whose auth files Ebb reads itself unless the proxy is on another machine.
+    public func isReadThroughProxy(isRemote: Bool) -> Bool {
+        provider != ClaudeProvider().proxyName || isRemote
+    }
+
     /// Parses the listing, every provider included.
     public static func parseList(_ data: Data) -> [ProxyAuthFile]? {
         guard let body = try? JSONSerialization.jsonObject(with: data) as? [String: Any],

@@ -33,10 +33,11 @@ struct EbbApp: App {
 final class AppModel {
     static let shared = AppModel()
 
-    let connection = ProxyConnection()
+    let connection = ProxyConnection(diagnostics: DiagnosticLog())
     let store: PoolStore
     let visibility = Visibility()
     let menuBarSettings = MenuBarSettings()
+    private var wakeObserver: NSObjectProtocol?
 
     private init() {
         if LaunchOptions.isDemo {
@@ -52,6 +53,10 @@ final class AppModel {
         visibility.onVisibilityChange = { [store] isVisible in store.setActive(isVisible) }
         store.setActive(visibility.isVisible)
         Task { [connection] in await connection.test() }
+        // Only the store hears about wake; the item's visibility never changes for it.
+        wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [store] _ in
+            MainActor.assumeIsolated { store.didWake() }
+        }
     }
 }
 
@@ -81,14 +86,15 @@ enum LaunchOptions {
     static let isOffline = CommandLine.arguments.contains("--offline")
     /// Fake logins of every provider tier, with no network and no saved key: `--demo`.
     static let isDemo = CommandLine.arguments.contains("--demo")
-    /// Puts the demo in a state worth a screenshot or recording: `--demo accounts|hover|disclosure|low`.
-    /// `low` fakes a nearly empty pool in the menu bar to show its warning colors.
+    /// Puts the demo in a state worth a screenshot or recording: `--demo accounts|hover|disclosure|low|down`.
+    /// `low` fakes a nearly empty pool in the menu bar to show its warning colors; `down` a proxy
+    /// that isn't answering (give it a `--key-file`, since the notice needs a key).
     static let demo: Demo? = value(after: "--demo").flatMap(Demo.init(rawValue:))
 
     enum Demo: String {
-        case accounts, hover, disclosure, low
+        case accounts, hover, disclosure, low, down
     }
-    /// Renders the panel, the menu bar styles and Settings → General and Routing offscreen into this folder and quits: `--snapshot <dir>`.
+    /// Renders the panel, the menu bar styles and Settings → General, Routing and Connection offscreen into this folder and quits: `--snapshot <dir>`.
     static let snapshotDirectory: URL? = value(after: "--snapshot").map { URL(fileURLWithPath: $0) }
     /// With `--snapshot`, renders what the running proxy reports instead of fixed numbers: `--live`.
     static let isLive = CommandLine.arguments.contains("--live")
@@ -117,6 +123,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 Task {
                     await model.store.readProxyOnce()
                     Snapshot.write(store: model.store, connection: model.connection, visibility: model.visibility, to: directory, prefix: "live")
+                    try? model.store.diagnosticsText().write(to: directory.appending(path: "live-diagnostics.txt"), atomically: true, encoding: .utf8)
                     exit(0)
                 }
                 return

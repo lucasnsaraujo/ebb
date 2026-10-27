@@ -21,6 +21,9 @@ public protocol Provider: Sendable {
     func readUsageCall(_ body: Data) -> UsageCallReading?
     /// Paid usage past the plan's limits that the signals say is on, or `nil` when it's off or spent.
     func extraUsage(fromSignals signals: [String: Any]) -> ExtraUsage?
+    /// A separate plan check through `api-call`, for providers whose usage answer doesn't name the plan.
+    func planCall(for login: ProxyAuthFile) -> ProxyAPICall?
+    func readPlanCall(_ body: Data) -> UsageCallReading?
 }
 
 extension Provider {
@@ -30,6 +33,8 @@ extension Provider {
     public func planName(fromEntry entry: [String: Any]) -> String? { nil }
     public func usageCall(for login: ProxyAuthFile) -> ProxyAPICall? { nil }
     public func readUsageCall(_ body: Data) -> UsageCallReading? { nil }
+    public func planCall(for login: ProxyAuthFile) -> ProxyAPICall? { nil }
+    public func readPlanCall(_ body: Data) -> UsageCallReading? { nil }
     public func extraUsage(fromSignals signals: [String: Any]) -> ExtraUsage? { nil }
 }
 

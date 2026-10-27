@@ -9,6 +9,15 @@ enum AccountFetch<Value> {
     var isAuthFailure: Bool {
         if case let .failed(status, _) = self { status == 401 || status == 403 } else { false }
     }
+
+    var outcome: RequestOutcome {
+        switch self {
+        case .success: .ok
+        case .failed(429, _): .rateLimited
+        case .failed(401, _), .failed(403, _): .tokenRefused
+        case .failed: .failed
+        }
+    }
 }
 
 /// Asks an account's provider directly, for accounts the proxy has no fresh headers for.

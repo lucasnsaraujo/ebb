@@ -71,6 +71,33 @@ public struct ClaudeProvider: Provider {
         }
     }
 
+    /// The same two requests through the proxy, for a proxy on another machine whose auth
+    /// folder is out of reach. The headers match the direct requests; the proxy fills in the token.
+    public func usageCall(for login: ProxyAuthFile) -> ProxyAPICall? {
+        call(Self.usageEndpoint, for: login)
+    }
+
+    public func planCall(for login: ProxyAuthFile) -> ProxyAPICall? {
+        call(Self.profileEndpoint, for: login)
+    }
+
+    public func readUsageCall(_ body: Data) -> UsageCallReading? {
+        parseUsage(body).map { UsageCallReading(limits: $0, planName: nil) }
+    }
+
+    /// The profile as a reading: the tier's plan name, and whether the subscription ended.
+    public func readPlanCall(_ body: Data) -> UsageCallReading? {
+        guard let profile = parsePlan(body) else { return nil }
+        return UsageCallReading(limits: nil, planName: Self.planName(rateLimitTier: profile.tier), hasEndedSubscription: profile.plan == .inactive)
+    }
+
+    private func call(_ url: URL, for login: ProxyAuthFile) -> ProxyAPICall? {
+        guard let authIndex = login.authIndex else { return nil }
+        var request = request(url, accessToken: ProxyAPICall.tokenPlaceholder)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        return ProxyAPICall(authIndex: authIndex, method: "GET", url: url, header: request.allHTTPHeaderFields ?? [:])
+    }
+
     /// `Anthropic-Ratelimit-Unified-5h-*` and `-7d-*`. `nil` without a 5-hour utilization, the one
     /// window every plan has. `7d` is the general weekly window; `7d_oi` and per-model caps are ignored.
     public func limits(fromSignals signals: [String: Any]) -> [UsageLimit]? {

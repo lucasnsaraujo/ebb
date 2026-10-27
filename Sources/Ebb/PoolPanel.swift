@@ -34,6 +34,10 @@ struct PoolPanel: View {
         VStack(alignment: .leading, spacing: 0) {
             header
                 .padding(.bottom, 12)
+            if store.outageAdvice != .none {
+                ProxyDownNotice(store: store, connection: connection)
+                    .padding(.bottom, 12)
+            }
             if let summary {
                 WindowPair(summary: summary, forecast: provider.flatMap { store.state.forecasts[$0] }, short: ProviderDisplay.shortWindow(provider))
                     .contentShape(.rect)
@@ -59,7 +63,7 @@ struct PoolPanel: View {
                     hasManagementKey: connection.endpoint != nil,
                     proxyReadAt: store.proxyReadAt,
                     usageAPIReadAt: provider.flatMap { store.state.usageAPIReadAt[$0] },
-                    proxyURL: connection.config.baseURL
+                    proxyURL: connection.baseURL
                 )
                     .padding(.top, 4)
                     .transition(.opacity)
@@ -180,6 +184,10 @@ struct PoolPanel: View {
                 Button("Open Proxy Panel") {
                     NSWorkspace.shared.open(connection.managementPage)
                 }
+                Button("Copy Diagnostics") {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(store.diagnosticsText(), forType: .string)
+                }
                 Button("Settings…", action: showSettings)
                     .keyboardShortcut(",")
                 Divider()
@@ -199,6 +207,80 @@ struct PoolPanel: View {
             .accessibilityLabel("More")
         }
         .foregroundStyle(.secondary)
+    }
+}
+
+/// The proxy didn't answer: says so and, for a Homebrew install on this Mac, starts it on request;
+/// otherwise shows the command to run. A refused key points at Settings; a remote proxy gets
+/// neither, since nothing here could start it. See `ProxyOutage` for the choice.
+private struct ProxyDownNotice: View {
+    let store: PoolStore
+    let connection: ProxyConnection
+
+    @Environment(\.openSettings) private var openSettings
+    @State private var didCopy = false
+
+    var body: some View {
+        let advice = store.outageAdvice
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 8) {
+                Text(title(advice))
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+                switch advice {
+                case .keyRefused:
+                    Button("Settings…") {
+                        NSApp.activate()
+                        openSettings()
+                    }
+                case .start:
+                    Button(connection.startState == .starting ? "Starting…" : "Start", action: start)
+                        .disabled(connection.startState == .starting)
+                case let .command(command):
+                    Button(didCopy ? "Copied" : "Copy") { copy(command) }
+                case .none, .remoteUnreachable:
+                    EmptyView()
+                }
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            if case let .command(command) = advice {
+                Text(command)
+                    .font(.caption.monospaced())
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+                    .lineLimit(2)
+            }
+            if case let .failed(message) = connection.startState {
+                Text("Couldn't start: \(message)")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private func title(_ advice: ProxyOutage.Advice) -> String {
+        switch advice {
+        case .keyRefused: "The proxy refused the management key"
+        case let .remoteUnreachable(host): "Can't reach the proxy at \(host)"
+        case .start, .command, .none: "CLIProxyAPI isn't running"
+        }
+    }
+
+    private func start() {
+        Task {
+            await connection.startProxy()
+            if connection.startState == .idle { store.proxyWasStarted() }
+        }
+    }
+
+    private func copy(_ command: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(command, forType: .string)
+        didCopy = true
     }
 }
 
@@ -575,7 +657,7 @@ private struct AccountsSection: View {
 
     private func freshness(now: Date) -> String {
         if isOffline { return "Offline · cached readings only" }
-        let proxy = proxyReadAt.map { "From proxy · \(TimeText.ago($0, now: now))" } ?? (hasManagementKey ? "Proxy unreachable" : "No management access")
+        let proxy = proxyReadAt.map { "From proxy · \(TimeText.ago($0, now: now))" } ?? (hasManagementKey ? "No proxy reading" : "No management access")
         guard let usageAPIReadAt else { return proxy }
         return "\(proxy) · Usage API · \(TimeText.ago(usageAPIReadAt, now: now))"
     }

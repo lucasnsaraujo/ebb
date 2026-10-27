@@ -35,6 +35,14 @@ public struct RetiredAccounts: Sendable {
         self.file = file
     }
 
+    /// `retired.json` for the proxy on this Mac. A remote proxy keeps its own list, named by host,
+    /// so its listing never forgets what Ebb retired on another proxy.
+    public static func file(in directory: URL, remoteHost: String?) -> URL {
+        guard let remoteHost else { return directory.appending(path: "retired.json") }
+        let safe = remoteHost.lowercased().map { $0.isLetter || $0.isNumber || $0 == "." ? $0 : "-" }
+        return directory.appending(path: "retired-\(String(safe).trimmingCharacters(in: CharacterSet(charactersIn: "-"))).json")
+    }
+
     public func load() -> Set<String> {
         guard let data = try? Data(contentsOf: file),
               let names = try? JSONDecoder().decode([String].self, from: data)

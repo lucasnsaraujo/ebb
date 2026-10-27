@@ -77,7 +77,7 @@ enum Snapshot {
         return rep.representation(using: .png, properties: [:])
     }
 
-    /// Settings → General, dark and light, at the Settings window's width.
+    /// Settings → General, Routing and Connection, dark and light, at the Settings window's width.
     static func writeSettings(model: AppModel, to directory: URL) {
         for scheme in [ColorScheme.dark, .light] {
             let view = GeneralSettings(visibility: model.visibility, store: model.store, menuBarSettings: model.menuBarSettings)
@@ -97,6 +97,15 @@ enum Snapshot {
                 .transaction { $0.disablesAnimations = true }
             if let data = png(of: routing, width: 480, scheme: scheme) {
                 try? data.write(to: directory.appending(path: "settings-routing-\(scheme == .dark ? "dark" : "light").png"))
+            }
+            let connection = ConnectionSettings(connection: model.connection, store: model.store)
+                .frame(width: 480)
+                .fixedSize(horizontal: false, vertical: true)
+                .background(Color(nsColor: .windowBackgroundColor))
+                .environment(\.colorScheme, scheme)
+                .transaction { $0.disablesAnimations = true }
+            if let data = png(of: connection, width: 480, scheme: scheme) {
+                try? data.write(to: directory.appending(path: "settings-connection-\(scheme == .dark ? "dark" : "light").png"))
             }
         }
     }

@@ -23,21 +23,40 @@ struct ProxyClient {
     }()
 
     /// Asks for the proxy's config, which only a valid key may read.
-    func check(_ endpoint: ProxyEndpoint) async -> KeyCheck {
+    func check(_ endpoint: ProxyEndpoint) async -> (check: KeyCheck, version: String?) {
         guard let (_, response) = try? await session.data(for: request("config", endpoint, method: "GET")),
-              let status = (response as? HTTPURLResponse)?.statusCode
+              let http = response as? HTTPURLResponse
+        else { return (.unreachable, nil) }
+        let version = Self.version(of: http)
+        switch http.statusCode {
+        case 200: return (.valid, version)
+        case 401, 403: return (.rejected, version)
+        default: return (.unreachable, version)
+        }
+    }
+
+    /// A poll of the listing: the logins, a refused key, or no answer at all. Every answer
+    /// names the proxy's version, a refusal included.
+    enum Listing {
+        case files([ProxyAuthFile], version: String?)
+        case refused(version: String?)
+        case unreachable
+    }
+
+    func authFiles(_ endpoint: ProxyEndpoint) async -> Listing {
+        guard let (data, response) = try? await session.data(for: request("auth-files", endpoint, method: "GET")),
+              let http = response as? HTTPURLResponse
         else { return .unreachable }
-        switch status {
-        case 200: return .valid
-        case 401, 403: return .rejected
+        let version = Self.version(of: http)
+        switch http.statusCode {
+        case 200: return ProxyAuthFile.parseList(data).map { .files($0, version: version) } ?? .unreachable
+        case 401, 403: return .refused(version: version)
         default: return .unreachable
         }
     }
 
-    /// `nil` when the proxy isn't running or refuses the key.
-    func authFiles(_ endpoint: ProxyEndpoint) async -> [ProxyAuthFile]? {
-        guard let data = await get("auth-files", endpoint) else { return nil }
-        return ProxyAuthFile.parseList(data)
+    private static func version(of response: HTTPURLResponse) -> String? {
+        response.value(forHTTPHeaderField: "X-Cpa-Version").flatMap { $0.isEmpty ? nil : $0 }
     }
 
     func routingStrategy(_ endpoint: ProxyEndpoint) async -> String? {

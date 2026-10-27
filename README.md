@@ -26,6 +26,10 @@ When CLIProxyAPI still holds an account in cooldown although a fresh reading sho
 
 Ebb needs the proxy's management key for everything but Claude. Enter it once in Settings → Connection, or keep it in a `.management-key` file in CLIProxyAPI's logins folder and Ebb picks it up until you press Forget Key. Calls "through the proxy" use CLIProxyAPI's `api-call` endpoint: Ebb names the account and the proxy fills in its token, so Ebb never reads those tokens. Plan weights have defaults (Settings → Plans) that you can change.
 
+For CLIProxyAPI on another machine, set its management URL in Settings → Connection. Ebb then reads every login, Claude's included, from the proxy's listing and `api-call`, and never touches a logins folder. Use https; plain http is accepted only on a private network, and the key then crosses it unencrypted.
+
+When the proxy isn't running, the panel says so and offers to start it (`brew services start cliproxyapi` for a Homebrew install, otherwise the command to copy). The ··· menu's Copy Diagnostics puts versions, account states and the last events on the clipboard, with keys, tokens, emails and file names left out.
+
 This README is a placeholder. Full docs come with the first release.
 
 ## Command line
@@ -53,7 +57,7 @@ Requires macOS 26 or later and Xcode 26 or later.
 swift test      # runs the unit tests
 ```
 
-`Ebb --demo` shows fake accounts of every provider with no network, for screenshots and testing. `Ebb --snapshot <dir>` renders the panel, every menu bar style and Settings → General and Routing offscreen to PNGs and quits; add `--demo` for the fake accounts.
+`Ebb --demo` shows fake accounts of every provider with no network, for screenshots and testing. `Ebb --snapshot <dir>` renders the panel, every menu bar style and Settings → General, Routing and Connection offscreen to PNGs and quits; add `--demo` for the fake accounts.
 
 ## License
 

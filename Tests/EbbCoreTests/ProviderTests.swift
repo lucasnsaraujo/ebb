@@ -352,3 +352,64 @@ private let observed = Date(timeIntervalSince1970: 1_793_040_000)
         #expect(ClaudeProvider.planName(rateLimitTier: "default_claude_max_20x") == "max_20x")
     }
 }
+
+@Suite struct ClaudeThroughTheProxyTests {
+    private let profile = #"{"organization":{"rate_limit_tier":"default_claude_max_20x","subscription_status":"active"}}"#
+
+    private func claudeLogin() throws -> ProxyAuthFile {
+        var login = try #require(ProxyAuthFile.parseList(fixtureData("proxy-auth-files")))[0]
+        login.authIndex = "claude-0001"
+        return login
+    }
+
+    @Test func claudeIsCalledThroughTheProxyOnlyWhenTheProxyIsRemote() throws {
+        let claude = try claudeLogin()
+        #expect(claude.isReadThroughProxy(isRemote: true))
+        #expect(!claude.isReadThroughProxy(isRemote: false))
+        let codex = try login("codex-plus@example.com.json")
+        #expect(codex.isReadThroughProxy(isRemote: false))
+    }
+
+    @Test func usageAndProfileCallsCarryClaudesOAuthHeadersAndLeaveTheTokenToTheProxy() throws {
+        let claude = try claudeLogin()
+        let usage = try #require(ClaudeProvider().usageCall(for: claude))
+        let plan = try #require(ClaudeProvider().planCall(for: claude))
+        #expect(usage.url.absoluteString == "https://api.anthropic.com/api/oauth/usage")
+        #expect(plan.url.absoluteString == "https://api.anthropic.com/api/oauth/profile")
+        for call in [usage, plan] {
+            #expect(call.method == "GET")
+            #expect(call.authIndex == "claude-0001")
+            #expect(call.header["Authorization"] == ProxyAPICall.bearer)
+            #expect(call.header["anthropic-beta"] == "oauth-2025-04-20")
+            #expect(call.header.values.filter { $0.contains(ProxyAPICall.tokenPlaceholder) }.count == 1)
+        }
+        var withoutIndex = claude
+        withoutIndex.authIndex = nil
+        #expect(ClaudeProvider().usageCall(for: withoutIndex) == nil)
+        #expect(ClaudeProvider().planCall(for: withoutIndex) == nil)
+    }
+
+    @Test func theUsageAnswerThroughTheProxyReadsLikeTheDirectOne() throws {
+        let body = try fixtureData("team-session-18")
+        let reading = try #require(ClaudeProvider().readUsageCall(Data("{\"limits\":\(String(decoding: body, as: UTF8.self))}".utf8)))
+        #expect(reading.limits?.first == UsageLimit(kind: .session, usedPercent: 18, resetsAt: UsageLimit.parseTimestamp("2026-10-26T20:10:00.831009+00:00")))
+        #expect(reading.planName == nil)
+        #expect(ClaudeProvider().readUsageCall(Data("{}".utf8)) == nil)
+    }
+
+    @Test func theProfileAnswerGivesThePlanAndWhetherItEnded() throws {
+        let active = try #require(ClaudeProvider().readPlanCall(Data(profile.utf8)))
+        #expect(active == UsageCallReading(limits: nil, planName: "max_20x", hasEndedSubscription: false))
+        let ended = #"{"organization":{"rate_limit_tier":"default_claude_max_20x","subscription_status":"canceled"}}"#
+        #expect(ClaudeProvider().readPlanCall(Data(ended.utf8))?.hasEndedSubscription == true)
+        #expect(ClaudeProvider().readPlanCall(Data(#"{"organization":{}}"#.utf8)) == nil)
+    }
+
+    @Test func aProfileThroughTheProxyIsReadWithThePlanParser() throws {
+        let wrapped = try JSONSerialization.data(withJSONObject: ["status_code": 200, "header": [:], "body": profile])
+        let outcome = CallOutcome.read(proxyStatus: 200, body: wrapped, now: .now, parse: ClaudeProvider().readPlanCall)
+        #expect(outcome == .reading(UsageCallReading(limits: nil, planName: "max_20x")))
+        let refused = try JSONSerialization.data(withJSONObject: ["status_code": 401, "header": [:], "body": ""])
+        #expect(CallOutcome.read(proxyStatus: 200, body: refused, now: .now, parse: ClaudeProvider().readPlanCall) == .tokenRejected)
+    }
+}

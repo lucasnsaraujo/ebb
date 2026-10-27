@@ -97,4 +97,14 @@ import Testing
         try list.forget(allBut: ["claude-b.json", "claude-user-disabled.json"])
         #expect(list.load() == ["claude-b.json"])
     }
+
+    /// Each proxy keeps its own list, so a remote listing never forgets what Ebb retired locally.
+    @Test func eachProxyKeepsItsOwnListNamedByHost() {
+        let folder = URL(fileURLWithPath: "/Users/example/.config/ebb")
+        #expect(RetiredAccounts.file(in: folder, remoteHost: nil).lastPathComponent == "retired.json")
+        #expect(RetiredAccounts.file(in: folder, remoteHost: "nas.local").lastPathComponent == "retired-nas.local.json")
+        #expect(RetiredAccounts.file(in: folder, remoteHost: "Proxy.Example.COM").lastPathComponent == "retired-proxy.example.com.json")
+        #expect(RetiredAccounts.file(in: folder, remoteHost: "[fe80::1]").lastPathComponent == "retired-fe80--1.json")
+        #expect(RetiredAccounts.file(in: folder, remoteHost: "nas.local").deletingLastPathComponent().path == folder.path)
+    }
 }

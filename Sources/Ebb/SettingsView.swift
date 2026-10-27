@@ -23,7 +23,7 @@ struct SettingsView: View {
             GeneralSettings(visibility: visibility, store: store, menuBarSettings: menuBarSettings)
                 .tabItem { Label("General", systemImage: "gearshape") }
                 .tag(SettingsTab.general.rawValue)
-            ConnectionSettings(connection: connection)
+            ConnectionSettings(connection: connection, store: store)
                 .tabItem { Label("Connection", systemImage: "point.3.connected.trianglepath.dotted") }
                 .tag(SettingsTab.connection.rawValue)
             RoutingSettingsPane(connection: connection, store: store)
@@ -245,10 +245,25 @@ private struct AppRow: View {
 
 // MARK: - Connection
 
-private struct ConnectionSettings: View {
+struct ConnectionSettings: View {
     let connection: ProxyConnection
+    let store: PoolStore
 
     @State private var draftKey = ""
+    @State private var draftURL: String
+    @State private var urlNote: URLNote?
+
+    private enum URLNote: Equatable {
+        case warning(String)
+        case refusal(String)
+    }
+
+    init(connection: ProxyConnection, store: PoolStore) {
+        self.connection = connection
+        self.store = store
+        _draftURL = State(initialValue: connection.managementURL?.absoluteString ?? "")
+        _urlNote = State(initialValue: connection.managementURL.flatMap { Self.note(for: ManagementURL.validate($0.absoluteString)) })
+    }
 
     var body: some View {
         Form {
@@ -258,8 +273,11 @@ private struct ConnectionSettings: View {
                         .textSelection(.enabled)
                         .foregroundStyle(connection.configFile == nil ? .secondary : .primary)
                 }
-                LabeledContent("Address", value: connection.config.baseURL.absoluteString)
-                LabeledContent("Logins folder", value: abbreviated(connection.authDirectory.path))
+                LabeledContent("Address", value: connection.baseURL.absoluteString)
+                LabeledContent("Logins folder") {
+                    Text(connection.localAuthDirectory.map { abbreviated($0.path) } ?? "Not read: the proxy is on another machine")
+                        .foregroundStyle(connection.isRemote ? .secondary : .primary)
+                }
                 HStack {
                     Spacer()
                     if connection.configOverride != nil {
@@ -267,6 +285,30 @@ private struct ConnectionSettings: View {
                     }
                     Button("Choose Config…", action: chooseConfig)
                 }
+            }
+            Section {
+                TextField("Management URL", text: $draftURL, prompt: Text("https://proxy.example.com:8317"))
+                    .onSubmit(useURL)
+                if let urlNote {
+                    switch urlNote {
+                    case let .warning(text): Text(text).font(.caption).foregroundStyle(.secondary)
+                    case let .refusal(text): Text(text).font(.caption).foregroundStyle(.red)
+                    }
+                }
+                HStack {
+                    if connection.isRemote {
+                        Button("Use Config File") { setURL(nil) }
+                    }
+                    Spacer()
+                    Button("Use URL", action: useURL)
+                        .disabled(draftURL.trimmingCharacters(in: .whitespaces).isEmpty || draftURL == connection.managementURL?.absoluteString)
+                }
+            } header: {
+                Text("Remote Proxy")
+            } footer: {
+                Text("For CLIProxyAPI on a server or homelab. Replaces the address from the config file; the management key below is sent there, and every login, Claude's included, is read from the proxy's listing. Plain http is allowed only on a private network.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             Section {
                 LabeledContent("Status") { KeyStatus(state: connection.keyState) }
@@ -286,7 +328,7 @@ private struct ConnectionSettings: View {
             } header: {
                 Text("Management Key")
             } footer: {
-                Text("The proxy keeps only a hash of this key, so Ebb asks once and stores it in a file only you can read, in Ebb's Application Support folder. A .management-key file in the logins folder is picked up on its own until you forget the key. Without the key, Ebb reads only Claude logins, from the logins folder, and routing and auto-retire stay off.")
+                Text("The proxy keeps only a hash of this key, so Ebb asks once and stores it in a file only you can read, in Ebb's Application Support folder. A .management-key file in the logins folder is picked up on its own until you forget the key. Without the key, a proxy on this Mac still has its Claude logins read from the logins folder, with routing and auto-retire off; a proxy on another machine can't be read at all.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -299,6 +341,30 @@ private struct ConnectionSettings: View {
         Task {
             await connection.save(key: key)
             if connection.keyState == .valid { draftKey = "" }
+        }
+    }
+
+    private func useURL() {
+        let verdict = ManagementURL.validate(draftURL)
+        urlNote = Self.note(for: verdict)
+        switch verdict {
+        case let .ok(url), let .unencrypted(url): setURL(url)
+        case .refused: break
+        }
+    }
+
+    private func setURL(_ url: URL?) {
+        connection.setManagementURL(url)
+        draftURL = url?.absoluteString ?? ""
+        if url == nil { urlNote = nil }
+        store.connectionDidChange()
+    }
+
+    private static func note(for verdict: ManagementURL.Verdict) -> URLNote? {
+        switch verdict {
+        case .ok: nil
+        case .unencrypted: .warning("Plain http: the management key crosses your network unencrypted.")
+        case let .refused(message): .refusal(message)
         }
     }
 

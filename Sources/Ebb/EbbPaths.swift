@@ -12,7 +12,10 @@ enum EbbPaths {
     static let demandFile = applicationSupport.appending(path: "demand.json")
     static let configDirectory = home.appending(path: ".config/ebb")
     static let modeFile = configDirectory.appending(path: "mode")
-    static let retiredAccounts = RetiredAccounts(file: configDirectory.appending(path: "retired.json"))
+    /// Ebb's own retirements, one list per proxy: `retired.json` locally, `retired-<host>.json` for a remote one.
+    static func retiredAccounts(remoteHost: String?) -> RetiredAccounts {
+        RetiredAccounts(file: RetiredAccounts.file(in: configDirectory, remoteHost: remoteHost))
+    }
     static let cacheDirectory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
         .appending(path: bundleIdentifier)
 

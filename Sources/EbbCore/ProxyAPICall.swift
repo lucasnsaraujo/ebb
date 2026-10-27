@@ -58,9 +58,14 @@ public enum CallOutcome: Sendable, Equatable {
     case rateLimited(retryAfter: TimeInterval?)
     case failed
 
-    /// Reads the proxy's answer: HTTP 200 wrapping `{status_code, header, body}`, or
-    /// HTTP 400 when it couldn't find a token for the login.
+    /// Reads the proxy's answer to a usage call.
     public static func read(proxyStatus: Int, body: Data, provider: any Provider, now: Date) -> CallOutcome {
+        read(proxyStatus: proxyStatus, body: body, now: now, parse: provider.readUsageCall)
+    }
+
+    /// Reads the proxy's answer: HTTP 200 wrapping `{status_code, header, body}`, or
+    /// HTTP 400 when it couldn't find a token for the login. `parse` reads the upstream body.
+    public static func read(proxyStatus: Int, body: Data, now: Date, parse: (Data) -> UsageCallReading?) -> CallOutcome {
         guard proxyStatus == 200 else {
             let message = (Signals.object(body)?["error"] as? String)?.lowercased() ?? ""
             return proxyStatus == 400 && message.contains("token") ? .tokenRejected : .failed
@@ -69,7 +74,7 @@ public enum CallOutcome: Sendable, Equatable {
         switch status {
         case 200:
             let upstream = Data((wrapper["body"] as? String ?? "").utf8)
-            return provider.readUsageCall(upstream).map(CallOutcome.reading) ?? .failed
+            return parse(upstream).map(CallOutcome.reading) ?? .failed
         case 401, 403:
             return .tokenRejected
         case 429:
@@ -87,5 +92,14 @@ public enum CallOutcome: Sendable, Equatable {
     public var subscriptionEvidence: Plan? {
         guard case let .reading(reading) = self else { return nil }
         return reading.hasEndedSubscription ? .inactive : nil
+    }
+
+    public var requestOutcome: RequestOutcome {
+        switch self {
+        case .reading: .ok
+        case .tokenRejected: .tokenRefused
+        case .rateLimited: .rateLimited
+        case .failed: .failed
+        }
     }
 }
