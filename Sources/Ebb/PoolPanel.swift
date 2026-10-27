@@ -182,18 +182,7 @@ struct PoolPanel: View {
 
     private var footer: some View {
         HStack(spacing: 6) {
-            Button {
-                store.refreshNow()
-            } label: {
-                Image(systemName: "arrow.clockwise")
-                    .symbolEffect(.rotate.byLayer, options: .repeat(.continuous), isActive: store.isRefreshing && !reduceMotion)
-                    .symbolEffect(.pulse, options: .repeat(.continuous), isActive: store.isRefreshing && reduceMotion)
-                    .frame(width: 22, height: 22)
-                    .contentShape(.rect)
-            }
-            .buttonStyle(.borderless)
-            .help("Refresh")
-            .accessibilityLabel("Refresh")
+            RefreshButton(store: store)
 
             if summary?.isPartial == true {
                 Label("Partial", systemImage: "exclamationmark.circle")
@@ -228,6 +217,106 @@ struct PoolPanel: View {
             .accessibilityLabel("More")
         }
         .foregroundStyle(.secondary)
+    }
+}
+
+/// The footer's refresh arrow. A tap starts the symbol's continuous rotation, which runs for at
+/// least a turn and as long as the refresh does, then settles on its own; a refresh that got
+/// through swaps in a checkmark for a second, one that got nothing shakes the arrow. Under
+/// Reduce Motion the arrow pulses instead of turning, the checkmark cross-fades, and the
+/// shake is a blink. The panel closing cuts all of it short.
+private struct RefreshButton: View {
+    let store: PoolStore
+
+    @State private var isSpinning = false
+    @State private var showsCheckmark = false
+    @State private var isBlinking = false
+    @State private var shakes = 0
+    @State private var spunAt = Date.distantPast
+    @State private var ending: Task<Void, Never>?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// A tap shows at least this much of the turn, even when the proxy answers at once.
+    private static let shortestSpin: Duration = .milliseconds(800)
+    /// Lets the rotation's outro settle before the arrow becomes a checkmark or shakes.
+    private static let settle: Duration = .milliseconds(300)
+    private static let checkmarkHold: Duration = .seconds(1)
+
+    var body: some View {
+        Button(action: tap) {
+            Image(systemName: showsCheckmark ? "checkmark" : "arrow.clockwise")
+                .contentTransition(reduceMotion ? .opacity : .symbolEffect(.replace))
+                .symbolEffect(.rotate.byLayer, options: .repeat(.continuous), isActive: isSpinning && !reduceMotion)
+                .symbolEffect(.pulse, options: .repeat(.continuous), isActive: isSpinning && reduceMotion)
+                .symbolEffect(.wiggle.left, value: reduceMotion ? 0 : shakes)
+                .opacity(isBlinking ? 0.25 : 1)
+                .frame(width: 22, height: 22)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.borderless)
+        .help("Refresh")
+        .accessibilityLabel("Refresh")
+        // A refresh the setup steps start spins the arrow too.
+        .onChange(of: store.isRefreshing) { _, inFlight in
+            if inFlight { begin() }
+        }
+        .onChange(of: store.lastRefresh) { _, outcome in
+            if let outcome { end(failed: outcome.failed) }
+        }
+        .onDisappear(perform: reset)
+    }
+
+    /// A second tap mid-flight starts nothing: the store refuses it, and the arrow is already turning.
+    private func tap() {
+        store.refreshNow()
+        if store.isRefreshing { begin() }
+    }
+
+    private func begin() {
+        ending?.cancel()
+        withAnimation(.default) { showsCheckmark = false }
+        guard !isSpinning else { return }
+        spunAt = .now
+        isSpinning = true
+    }
+
+    private func end(failed: Bool) {
+        ending?.cancel()
+        ending = Task {
+            let remaining = Self.shortestSpin - .seconds(Date.now.timeIntervalSince(spunAt))
+            guard (try? await Task.sleep(for: max(remaining, .zero))) != nil else { return }
+            isSpinning = false
+            guard (try? await Task.sleep(for: Self.settle)) != nil else { return }
+            if failed {
+                if reduceMotion { await blink() } else { shakes += 1 }
+                return
+            }
+            withAnimation(.default) { showsCheckmark = true }
+            guard (try? await Task.sleep(for: Self.checkmarkHold)) != nil else { return }
+            withAnimation(.default) { showsCheckmark = false }
+        }
+    }
+
+    /// Two dips in place of the shake.
+    private func blink() async {
+        for _ in 0..<2 {
+            withAnimation(.easeInOut(duration: 0.12)) { isBlinking = true }
+            guard (try? await Task.sleep(for: .milliseconds(140))) != nil else { return }
+            withAnimation(.easeInOut(duration: 0.12)) { isBlinking = false }
+            guard (try? await Task.sleep(for: .milliseconds(140))) != nil else { return }
+        }
+    }
+
+    private func reset() {
+        ending?.cancel()
+        ending = nil
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            isSpinning = false
+            showsCheckmark = false
+            isBlinking = false
+        }
     }
 }
 
@@ -490,6 +579,7 @@ private struct GainLabel: View {
     @State private var isHovering = false
     @State private var showsBreakdown = false
     @State private var pendingOpen: Task<Void, Never>?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Shown only when there's nothing else to say under the meter.
     var inlineNote: String?
@@ -509,6 +599,9 @@ private struct GainLabel: View {
             Text(text)
                 .font(.callout)
                 .monospacedDigit()
+                // A refresh rolls the digits the way the big number's roll.
+                .contentTransition(reduceMotion ? .identity : .numericText())
+                .animation(reduceMotion ? nil : .smooth, value: text)
                 .foregroundStyle(isUrgent ? AnyShapeStyle(.orange) : AnyShapeStyle(.secondary))
                 .underline(isHovering, pattern: .dot, color: .secondary)
                 .lineLimit(1)

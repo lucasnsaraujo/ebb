@@ -16,6 +16,13 @@ struct PoolState: Equatable {
     var forecasts: [String: PoolForecast] = [:]
 }
 
+/// How a refresh asked for from the panel ended, for its button to show.
+struct RefreshOutcome: Equatable {
+    var endedAt: Date
+    /// The proxy didn't answer or refused the key, or the one read the refresh ran came back empty.
+    var failed: Bool
+}
+
 
 /// Keeps the pools fresh while the menu bar item is visible.
 ///
@@ -43,6 +50,8 @@ final class PoolStore {
     /// Why the last poll came back empty; `nil` until a poll has failed.
     private(set) var proxyFailure: ProxyOutage.Failure?
     private(set) var isRefreshing = false
+    /// Set as each `refreshNow()` ends, before `isRefreshing` clears.
+    private(set) var lastRefresh: RefreshOutcome?
     /// The login reset urgency raises most, for Settings → Routing.
     private(set) var strongestUrgency: UrgentLogin?
 
@@ -103,7 +112,8 @@ final class PoolStore {
     @ObservationIgnored private var lastProviderRequest = UserDefaults.standard.object(forKey: "lastProviderRequest") as? Date {
         didSet { UserDefaults.standard.set(lastProviderRequest, forKey: "lastProviderRequest") }
     }
-    @ObservationIgnored private var isPollingProxy = false
+    /// The poll in flight, which any poll asked for meanwhile waits on instead of sending its own.
+    @ObservationIgnored private var proxyPoll: Task<Void, Never>?
     @ObservationIgnored private var loops: [Task<Void, Never>] = []
     @ObservationIgnored private var ledger = DemandLedger()
     @ObservationIgnored private var alertTracker = UserDefaults.standard.data(forKey: PoolStore.alertTrackerKey)
@@ -306,12 +316,15 @@ final class PoolStore {
         Task { await pollProxy() }
     }
 
+    /// Polls the proxy and reads the account due soonest, one refresh at a time. A read that was
+    /// skipped because another trigger got there first counts as nothing failing.
     func refreshNow() {
         guard !loops.isEmpty, !isRefreshing else { return }
         isRefreshing = true
         Task {
             await pollProxy()
-            if let job = nextJob(usageMinimumAge: 0) { await run(job) }
+            let read: RequestOutcome? = if let job = nextJob(usageMinimumAge: 0) { await run(job) } else { nil }
+            lastRefresh = RefreshOutcome(endedAt: .now, failed: proxyFailure != nil || (read ?? .ok) != .ok)
             isRefreshing = false
         }
     }
@@ -332,10 +345,14 @@ final class PoolStore {
     }
 
     private func pollProxy(syncsWeights: Bool = true) async {
-        guard !isPollingProxy else { return }
-        isPollingProxy = true
-        defer { isPollingProxy = false }
+        if let proxyPoll { return await proxyPoll.value }
+        let poll = Task { await sendProxyPoll(syncsWeights: syncsWeights) }
+        proxyPoll = poll
+        defer { proxyPoll = nil }
+        await poll.value
+    }
 
+    private func sendProxyPoll(syncsWeights: Bool) async {
         let wasReachable = proxyReadAt != nil
         let endpoint = connection.endpoint
         // A refused key isn't sent again until the proxy's lockout would have ended; the last answer stands meanwhile.
@@ -551,16 +568,19 @@ final class PoolStore {
         return !ReadingChoice.hasFreshSignals(signals(for: account), now: now)
     }
 
-    private func run(_ job: Job) async {
+    /// How the request ended; `nil` when none went out.
+    @discardableResult
+    private func run(_ job: Job) async -> RequestOutcome? {
         let chosenAt = Date.now
-        guard await waitForProviderSlot() else { return }
-        switch job {
+        guard await waitForProviderSlot() else { return nil }
+        let outcome = switch job {
         case let .usage(email): await readUsage(email, chosenAt: chosenAt)
         case let .profile(email): await checkPlan(email, chosenAt: chosenAt)
         case let .call(name): await readThroughProxy(name, kind: .usage, chosenAt: chosenAt)
         case let .planCall(name): await readThroughProxy(name, kind: .plan, chosenAt: chosenAt)
         }
         recompute()
+        return outcome
     }
 
     private func isProviderSlotFree(at now: Date) -> Bool {
@@ -577,11 +597,11 @@ final class PoolStore {
         return !Task.isCancelled
     }
 
-    private func readUsage(_ email: String, chosenAt: Date) async {
+    private func readUsage(_ email: String, chosenAt: Date) async -> RequestOutcome? {
         // Another trigger may have read this account while we waited.
-        guard RefreshPlan.isStillDue(usageStates[email], chosenAt: chosenAt) else { return }
+        guard RefreshPlan.isStillDue(usageStates[email], chosenAt: chosenAt) else { return nil }
         // The proxy may have refreshed the token while we waited, too.
-        guard let account = loadAccounts()[email] else { return }
+        guard let account = loadAccounts()[email] else { return nil }
 
         lastProviderRequest = .now
         usageStates[email, default: FetchState()].lastAttempt = .now
@@ -599,11 +619,12 @@ final class PoolStore {
             Self.backOff(&usageStates, email, retryAfter: retryAfter)
             if result.isAuthFailure { profileRequested.insert(email) }
         }
+        return result.outcome
     }
 
-    private func checkPlan(_ email: String, chosenAt: Date) async {
-        guard RefreshPlan.isStillDue(profileStates[email], chosenAt: chosenAt) else { return }
-        guard let account = loadAccounts()[email] else { return }
+    private func checkPlan(_ email: String, chosenAt: Date) async -> RequestOutcome? {
+        guard RefreshPlan.isStillDue(profileStates[email], chosenAt: chosenAt) else { return nil }
+        guard let account = loadAccounts()[email] else { return nil }
 
         lastProviderRequest = .now
         profileStates[email, default: FetchState()].lastAttempt = .now
@@ -625,17 +646,18 @@ final class PoolStore {
         case let .failed(_, retryAfter):
             Self.backOff(&profileStates, email, retryAfter: retryAfter)
         }
+        return result.outcome
     }
 
     /// One usage or plan read through the proxy. A refused token shows "Limits not available" and
     /// waits hours before the next try; it never touches the plan or retires the login.
-    private func readThroughProxy(_ name: String, kind: CallKind, chosenAt: Date) async {
+    private func readThroughProxy(_ name: String, kind: CallKind, chosenAt: Date) async -> RequestOutcome? {
         let states = kind == .usage ? \PoolStore.callStates : \PoolStore.callPlanStates
-        guard RefreshPlan.isStillDue(self[keyPath: states][name], chosenAt: chosenAt) else { return }
+        guard RefreshPlan.isStillDue(self[keyPath: states][name], chosenAt: chosenAt) else { return nil }
         guard let endpoint = connection.endpoint, let file = proxyFiles[name],
               let provider = Providers.named(file.provider),
               let call = kind == .usage ? provider.usageCall(for: file) : provider.planCall(for: file)
-        else { return }
+        else { return nil }
 
         lastProviderRequest = .now
         self[keyPath: states][name, default: FetchState()].lastAttempt = .now
@@ -652,7 +674,7 @@ final class PoolStore {
             self[keyPath: states][name]?.failures = 0
             self[keyPath: states][name]?.retryNotBefore = nil
             // Where a plan call exists, it alone speaks for the subscription.
-            guard kind == .plan || provider.planCall(for: file) == nil else { return }
+            guard kind == .plan || provider.planCall(for: file) == nil else { return .ok }
             if reading.hasEndedSubscription { endedSubscriptions.insert(name) } else { endedSubscriptions.remove(name) }
             let streak = reading.hasEndedSubscription ? callInactiveStreaks[name, default: 0] + 1 : 0
             callInactiveStreaks[name] = streak
@@ -668,6 +690,7 @@ final class PoolStore {
         case .failed:
             Self.backOff(&self[keyPath: states], name, retryAfter: nil)
         }
+        return outcome.requestOutcome
     }
 
     /// Disables a login whose plan ended, or re-enables one we disabled, through the proxy.
