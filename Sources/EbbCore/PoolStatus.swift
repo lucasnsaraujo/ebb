@@ -50,8 +50,9 @@ public struct PoolStatus: Sendable, Equatable, Codable {
     /// waits for the refresh, since the proxy is read every 30 seconds.
     public func needsWrite(after previous: PoolStatus?) -> Bool {
         guard let previous else { return true }
+        // Only a newer time for a reading already there waits; a pool's first reading is news.
         func numbers(_ status: PoolStatus) -> [ProviderStatus] {
-            status.providers.map { var pool = $0; pool.readAt = nil; return pool }
+            status.providers.map { var pool = $0; pool.readAt = pool.readAt.map { _ in .distantPast }; return pool }
         }
         return numbers(previous) != numbers(self) || previous.menuBarProvider != menuBarProvider
             || updatedAt.timeIntervalSince(previous.updatedAt) >= Self.refreshInterval

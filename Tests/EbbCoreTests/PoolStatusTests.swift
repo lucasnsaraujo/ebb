@@ -113,6 +113,12 @@ private func temporaryFile() -> URL {
         #expect(!next.needsWrite(after: status(at: now)))
     }
 
+    @Test func aPoolsFirstReadingIsWrittenAtOnce() {
+        var before = status(at: now)
+        before.providers[0].readAt = nil
+        #expect(status(at: at(0.5)).needsWrite(after: before))
+    }
+
     @Test func unchangedNumbersAreRewrittenOnlyToRefreshTheirAge() {
         #expect(!status(at: at(4)).needsWrite(after: status(at: now)))
         #expect(status(at: at(5)).needsWrite(after: status(at: now)))
