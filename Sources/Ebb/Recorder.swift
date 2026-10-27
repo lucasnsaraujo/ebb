@@ -269,6 +269,13 @@ private final class Desk {
     private var digit = CGRect.zero
     private var digits: [(sharp: CGImage, blurred: CGImage)] = []
 
+    /// The menu bar clock's format: "Tue Oct 27  9:12 AM".
+    private static func clockText(_ date: Date) -> String {
+        let day = DateFormatter()
+        day.dateFormat = DateFormatter.dateFormat(fromTemplate: "EEEMMMd", options: 0, locale: .current)?.replacingOccurrences(of: ",", with: "")
+        return day.string(from: date) + "  " + date.formatted(date: .omitted, time: .shortened)
+    }
+
     init(model: AppModel, scheme: ColorScheme) {
         isDark = scheme == .dark
         let claude = ClaudeProvider().proxyName
@@ -295,7 +302,8 @@ private final class Desk {
         }
         wallpaper = Self.wallpaper(isDark: isDark)
         blurredWallpaper = Self.blur(wallpaper, radius: 90, saturation: 1.4)
-        clock = (NSAttributedString(string: "Mon 26 Oct  9:41", attributes: [.font: NSFont.systemFont(ofSize: 13)]), .zero)
+        // From the same `now` as the resets in the hover card, so the frame agrees with itself; set TZ to pick the hour.
+        clock = (NSAttributedString(string: Self.clockText(now), attributes: [.font: NSFont.systemFont(ofSize: 13)]), .zero)
         layOutBar()
         measure()
         cardBackdrop = makeCardBackdrop()

@@ -46,8 +46,8 @@
   </tr>
   <tr>
     <td>Settings</td>
-    <td><img src="docs/images/settings-menubar-light.png" width="300" alt="Settings, Menu Bar section: when to show Ebb, which pool, eight menu bar styles and the limit."></td>
-    <td><img src="docs/images/settings-menubar-dark.png" width="300" alt="The same settings in dark mode."></td>
+    <td><img src="docs/images/settings-menubar-light.png" width="380" alt="Settings, Menu Bar section: when to show Ebb, which pool, eight menu bar styles and the limit."></td>
+    <td><img src="docs/images/settings-menubar-dark.png" width="380" alt="The same settings in dark mode."></td>
   </tr>
   <tr>
     <td>Routing</td>
