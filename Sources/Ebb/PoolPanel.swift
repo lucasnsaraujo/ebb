@@ -16,11 +16,18 @@ struct PoolPanel: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.openSettings) private var openSettings
 
-    init(store: PoolStore, connection: ProxyConnection, showsAccounts: Bool = LaunchOptions.demo == .accounts, setup: ProxySetup? = nil) {
+    /// Expands, then collapses, on its own: `--demo disclosure`, and the tests that watch the height.
+    private let playsDisclosureDemo: Bool
+
+    init(
+        store: PoolStore, connection: ProxyConnection, showsAccounts: Bool = LaunchOptions.demo == .accounts, setup: ProxySetup? = nil,
+        playsDisclosureDemo: Bool = LaunchOptions.demo == .disclosure
+    ) {
         self.store = store
         self.connection = connection
         _showsAccounts = State(initialValue: showsAccounts)
         fixedSetup = setup
+        self.playsDisclosureDemo = playsDisclosureDemo
     }
 
     /// The pool on show: the one picked here, else the menu bar's.
@@ -81,7 +88,7 @@ struct PoolPanel: View {
         .onAppear {
             PanelOpener.isPanelOpen = true
             store.panelDidOpen()
-            if LaunchOptions.demo == .disclosure { playDisclosureDemo() }
+            if playsDisclosureDemo { playDisclosureDemo() }
         }
         .onDisappear { PanelOpener.isPanelOpen = false }
     }
@@ -121,16 +128,17 @@ struct PoolPanel: View {
                     proxyURL: connection.baseURL
                 )
                     .padding(.top, 4)
-                    // With Reduce Motion the panel's height snaps and only the rows cross-fade.
-                    .transition(reduceMotion ? .opacity.animation(.easeInOut(duration: 0.2)) : .opacity)
+                    // The rows cross-fade on their own clock, so the height above never animates; see `toggleAccounts`.
+                    .transition(.opacity.animation(.easeInOut(duration: 0.2)))
             }
         }
     }
 
+    /// The height changes in one step, on purpose: the menu bar's window takes its size from this
+    /// view, so an animated height resizes it frame by frame, and each resize fights the status
+    /// item's placement of the window, which jumps and settles. Only the rows and the chevron move.
     private func toggleAccounts() {
-        withAnimation(Motion.disclosure(expanding: !showsAccounts, reduceMotion: reduceMotion)) {
-            showsAccounts.toggle()
-        }
+        showsAccounts.toggle()
     }
 
     /// Expands, then collapses, for screen recordings.
@@ -399,13 +407,6 @@ enum Motion {
     /// Delay between consecutive rows as they cascade in.
     static let stagger = 0.03
     static let reveal = Animation.spring(response: 0.35, dampingFraction: 0.85)
-
-    /// Springs open, closes quicker. With Reduce Motion nothing moves: the height snaps, and the
-    /// rows bring their own cross-fade.
-    static func disclosure(expanding: Bool, reduceMotion: Bool) -> Animation? {
-        if reduceMotion { return nil }
-        return expanding ? reveal : .smooth(duration: 0.2)
-    }
 }
 
 // MARK: - Windows
@@ -764,6 +765,7 @@ private struct AccountsDisclosure: View {
     let action: () -> Void
 
     @State private var isHovering = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         Button(action: action) {
@@ -774,6 +776,7 @@ private struct AccountsDisclosure: View {
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.semibold))
                     .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                    .animation(reduceMotion ? nil : Motion.reveal, value: isExpanded)
             }
             .foregroundStyle(.secondary)
             .padding(.vertical, 4)
