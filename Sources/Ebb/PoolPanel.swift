@@ -502,15 +502,19 @@ private struct WindowColumn: View {
     }
 }
 
-/// Free share as a capsule; what comes back soon shows as a lighter segment after it, and what a
-/// spent week locks is hatched at the far end. The plain track between them is what's used. A week
-/// that resets within the window is both locked and coming back, so its hatch lies over the lighter
-/// segment.
+/// Free share as a capsule; what comes back soon runs on after it as a thinner, lighter line, and
+/// what a spent week locks is hatched at the far end. The plain track between them is what's used.
+/// A week that resets within the window is both locked and coming back, so its hatch lies over the
+/// line. The line is thinner, not only lighter, because the panel's material brightens a faint
+/// vibrant fill toward the full one over a bright desktop, where the two read as one bar.
 private struct Meter: View {
     let free: Double
     let comingBack: Double
     var locked = 0.0
     let tint: Color
+
+    /// Half the track's height, centred in it.
+    private static let comingBackHeight: CGFloat = 3
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorSchemeContrast) private var contrast
@@ -525,7 +529,8 @@ private struct Meter: View {
                     ZStack(alignment: .trailing) {
                         HStack(spacing: 0) {
                             Rectangle().fill(tint).frame(width: freeWidth)
-                            Rectangle().fill(tint.opacity(contrast == .increased ? 0.5 : 0.28)).frame(width: min(width * comingBack / 100, width - freeWidth))
+                            Rectangle().fill(tint.opacity(contrast == .increased ? 0.65 : 0.4))
+                                .frame(width: min(width * comingBack / 100, width - freeWidth), height: Self.comingBackHeight)
                             Spacer(minLength: 0)
                         }
                         Hatch()
