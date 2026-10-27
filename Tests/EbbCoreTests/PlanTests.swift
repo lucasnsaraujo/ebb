@@ -22,7 +22,7 @@ import Testing
     /// Auto-retire disables the login in the proxy, so only a status that says the plan ended may lead there.
     @Test func aStatusThatDoesNotSayThePlanEndedKeepsTheTiersWeight() {
         for status in [nil, "past_due", "trialing", "unpaid_grace", ""] as [String?] {
-            #expect(ClaudeProvider.plan(rateLimitTier: "default_claude_max_20x", subscriptionStatus: status) == .paid(weight: 20), "\(String(describing: status))")
+            #expect(ClaudeProvider.plan(rateLimitTier: "default_claude_max_20x", subscriptionStatus: status) == .paid(weight: PlanWeight(session: 20, weekly: 7)), "\(String(describing: status))")
         }
     }
 
