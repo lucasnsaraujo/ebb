@@ -122,6 +122,12 @@ private struct SeededGenerator: RandomNumberGenerator {
         #expect(RefreshPlan.nextAccount(in: states, minimumAge: 0, now: failedAt + 121) == "a1")
     }
 
+    /// The last request's time is saved, so a clock set back an hour would otherwise hold every read for that hour.
+    @Test func aClockSetBackFreesTheSlotInsteadOfWaitingItOut() {
+        #expect(RefreshPlan.isSlotFree(lastRequest: t0 + 3600, now: t0))
+        #expect(!RefreshPlan.isSlotFree(lastRequest: t0 - 30, now: t0))
+    }
+
     @Test func eachFailureInARowDoublesTheWaitUpToThirtyMinutes() {
         let waits = (1...8).map { Backoff.delay(afterFailures: $0, retryAfter: nil) }
         #expect(waits == [120, 240, 480, 960, 1_800, 1_800, 1_800, 1_800])

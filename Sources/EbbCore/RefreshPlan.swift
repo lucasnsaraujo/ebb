@@ -28,8 +28,9 @@ public enum RefreshPlan {
     }
 
     /// Whether a provider request may go out now: none went out within `minimumSpacing`.
+    /// A last request "in the future" means the clock was set back, and frees the slot.
     public static func isSlotFree(lastRequest: Date?, now: Date) -> Bool {
-        guard let lastRequest else { return true }
+        guard let lastRequest, lastRequest <= now else { return true }
         return now.timeIntervalSince(lastRequest) >= minimumSpacing
     }
 
