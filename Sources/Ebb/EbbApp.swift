@@ -17,7 +17,7 @@ struct EbbApp: App {
         MenuBarExtra(isInserted: Binding(get: { model.visibility.isVisible && !LaunchOptions.rendersOffscreen }, set: { _ in })) {
             PoolPanel(store: model.store, visibility: model.visibility, connection: model.connection)
         } label: {
-            MenuBarLabel(store: model.store, settings: model.menuBarSettings, provider: menuBarProvider)
+            MenuBarLabel(store: model.store, settings: model.menuBarSettings, provider: menuBarProvider, isShowing: model.visibility.isVisible)
         }
         .menuBarExtraStyle(.window)
 
@@ -32,11 +32,14 @@ struct EbbApp: App {
 final class AppModel {
     static let shared = AppModel()
 
+    /// First, so it runs before the properties below touch any of Ebb's folders.
+    private let hasThrowawayHome: Void = Budget.requireThrowawayHome()
     let connection = ProxyConnection(diagnostics: DiagnosticLog())
     let store: PoolStore
     let visibility = Visibility()
     let menuBarSettings = MenuBarSettings()
     private var wakeObserver: NSObjectProtocol?
+    private var hasCheckedConnection = false
 
     private init() {
         if LaunchOptions.isDemo {
@@ -51,16 +54,26 @@ final class AppModel {
             return
         }
         store = PoolStore(connection: connection, isOffline: LaunchOptions.isOffline)
-        visibility.onVisibilityChange = { [store] isVisible in store.setActive(isVisible) }
-        store.setActive(visibility.isVisible)
-        Task { [connection] in
-            await connection.test()
-            // Answered before the panel first opens, so its setup steps don't start on a guess.
-            if !connection.hasSavedKey, !LaunchOptions.isOffline { await connection.lookForProxy() }
+        visibility.onVisibilityChange = { [weak self, store] isVisible in
+            store.setActive(isVisible)
+            if isVisible { self?.checkConnectionOnce() }
         }
+        store.setActive(visibility.isVisible)
+        if visibility.isVisible { checkConnectionOnce() }
         // Only the store hears about wake; the item's visibility never changes for it.
         wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [store] _ in
             MainActor.assumeIsolated { store.didWake() }
+        }
+    }
+
+    /// Answered before the panel first opens, so its setup steps don't start on a guess. Waits for the
+    /// item to show: a hidden Ebb sends nothing, not even this.
+    private func checkConnectionOnce() {
+        guard !hasCheckedConnection else { return }
+        hasCheckedConnection = true
+        Task { [connection] in
+            await connection.test()
+            if !connection.hasSavedKey, !LaunchOptions.isOffline { await connection.lookForProxy() }
         }
     }
 }
@@ -91,6 +104,12 @@ enum LaunchOptions {
     static let snapshotKey: ManagementKey? = value(after: "--key-file")
         .flatMap { try? String(contentsOfFile: $0, encoding: .utf8) }
         .flatMap(ManagementKey.init)
+    /// Runs against a stand-in proxy inside the process, counts requests and timer wakes, writes them to this file and quits: `--budget-report <file>`. See `Budget`.
+    static let budgetReport: URL? = value(after: "--budget-report").map { URL(fileURLWithPath: $0) }
+    /// How long a budget run lasts: `--budget-seconds <n>`.
+    static let budgetSeconds = value(after: "--budget-seconds").flatMap(Double.init) ?? 60
+    /// Keeps the menu bar item hidden, ignoring `~/.config/ebb/mode`: `--hidden`.
+    static let forcesHidden = CommandLine.arguments.contains("--hidden")
     /// Forces the panel's appearance: `--appearance light|dark`.
     static let appearance: NSAppearance.Name? = value(after: "--appearance").map { $0 == "dark" ? .darkAqua : .aqua }
 
@@ -138,6 +157,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let appearance = LaunchOptions.appearance { NSApp.appearance = NSAppearance(named: appearance) }
         registerLoginItemOnce()
         _ = Updater.shared
+        if let file = LaunchOptions.budgetReport { Budget.finish(after: LaunchOptions.budgetSeconds, writingTo: file) }
     }
 
     func applicationWillTerminate(_ notification: Notification) {

@@ -50,6 +50,7 @@ final class ProxyConnection {
     /// A logins-folder key the proxy refused, never tried again: each refusal counts toward
     /// CLIProxyAPI's 30-minute lockout of this Mac. A changed file is tried afresh.
     @ObservationIgnored private var refusedImport: ManagementKey?
+    @ObservationIgnored private var isTesting = false
     @ObservationIgnored private let client = ProxyClient()
     @ObservationIgnored private let keyFile = ManagementKeyFile(url: EbbPaths.managementKeyFile)
 
@@ -208,6 +209,10 @@ final class ProxyConnection {
     }
 
     func test() async {
+        // Settings may ask while a check is already out; one answer serves both.
+        guard !isTesting else { return }
+        isTesting = true
+        defer { isTesting = false }
         guard let endpoint else {
             keyState = .missing
             return

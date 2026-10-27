@@ -52,7 +52,7 @@ final class Visibility {
 
     /// `--demo`: shows the item without writing the mode file.
     func showAlwaysForDemo() {
-        update { $0.mode = .always }
+        update { $0.mode = LaunchOptions.forcesHidden ? .off : .always }
     }
 
     func setWatchedApps(_ bundleIdentifiers: [String]) {
@@ -69,8 +69,9 @@ final class Visibility {
         if isVisible != wasVisible { onVisibilityChange?(isVisible) }
     }
 
-    /// A missing or unreadable file means `always`, so a new install shows up.
+    /// A missing or unreadable file means `always`, so a new install shows up. `--hidden` ignores the file.
     private static func readMode() -> DisplayMode {
+        if LaunchOptions.forcesHidden { return .off }
         let text = (try? String(contentsOf: EbbPaths.modeFile, encoding: .utf8)) ?? ""
         return DisplayMode(rawValue: text.trimmingCharacters(in: .whitespacesAndNewlines)) ?? .always
     }

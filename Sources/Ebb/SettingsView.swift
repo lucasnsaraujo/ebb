@@ -363,6 +363,8 @@ struct ConnectionSettings: View {
             }
         }
         .formStyle(.grouped)
+        // A hidden Ebb skips the check at launch; looking at the status asks for it.
+        .task { if connection.keyState == .checking { await connection.test() } }
     }
 
     private func save() {

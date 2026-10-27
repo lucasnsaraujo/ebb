@@ -8,6 +8,8 @@ struct MenuBarLabel: View {
     let settings: MenuBarSettings
     /// The pool on show; `nil` while no provider has a login.
     let provider: String?
+    /// SwiftUI may build the label while the item is out of the menu bar; the clock below runs only while it shows.
+    let isShowing: Bool
 
     @State private var now = Date.now
 
@@ -18,9 +20,12 @@ struct MenuBarLabel: View {
             .accessibilityLabel(item.accessibilityLabel)
             // Refill times count down and readings go stale even when nothing new arrives.
             // Not a TimelineView: a menu bar label redraws at once when asked, so it would spin.
-            .task {
+            .task(id: isShowing) {
+                guard isShowing else { return }
+                now = .now
                 while !Task.isCancelled {
                     try? await Task.sleep(for: .seconds(60))
+                    Budget.wake("menu bar clock")
                     now = .now
                 }
             }

@@ -139,7 +139,7 @@ Settings → General → Install Command Line Tool puts an `ebb` command on your
 }
 ```
 
-The command reads the numbers the app already saved and never touches the network. See [docs/cli.md](docs/cli.md).
+The command reads the numbers the app already saved and never touches the network. `ebb --uninstall-data` is the one command that changes anything: it lists Ebb's settings, caches, saved key and command link, asks, and removes them, but never CLIProxyAPI's files or `Ebb.app` ([exact paths](docs/paths.md)). See [docs/cli.md](docs/cli.md).
 
 ## Shortcuts and Siri
 
@@ -154,7 +154,7 @@ Ebb has no telemetry, no analytics and no server of its own. It talks to:
 - `status.claude.com` and `status.openai.com`, at most every 5 minutes while the menu bar item shows, with no account data;
 - GitHub, once a day, to check for a new release.
 
-The management key is stored in a file only your user can read, and is never logged. On its first launch Ebb adds itself as a login item, and macOS shows a notice; Settings → General → Launch at login turns it off. It asks for no other permission at launch: notifications are requested the first time an alert is due. [SECURITY.md](SECURITY.md) lists the files Ebb writes and how to report a vulnerability. The ··· menu's Copy Diagnostics puts versions, account states and recent events on the clipboard for a bug report, with keys, tokens, emails and file names left out.
+The management key is stored in a file only your user can read, and is never logged. On its first launch Ebb adds itself as a login item, and macOS shows a notice; Settings → General → Launch at login turns it off. It asks for no other permission at launch: notifications are requested the first time an alert is due. [SECURITY.md](SECURITY.md) lists the files Ebb writes and how to report a vulnerability; [docs/paths.md](docs/paths.md) has their exact paths, for removing Ebb completely or for the Homebrew cask's `zap`. The ··· menu's Copy Diagnostics puts versions, account states and recent events on the clipboard for a bug report, with keys, tokens, emails and file names left out.
 
 ## FAQ
 
@@ -179,7 +179,7 @@ swift test      # runs the unit tests
 
 `./build.sh --bundle <dir>` only writes `Ebb.app` into `<dir>`. Releases and updates are described in [docs/updates.md](docs/updates.md).
 
-`Ebb --demo` shows fake accounts of every provider with no network, for screenshots and testing. `Ebb --snapshot <dir>` renders the panel, every menu bar style and Settings → General, Routing and Connection offscreen to PNGs and quits; add `--demo` for the fake accounts. `Ebb --record <dir>` renders the README hero offscreen from the fake accounts, plus the demo video's frames in `frames/` (60 fps) and the GIF's in `gif-frames/` (20 fps) for ffmpeg, and quits.
+Measured on a macOS 26 CI runner over 60 s idle against a stand-in proxy: a 4.6 MB single-architecture binary (the shipped app is universal, about twice that), 13–14 MB physical footprint, 0.02–0.09% CPU once launched, 9–10 network requests and 8 timer wakes, and none of either while the item is hidden. Sparkle and the login item only start inside the app bundle, so the budget doesn't cover them. `scripts/check-budget.sh` is the lightweight budget CI runs; it launches Ebb with `--budget-report <file> --budget-seconds 60`, once with `--hidden`, so run it only in a disposable session. `Ebb --demo` shows fake accounts of every provider with no network, for screenshots and testing. `Ebb --snapshot <dir>` renders the panel, every menu bar style and Settings → General, Routing and Connection offscreen to PNGs and quits; add `--demo` for the fake accounts. `Ebb --record <dir>` renders the README hero offscreen from the fake accounts, plus the demo video's frames in `frames/` (60 fps) and the GIF's in `gif-frames/` (20 fps) for ffmpeg, and quits.
 
 ## Contributing
 
