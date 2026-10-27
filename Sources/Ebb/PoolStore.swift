@@ -73,6 +73,7 @@ final class PoolStore {
     @ObservationIgnored private var accounts: [String: ProxyAccount] = [:]
     @ObservationIgnored private var disabledByUser: [ProxyAccount] = []
     @ObservationIgnored private var managementLockout = ManagementLockout()
+    @ObservationIgnored private var seenKeyAcceptances = 0
     /// The proxy's latest listing by auth file name. Kept while it's unreachable, so the numbers
     /// last read stay on show, dimmed by their age; weights aren't synced from it meanwhile.
     @ObservationIgnored private var proxyFiles: [String: ProxyAuthFile] = [:]
@@ -281,6 +282,7 @@ final class PoolStore {
 
     /// Settings pointed Ebb at another proxy: the logins folder may be out of reach now, or back.
     func connectionDidChange() {
+        managementLockout = ManagementLockout()
         proxyFiles = [:]
         proxyReadAt = nil
         proxyFailure = nil
@@ -337,6 +339,11 @@ final class PoolStore {
         let wasReachable = proxyReadAt != nil
         let endpoint = connection.endpoint
         // A refused key isn't sent again until the proxy's lockout would have ended; the last answer stands meanwhile.
+        // Settings or the setup steps checked the key and the proxy took it: no reason to wait any longer.
+        if connection.keyAcceptances != seenKeyAcceptances {
+            seenKeyAcceptances = connection.keyAcceptances
+            managementLockout.noteAccepted()
+        }
         let isPaused = endpoint.map { !managementLockout.allowsRequest(with: $0.key, now: .now) } ?? false
         if !isPaused {
             let listing: ProxyClient.Listing? = if let endpoint { await proxy.authFiles(endpoint) } else { nil }
@@ -353,13 +360,15 @@ final class PoolStore {
                     // A key checked while the proxy was down stays "unreachable" in Settings until it's checked again.
                     if connection.keyState == .unreachable { await connection.test() }
                 }
-            case let .refused(version, message):
+            case let .refused(version, status, message):
                 connection.noteProxyVersion(version)
-                if let endpoint { managementLockout.noteRefusal(of: endpoint.key, message: message, now: .now) }
+                connection.noteKeyRefused()
+                if let endpoint { managementLockout.noteRefusal(of: endpoint.key, status: status, message: message, now: .now) }
                 if wasReachable || proxyFailure != .refused {
+                    let isPausing = endpoint.map { !managementLockout.allowsRequest(with: $0.key, now: .now) } ?? false
                     diagnostics.record(managementLockout.isBanned(now: .now)
                         ? "Proxy locked this Mac out after too many wrong keys; asking again when that ends"
-                        : "Proxy refused the key; asking again in 31 min, before its lockout could start")
+                        : isPausing ? "Proxy refused the key; asking again in 31 min, before its lockout could start" : "Proxy refused the request: \(message)")
                 }
                 proxyReadAt = nil
                 proxyFailure = .refused

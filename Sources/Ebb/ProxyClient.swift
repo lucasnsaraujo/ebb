@@ -44,7 +44,7 @@ struct ProxyClient {
     enum Listing {
         case files([ProxyAuthFile], version: String?)
         /// `message` is the proxy's error text, which tells a lockout from a wrong key.
-        case refused(version: String?, message: String)
+        case refused(version: String?, status: Int, message: String)
         case unreachable
     }
 
@@ -55,7 +55,7 @@ struct ProxyClient {
         let version = Self.version(of: http)
         switch http.statusCode {
         case 200: return ProxyAuthFile.parseList(data).map { .files($0, version: version) } ?? .unreachable
-        case 401, 403: return .refused(version: version, message: Self.errorMessage(in: data))
+        case 401, 403: return .refused(version: version, status: http.statusCode, message: Self.errorMessage(in: data))
         default: return .unreachable
         }
     }

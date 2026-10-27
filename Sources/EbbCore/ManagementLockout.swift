@@ -23,10 +23,13 @@ public struct ManagementLockout: Sendable, Equatable {
         bannedUntil.map { now < $0 } ?? false
     }
 
-    /// `message` is the proxy's error text, which names the time left when it's a lockout.
-    public mutating func noteRefusal(of key: ManagementKey, message: String, now: Date) {
-        refusedKey = key
+    /// `message` is the proxy's error text, which names the time left when it's a lockout. Only a
+    /// 401 (wrong or missing key) counts toward a lockout; a 403 such as "remote management disabled"
+    /// doesn't, so it pauses nothing unless it is the lockout itself.
+    public mutating func noteRefusal(of key: ManagementKey, status: Int, message: String, now: Date) {
         let ban = Self.remainingBan(in: message)
+        guard status == 401 || ban != nil else { return }
+        refusedKey = key
         bannedUntil = ban.map { now + $0 }
         resumesAt = now + (ban.map { $0 + 60 } ?? Self.pause)
     }

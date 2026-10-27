@@ -27,6 +27,8 @@ final class ProxyConnection {
     /// An address set by hand in Settings, for a proxy on another machine; `nil` follows the config file.
     private(set) var managementURL: URL?
     private(set) var keyState: KeyState = .missing
+    /// Goes up each time the proxy accepts the key in a check, so the store resumes a key it paused.
+    @ObservationIgnored private(set) var keyAcceptances = 0
     /// `nil` until read, or when the proxy can't be asked.
     private(set) var routingStrategy: String?
     private(set) var startState: StartState = .idle
@@ -187,6 +189,7 @@ final class ProxyConnection {
         diagnostics.record("Key entered: \(result.check)")
         switch result.check {
         case .valid:
+            keyAcceptances += 1
             key = (try? keyFile.save(newKey)) == nil ? nil : newKey
             keyState = key == nil ? .missing : .valid
             unsavedKey = nil
@@ -197,6 +200,11 @@ final class ProxyConnection {
         case .unreachable:
             keyState = .unreachable
         }
+    }
+
+    /// A poll saw the proxy refuse the saved key, so Settings and the setup steps stop calling it valid.
+    func noteKeyRefused() {
+        if keyState == .valid { keyState = .rejected }
     }
 
     func forgetKey() {
@@ -232,6 +240,7 @@ final class ProxyConnection {
             self.unsavedKey = nil
         }
         guard keyState == .valid else { return }
+        keyAcceptances += 1
         if let unsavedKey, (try? keyFile.save(unsavedKey)) != nil { self.unsavedKey = nil }
         await refreshRoutingStrategy()
     }

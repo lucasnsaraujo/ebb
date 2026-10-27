@@ -7,14 +7,19 @@ final class FakeProxy: @unchecked Sendable {
     private(set) var port: UInt16
     private var listener: NWListener?
     private let listing: Data
-    /// Answers every management call with 401, as CLIProxyAPI does to a wrong key.
-    private let refusesKeys: Bool
+    /// Answers every management call with 401, as CLIProxyAPI does to a wrong key. Settable, to play
+    /// the user fixing the proxy's config.
+    var refusesKeys: Bool {
+        get { lock.withLock { refusing } }
+        set { lock.withLock { refusing = newValue } }
+    }
+    private var refusing: Bool
     private let lock = NSLock()
     private var managementCalls = 0
 
     init(listing: Data, refusesKeys: Bool = false) {
         self.listing = listing
-        self.refusesKeys = refusesKeys
+        refusing = refusesKeys
         port = UInt16.random(in: 40_000..<60_000)
     }
 
@@ -32,7 +37,6 @@ final class FakeProxy: @unchecked Sendable {
         parameters.allowLocalEndpointReuse = true
         let listener = try NWListener(using: parameters, on: NWEndpoint.Port(rawValue: port)!)
         let listing = listing
-        let refusesKeys = refusesKeys
         listener.newConnectionHandler = { [weak self] connection in
             connection.start(queue: .global())
             connection.receive(minimumIncompleteLength: 1, maximumLength: 65_536) { data, _, _, _ in
@@ -40,7 +44,8 @@ final class FakeProxy: @unchecked Sendable {
                 let isManagement = request.split(separator: " ").dropFirst().first?.hasPrefix("/v0/management/") == true
                 if isManagement { self?.countManagementCall() }
                 let isListing = request.hasPrefix("GET /v0/management/auth-files")
-                let status = isManagement && refusesKeys ? 401 : isListing ? 200 : 404
+                let isRefusing = self?.refusesKeys ?? false
+                let status = isManagement && isRefusing ? 401 : isListing || request.hasPrefix("GET /v0/management/config") ? 200 : 404
                 let payload = status == 200 ? listing : Data()
                 let head = "HTTP/1.1 \(status) X\r\nContent-Type: application/json\r\nContent-Length: \(payload.count)\r\nConnection: close\r\n\r\n"
                 connection.send(content: Data(head.utf8) + payload, completion: .contentProcessed { _ in connection.cancel() })
