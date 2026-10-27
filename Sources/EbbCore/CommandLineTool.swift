@@ -60,7 +60,7 @@ public struct CommandLineTool: Sendable {
     }
 
     /// The tool inside any copy of Ebb, renamed ones like `Ebb 2.app` included.
-    private static func isEbbTool(_ path: String) -> Bool {
+    static func isEbbTool(_ path: String) -> Bool {
         let components = Array(URL(fileURLWithPath: path).pathComponents.suffix(4))
         guard components.count == 4 else { return false }
         return components[0].hasPrefix("Ebb") && components[0].hasSuffix(".app") && Array(components[1...]) == ["Contents", "Helpers", name]

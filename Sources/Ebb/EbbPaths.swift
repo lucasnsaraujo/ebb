@@ -3,7 +3,7 @@ import Foundation
 
 /// Ebb's own files. The mode file lives in `~/.config/ebb` so scripts can flip it.
 enum EbbPaths {
-    static let bundleIdentifier = "io.github.lucasnsaraujo.ebb"
+    static let bundleIdentifier = EbbData.bundleIdentifier
     static let home = FileManager.default.homeDirectoryForCurrentUser
     static let applicationSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         .appending(path: "Ebb")
