@@ -143,6 +143,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         if let appearance = LaunchOptions.appearance { NSApp.appearance = NSAppearance(named: appearance) }
         registerLoginItemOnce()
+        _ = Updater.shared
     }
 
     func applicationWillTerminate(_ notification: Notification) {

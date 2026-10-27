@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    # Xcode 27's Swift 6.4 build system is what lets build.sh extract the App Intents metadata.
+    runs-on: xcode-27
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # build.sh numbers each build by its commit count, and Sparkle compares that number.
+          fetch-depth: 0
+      - name: Test
+        run: swift test
+      - name: Build Ebb.app
+        run: EBB_VERSION="${GITHUB_REF_NAME#v}" ./build.sh --bundle dist
+      - name: Write release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir updates
+          gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" -f tag_name="$GITHUB_REF_NAME" --jq .body \
+            > "updates/Ebb-${GITHUB_REF_NAME#v}.md"
+      - name: Zip, sign and write the appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent dist/Ebb.app "updates/Ebb-${GITHUB_REF_NAME#v}.zip"
+          generate_appcast="$(find .build -path "*/Sparkle/bin/generate_appcast" -type f | head -1)"
+          printf '%s' "$SPARKLE_PRIVATE_KEY" | "$generate_appcast" --ed-key-file - --embed-release-notes \
+            --download-url-prefix "https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/" \
+            --full-release-notes-url "https://github.com/$GITHUB_REPOSITORY/releases" \
+            --link "https://github.com/$GITHUB_REPOSITORY" \
+            updates
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          prerelease=()
+          [[ "$version" == *-* ]] && prerelease=(--prerelease)
+          gh release create "$GITHUB_REF_NAME" "updates/Ebb-$version.zip" updates/appcast.xml \
+            --title "Ebb $version" --notes-file "updates/Ebb-$version.md" --verify-tag "${prerelease[@]}"
+          shasum -a 256 "updates/Ebb-$version.zip" >> "$GITHUB_STEP_SUMMARY"

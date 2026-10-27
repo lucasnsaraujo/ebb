@@ -117,8 +117,31 @@ struct GeneralSettings: View {
                     }
             }
             CommandLineToolSection()
+            UpdatesSection(updater: .shared)
         }
         .formStyle(.grouped)
+    }
+}
+
+private struct UpdatesSection: View {
+    @Bindable var updater: Updater
+
+    var body: some View {
+        Section {
+            Toggle("Check for updates automatically", isOn: $updater.checksAutomatically)
+                .disabled(!updater.isStarted)
+            HStack {
+                Spacer()
+                Button("Check for Updates…") { updater.checkForUpdates() }
+                    .disabled(!updater.canCheckForUpdates)
+            }
+        } header: {
+            Text("Updates")
+        } footer: {
+            Text("Once a day, Ebb asks GitHub whether a new release is out. The request names Ebb's version and nothing about your accounts.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
     }
 }
 

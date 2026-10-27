@@ -57,6 +57,8 @@ Requires macOS 26 or later and Xcode 26 or later.
 swift test      # runs the unit tests
 ```
 
+`./build.sh --bundle <dir>` only writes `Ebb.app` into `<dir>`. Releases and updates are described in [docs/updates.md](docs/updates.md).
+
 `Ebb --demo` shows fake accounts of every provider with no network, for screenshots and testing. `Ebb --snapshot <dir>` renders the panel, every menu bar style and Settings → General, Routing and Connection offscreen to PNGs and quits; add `--demo` for the fake accounts.
 
 ## License
