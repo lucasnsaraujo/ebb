@@ -57,6 +57,9 @@ public struct PoolSummary: Sendable, Equatable {
     public var weeklyLimitedAccounts = 0
     /// The oldest reading behind the numbers: they're as fresh as this.
     public var oldestReadingAt: Date?
+    /// False when every read account has a weekly window and no short one (Codex plans without a
+    /// 5-hour cap): the short window then counts as free but isn't a cap, so it isn't worth showing.
+    public var hasShortWindow = true
 }
 
 public enum Pool {
@@ -113,6 +116,10 @@ public enum Pool {
             return WindowSummary(freePercent: free / totalWeight, resets: merge(resets), uncappedPercent: uncapped / totalWeight)
         }
 
+        func hasWeeklyOnly(_ account: AccountUsage) -> Bool {
+            !account.limits.contains { $0.kind == .session } && account.limits.contains { $0.kind == .weeklyAll }
+        }
+
         return PoolSummary(
             session: window(.session, horizon: sessionHorizon),
             weekly: window(.weeklyAll, horizon: nil),
@@ -122,7 +129,8 @@ public enum Pool {
             readAccounts: readable.count,
             unreadAccounts: accounts.filter { $0 == nil }.count,
             weeklyLimitedAccounts: readable.filter(isWeekSpent).count,
-            oldestReadingAt: readable.compactMap(\.readAt).min()
+            oldestReadingAt: readable.compactMap(\.readAt).min(),
+            hasShortWindow: !readable.allSatisfy(hasWeeklyOnly)
         )
     }
 

@@ -116,12 +116,15 @@ public struct MenuBarPool: Sendable, Equatable {
     /// One flag per account in the pool, true when it can take work.
     public var accounts: [Bool]
     public var lastReadAt: Date?
+    /// False when no account of the pool has a short window, so the weekly one stands in for it.
+    public var hasShortWindow: Bool
 
-    public init(session: WindowReading, weekly: WindowReading, accounts: [Bool], lastReadAt: Date?) {
+    public init(session: WindowReading, weekly: WindowReading, accounts: [Bool], lastReadAt: Date?, hasShortWindow: Bool = true) {
         self.session = session
         self.weekly = weekly
         self.accounts = accounts
         self.lastReadAt = lastReadAt
+        self.hasShortWindow = hasShortWindow
     }
 
     public init(summary: PoolSummary, shortWindow: ShortWindow, accounts: [Bool], lastReadAt: Date?, now: Date) {
@@ -129,7 +132,8 @@ public struct MenuBarPool: Sendable, Equatable {
             session: WindowReading(window: .session, summary: summary.session, shortWindow: shortWindow, now: now),
             weekly: WindowReading(window: .weekly, summary: summary.weekly, shortWindow: shortWindow, now: now),
             accounts: accounts,
-            lastReadAt: lastReadAt
+            lastReadAt: lastReadAt,
+            hasShortWindow: summary.hasShortWindow
         )
     }
 }
@@ -228,9 +232,10 @@ public struct MenuBarItem: Sendable, Equatable {
             accessibilityLabel = "Ebb, no reading"
             return
         }
-        let session = pool.session
         let weekly = pool.weekly
+        let session = pool.hasShortWindow ? pool.session : weekly
         let shown = limit.pick(session: session, weekly: weekly)
+        let windows = pool.hasShortWindow ? [session, weekly] : [weekly]
 
         func refill(_ reading: WindowReading) -> String? {
             reading.refillsAt.map { "· " + RefillText.until($0, now: now) }
@@ -251,9 +256,9 @@ public struct MenuBarItem: Sendable, Equatable {
         case .ring:
             parts = [.ring(Ring(number: Gauge(session), arc: Gauge(weekly), accounts: pool.accounts))]
         case .both:
-            parts = [.mark(percent: session.percent, state: .normal), .line(runs(session) + [Run("·", isSecondary: true)] + runs(weekly))]
+            parts = [.mark(percent: session.percent, state: .normal), .line(Array(windows.map(runs).joined(separator: [Run("·", isSecondary: true)])))]
         case .stacked:
-            parts = [.mark(percent: session.percent, state: .normal), .stack([row(session), row(weekly)])]
+            parts = [.mark(percent: session.percent, state: .normal), .stack(windows.map(row))]
         case .refillTime:
             let value = Run("\(shown.label) \(shown.percent)%", state: shown.state)
             parts = [.mark(percent: shown.percent, state: .normal), .line([value] + (refill(shown).map { [Run($0, isSecondary: true)] } ?? []))]
@@ -268,7 +273,7 @@ public struct MenuBarItem: Sendable, Equatable {
         isStale = pool.lastReadAt.map { now.timeIntervalSince($0) > Self.staleAfter } ?? true
         if isStale { parts = parts.map(\.untinted) }
 
-        let spoken = style.showsBothWindows ? [session, weekly] : [shown]
+        let spoken = style.showsBothWindows ? windows : [shown]
         var label = "Ebb, " + spoken.map { "\($0.spokenTitle) \($0.percent)% free" }.joined(separator: ", ")
         if style == .refillTime || shown.percent == 0, !style.showsBothWindows, let date = shown.refillsAt {
             label += ", more in " + RefillText.until(date, now: now)
