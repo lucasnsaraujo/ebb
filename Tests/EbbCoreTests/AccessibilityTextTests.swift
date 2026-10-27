@@ -73,6 +73,12 @@ private func label(_ style: MenuBarStyle, _ limit: MenuBarLimit = .fiveHour, _ p
         #expect(AccessibilityText.meter(freePercent: 0, comingBackPercent: 0, locale: brazil) == "0 por cento livre")
     }
 
+    @Test func aPoolMeterSaysWhatIsLocked() {
+        #expect(AccessibilityText.meter(freePercent: 24, comingBackPercent: 0, lockedPercent: 57, locale: english) == "24 percent free, 57 percent locked")
+        #expect(AccessibilityText.meter(freePercent: 24, comingBackPercent: 5, lockedPercent: 57, locale: english) == "24 percent free, 5 percent coming back, 57 percent locked")
+        #expect(AccessibilityText.meter(freePercent: 24, comingBackPercent: 0, lockedPercent: 57, locale: brazil) == "24 por cento livre, 57 por cento bloqueado")
+    }
+
     @Test func anAccountMeterSaysWhatIsFreeOrWhyThereIsNoBar() {
         #expect(AccessibilityText.miniMeter(freePercent: 36, isUncapped: false, locale: english) == "36 percent free")
         #expect(AccessibilityText.miniMeter(freePercent: nil, isUncapped: true, locale: english) == "no weekly limit")

@@ -738,7 +738,8 @@ final class PoolStore {
             routingStrategy: connection.routingStrategy,
             accounts: diagnosticAccounts(),
             log: diagnostics.entries,
-            secrets: [connection.endpoint?.key.value].compactMap { $0 }
+            secrets: [connection.endpoint?.key.value].compactMap { $0 },
+            pools: state.summaries
         )
         return Diagnostics.text(report, now: now)
     }

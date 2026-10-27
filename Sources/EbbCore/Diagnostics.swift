@@ -59,8 +59,10 @@ public struct DiagnosticsReport: Sendable {
     public var log: [DiagnosticLog.Entry]
     /// Values that must not appear whatever a line says: the management key.
     public var secrets: [String]
+    /// Each provider's pool, as the panel reads it.
+    public var pools: [String: PoolSummary]
 
-    public init(ebbVersion: String, macOSVersion: String, proxyVersion: String?, connection: String, routingStrategy: String?, accounts: [DiagnosticAccount], log: [DiagnosticLog.Entry], secrets: [String]) {
+    public init(ebbVersion: String, macOSVersion: String, proxyVersion: String?, connection: String, routingStrategy: String?, accounts: [DiagnosticAccount], log: [DiagnosticLog.Entry], secrets: [String], pools: [String: PoolSummary] = [:]) {
         self.ebbVersion = ebbVersion
         self.macOSVersion = macOSVersion
         self.proxyVersion = proxyVersion
@@ -69,6 +71,7 @@ public struct DiagnosticsReport: Sendable {
         self.accounts = accounts
         self.log = log
         self.secrets = secrets
+        self.pools = pools
     }
 }
 
@@ -96,6 +99,14 @@ public enum Diagnostics {
             lines.append([label(provider: account.provider, name: account.name, among: report.accounts), account.status, read, account.outcome?.rawValue ?? "no request yet"].joined(separator: "  "))
         }
         lines.append("")
+        for (provider, pool) in report.pools.sorted(by: { $0.key < $1.key }) {
+            var short = "\(Providers.named(provider)?.shortWindow == .day ? "daily" : "5h") \(percent(pool.session.freePercent)) free"
+            if pool.session.lockedPercent > 0 {
+                short += ", \(percent(pool.session.lockedPercent)) locked" + (pool.session.unlocksAt.map { ", unlocks in \(ahead($0, now: now))" } ?? "")
+            }
+            lines.append("Pool \(provider): \(short); weekly \(percent(pool.weekly.freePercent)) free")
+        }
+        if !report.pools.isEmpty { lines.append("") }
         lines.append("Log")
         for entry in report.log.suffix(DiagnosticLog.capacity) {
             lines.append("\(clock(entry.date))  \(entry.message)")
@@ -109,6 +120,16 @@ public enum Diagnostics {
         if seconds < 3600 { return "\(seconds / 60)m" }
         if seconds < 86_400 { return "\(seconds / 3600)h" }
         return "\(seconds / 86_400)d"
+    }
+
+    private static func percent(_ value: Double) -> String {
+        "\(Int(value.rounded()))%"
+    }
+
+    /// "40m", "26h": hours keep a day-long wait exact enough to match against the log.
+    private static func ahead(_ date: Date, now: Date) -> String {
+        let seconds = max(0, Int(date.timeIntervalSince(now)))
+        return seconds < 3600 ? "\(seconds / 60)m" : "\(seconds / 3600)h"
     }
 
     private static func clock(_ date: Date) -> String {

@@ -343,27 +343,40 @@ private struct WindowPair: View {
     var body: some View {
         TimelineView(.periodic(from: .now, by: 30)) { context in
             let now = context.date
-            HStack(alignment: .top, spacing: 20) {
-                WindowColumn(
-                    window: .session,
-                    short: short,
-                    freePercent: summary.session.freePercent,
-                    line: GainLine.session(summary.session.resets.filter { $0.date > now }),
-                    forecast: forecast?.session,
-                    notes: PoolNotes.lines(summary, window: .session, now: now),
-                    now: now,
-                    inlineNote: PoolNotes.inline(summary)
-                )
-                WindowColumn(
-                    window: .weekly,
-                    short: short,
-                    freePercent: summary.weekly.freePercent,
-                    line: GainLine.weekly(summary.weekly.resets.filter { $0.date > now }),
-                    forecast: forecast?.weekly,
-                    notes: PoolNotes.lines(summary, window: .weekly, now: now),
-                    now: now,
-                    budget: summary.weeklyBudget
-                )
+            // The locked share and its line come together: a sliver with no words would be a mystery.
+            let locked = PoolNotes.locked(summary.session)
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .top, spacing: 20) {
+                    WindowColumn(
+                        window: .session,
+                        short: short,
+                        freePercent: summary.session.freePercent,
+                        line: GainLine.session(summary.session.resets.filter { $0.date > now }),
+                        forecast: forecast?.session,
+                        notes: PoolNotes.lines(summary, window: .session, now: now),
+                        now: now,
+                        lockedPercent: locked == nil ? 0 : summary.session.lockedPercent,
+                        inlineNote: locked == nil ? PoolNotes.inline(summary) : nil
+                    )
+                    WindowColumn(
+                        window: .weekly,
+                        short: short,
+                        freePercent: summary.weekly.freePercent,
+                        line: GainLine.weekly(summary.weekly.resets.filter { $0.date > now }),
+                        forecast: forecast?.weekly,
+                        notes: PoolNotes.lines(summary, window: .weekly, now: now),
+                        now: now,
+                        budget: summary.weeklyBudget
+                    )
+                }
+                // Too long for its column, so it runs under both, starting where the 5-hour lines do.
+                if let locked {
+                    Text(locked)
+                        .font(.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 5)
+                }
             }
         }
     }
@@ -377,6 +390,8 @@ private struct WindowColumn: View {
     let forecast: Pace.Forecast?
     let notes: [String]
     let now: Date
+    /// The 5-hour share held by accounts whose week is spent; see `WindowSummary.lockedPercent`.
+    var lockedPercent = 0.0
     var inlineNote: String?
     /// The weekly window's daily share; see `WeeklyBudget`.
     var budget: WeeklyBudget?
@@ -401,13 +416,13 @@ private struct WindowColumn: View {
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
-                Meter(free: freePercent, comingBack: Double(line?.points ?? 0), tint: level.warningTint ?? .primary)
+                Meter(free: freePercent, comingBack: Double(line?.points ?? 0), locked: lockedPercent, tint: level.warningTint ?? .primary)
                     .frame(height: 6)
                     .padding(.top, 5)
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(window.title(short))
-            .accessibilityValue(AccessibilityText.meter(freePercent: level.percent, comingBackPercent: line?.points ?? 0))
+            .accessibilityValue(AccessibilityText.meter(freePercent: level.percent, comingBackPercent: line?.points ?? 0, lockedPercent: Int(lockedPercent.rounded())))
             GainLabel(window: window, short: short, line: line, forecast: forecast, notes: notes, now: now, inlineNote: inlineNote, budget: budget)
                 .padding(.top, 7)
         }
@@ -416,10 +431,14 @@ private struct WindowColumn: View {
     }
 }
 
-/// Free share as a capsule; what comes back soon shows as a lighter segment after it.
+/// Free share as a capsule; what comes back soon shows as a lighter segment after it, and what a
+/// spent week locks is hatched at the far end. The plain track between them is what's used. A week
+/// that resets within the window is both locked and coming back, so its hatch lies over the lighter
+/// segment.
 private struct Meter: View {
     let free: Double
     let comingBack: Double
+    var locked = 0.0
     let tint: Color
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -428,18 +447,47 @@ private struct Meter: View {
     var body: some View {
         Capsule()
             .fill(contrast.track)
-            .overlay(alignment: .leading) {
+            .overlay {
                 GeometryReader { geometry in
                     let width = geometry.size.width
                     let freeWidth = width * min(max(free, 0), 100) / 100
-                    HStack(spacing: 0) {
-                        Rectangle().fill(tint).frame(width: freeWidth)
-                        Rectangle().fill(tint.opacity(contrast == .increased ? 0.5 : 0.28)).frame(width: min(width * comingBack / 100, width - freeWidth))
+                    ZStack(alignment: .trailing) {
+                        HStack(spacing: 0) {
+                            Rectangle().fill(tint).frame(width: freeWidth)
+                            Rectangle().fill(tint.opacity(contrast == .increased ? 0.5 : 0.28)).frame(width: min(width * comingBack / 100, width - freeWidth))
+                            Spacer(minLength: 0)
+                        }
+                        Hatch()
+                            .fill(contrast == .increased ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
+                            .frame(width: min(width * max(locked, 0) / 100, width - freeWidth))
+                            .clipped()
                     }
                 }
             }
             .clipShape(.capsule)
             .animation(reduceMotion ? nil : .smooth, value: free)
+    }
+}
+
+/// Diagonal bands over the track, the way Storage hatches purgeable space: there, but not to be
+/// had. Laid from the trailing edge, so the pattern holds still while the segment grows.
+private struct Hatch: Shape {
+    private static let pitch: CGFloat = 4
+    private static let band: CGFloat = 1.5
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let rise = rect.height
+        var x = rect.maxX
+        while x > rect.minX - rise {
+            path.move(to: CGPoint(x: x, y: rect.maxY))
+            path.addLine(to: CGPoint(x: x + Self.band, y: rect.maxY))
+            path.addLine(to: CGPoint(x: x + Self.band + rise, y: rect.minY))
+            path.addLine(to: CGPoint(x: x + rise, y: rect.minY))
+            path.closeSubpath()
+            x -= Self.pitch
+        }
+        return path
     }
 }
 

@@ -295,6 +295,58 @@ private func todaysAccounts() throws -> [AccountUsage] {
         expectClose(resets.first?.gain, 20 * 100 / 25.0)
     }
 
+    /// Lucas's pool: three Max 5x at 55% free and a Max 20x whose week is spent reads 25% free,
+    /// and 57% of it is locked until that week resets.
+    @Test func aSpentWeeksShareOfTheFiveHourPoolIsLockedUntilItResets() throws {
+        let max5x = AccountUsage(weight: PlanWeight(session: 5, weekly: 3.5), limits: [session(45), weekly(40)])
+        let spent = AccountUsage(weight: PlanWeight(session: 20, weekly: 7), limits: [session(0), weekly(100, resetsIn: 26 * 60)])
+        let summary = try #require(Pool.summarize([max5x, max5x, max5x, spent], at: now))
+
+        expectClose(summary.session.freePercent, 15 * 55 / 35.0)
+        expectClose(summary.session.lockedPercent, 20 * 100 / 35.0)
+        #expect(summary.session.unlocksAt == at(26 * 60))
+        #expect(summary.weekly.lockedPercent == 0)
+        #expect(summary.weekly.unlocksAt == nil)
+    }
+
+    @Test func theEarliestSpentWeekSetsTheUnlock() throws {
+        let later = AccountUsage(weight: PlanWeight(5), limits: [session(0), weekly(99.5, resetsIn: 3 * 24 * 60)])
+        let sooner = AccountUsage(weight: PlanWeight(5), limits: [session(0), weekly(100, resetsIn: 24 * 60)])
+        let undated = AccountUsage(weight: PlanWeight(5), limits: [session(0), UsageLimit(kind: .weeklyAll, usedPercent: 100, resetsAt: nil)])
+        let team = AccountUsage(weight: PlanWeight(5), limits: [session(40), weekly(98)])
+        let summary = try #require(Pool.summarize([later, sooner, undated, team], at: now))
+
+        expectClose(summary.session.lockedPercent, 75)
+        #expect(summary.session.unlocksAt == at(24 * 60))
+    }
+
+    /// The meter draws this share twice: hatched as locked, and in the lighter segment as coming back.
+    @Test func aSpentWeekResettingWithinTheWindowIsBothLockedAndComingBack() throws {
+        let spent = AccountUsage(weight: PlanWeight(5), limits: [session(0), weekly(100, resetsIn: 180)])
+        let team = AccountUsage(weight: PlanWeight(15), limits: [session(40, resetsIn: 60)])
+        let summary = try #require(Pool.summarize([spent, team], at: now))
+
+        expectClose(summary.session.lockedPercent, 25)
+        #expect(summary.session.unlocksAt == at(180))
+        #expect(summary.session.resets.map(\.date) == [at(60), at(180)])
+        expectClose(summary.session.resets.last?.gain, 25)
+    }
+
+    @Test func aPoolWhoseEveryWeekIsSpentIsAllLocked() throws {
+        let spent = AccountUsage(weight: PlanWeight(5), limits: [session(20), weekly(100)])
+        let summary = try #require(Pool.summarize([spent, spent], at: now))
+
+        #expect(summary.session.freePercent == 0)
+        #expect(summary.session.lockedPercent == 100)
+    }
+
+    @Test func aPoolWithoutASpentWeekHasNothingLocked() throws {
+        let summary = try #require(Pool.summarize([AccountUsage(weight: PlanWeight(5), limits: [session(90), weekly(98)])], at: now))
+
+        #expect(summary.session.lockedPercent == 0)
+        #expect(summary.session.unlocksAt == nil)
+    }
+
     @Test func unreadAccountsAreCountedForTheHoverCard() throws {
         let read = AccountUsage(weight: PlanWeight(5), limits: [session(10)], readAt: at(-3))
         let older = AccountUsage(weight: PlanWeight(5), limits: [session(10)], readAt: at(-7))
@@ -317,6 +369,22 @@ private func todaysAccounts() throws -> [AccountUsage] {
         #expect(PoolNotes.lines(summary(read: 4, weeklyLimited: 1), window: .session, now: now) == ["1 of 4 accounts at their weekly limit"])
         #expect(PoolNotes.lines(summary(read: 1, weeklyLimited: 1), window: .session, now: now) == ["Its only account is at its weekly limit"])
         #expect(PoolNotes.lines(summary(read: 4, weeklyLimited: 1), window: .weekly, now: now).isEmpty)
+    }
+
+    @Test func aLockedShareReadsWithItsUnlockInTheLocalesClock() {
+        let utc = TimeZone(identifier: "UTC")!
+        let tuesday = UsageLimit.parseTimestamp("2026-10-27T22:00:00+00:00")!
+        let window = WindowSummary(freePercent: 23.6, resets: [], lockedPercent: 57.1, unlocksAt: tuesday)
+        #expect(PoolNotes.locked(window, timeZone: utc, locale: Locale(identifier: "en_US")) == "57% locked until Tue 10:00\u{202F}PM")
+        #expect(PoolNotes.locked(window, timeZone: utc, locale: Locale(identifier: "pt_BR")) == "57% bloqueado até ter. 22:00")
+        #expect(PoolNotes.locked(WindowSummary(freePercent: 50, resets: [], lockedPercent: 30), timeZone: utc, locale: Locale(identifier: "en_US")) == "30% locked until the weekly reset")
+    }
+
+    @Test func aLockedShareUnderFivePercentStaysOffTheMeter() {
+        let window = WindowSummary(freePercent: 50, resets: [], lockedPercent: 4.9, unlocksAt: at(60))
+        #expect(PoolNotes.locked(window) == nil)
+        #expect(PoolNotes.locked(WindowSummary(freePercent: 50, resets: [], lockedPercent: 5, unlocksAt: at(60))) != nil)
+        #expect(PoolNotes.locked(WindowSummary(freePercent: 50, resets: [])) == nil)
     }
 
     @Test func bothCardsSayHowOldTheNumbersAreAndWhatIsLeftOut() {

@@ -2,9 +2,9 @@ import AppKit
 import EbbCore
 import SwiftUI
 
-/// `--snapshot <dir>`: renders the panel offscreen to PNGs, dark and light, collapsed and
-/// expanded, plus its first-run setup steps, every menu bar style and Settings → General, then
-/// quits. The windows it draws in are never put on screen.
+/// `--snapshot <dir>`: renders the panel offscreen to PNGs, dark and light, collapsed, expanded
+/// and at Increase Contrast, plus its first-run setup steps, every menu bar style and
+/// Settings → General, then quits. The windows it draws in are never put on screen.
 @MainActor
 enum Snapshot {
     static func write(store: PoolStore, connection: ProxyConnection, visibility: Visibility, to directory: URL, prefix: String) {
@@ -22,6 +22,12 @@ enum Snapshot {
                 if let data = png(of: card, scheme: scheme) {
                     try? data.write(to: directory.appending(path: "\(prefix)-\(appearance)-hover-\(window).png"))
                 }
+            }
+            // Increase Contrast, collapsed: the tracks, the faint text and the hatch step up a level.
+            let panel = PoolPanel(store: store, visibility: visibility, connection: connection, showsAccounts: false)
+                .environment(\._colorSchemeContrast, .increased)
+            if let data = png(of: panel, scheme: scheme) {
+                try? data.write(to: directory.appending(path: "\(prefix)-\(appearance)-contrast.png"))
             }
         }
     }

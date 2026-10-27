@@ -60,6 +60,17 @@ import Testing
         #expect(text.contains("codex#1  limits unavailable  never read  token refused"))
     }
 
+    @Test func reportGivesEachPoolsWindowsAndWhatIsLocked() {
+        var report = report(log: DiagnosticLog())
+        let locked = WindowSummary(freePercent: 23.6, resets: [], lockedPercent: 57.1, unlocksAt: now + 26 * 3600 + 20 * 60)
+        report.pools = [
+            "codex": PoolSummary(session: WindowSummary(freePercent: 80, resets: []), weekly: WindowSummary(freePercent: 90, resets: []), isPartial: false),
+            "claude": PoolSummary(session: locked, weekly: WindowSummary(freePercent: 41.4, resets: []), isPartial: false),
+        ]
+        let text = Diagnostics.text(report, now: now)
+        #expect(text.contains("Pool claude: 5h 24% free, 57% locked, unlocks in 26h; weekly 41% free\nPool codex: 5h 80% free; weekly 90% free"))
+    }
+
     @Test func logKeepsOnlyTheLastTwentyLines() {
         let log = DiagnosticLog()
         for index in 1...25 { log.record("event \(index)", at: now + Double(index)) }
