@@ -7,22 +7,29 @@ import Testing
 @Suite struct SettingsPresenceTests {
     @Test func openingMakesEbbRegularAndClosingMakesItAnAccessoryAgain() {
         var presence = SettingsPresence()
-        #expect(presence.willOpen() == .regular)
+        #expect(presence.willOpen(from: .accessory) == .regular)
         #expect(presence.didClose() == .accessory)
     }
 
     @Test func aSecondOpenWhileTheWindowIsUpChangesNothing() {
         var presence = SettingsPresence()
-        #expect(presence.willOpen() == .regular)
-        #expect(presence.willOpen() == nil)
+        #expect(presence.willOpen(from: .accessory) == .regular)
+        #expect(presence.willOpen(from: .accessory) == nil)
         #expect(presence.didClose() == .accessory)
     }
 
     @Test func aCloseWithNoOpenChangesNothing() {
         var presence = SettingsPresence()
         #expect(presence.didClose() == nil)
-        #expect(presence.willOpen() == .regular)
+        #expect(presence.willOpen(from: .accessory) == .regular)
         #expect(presence.didClose() == .accessory)
+        #expect(presence.didClose() == nil)
+    }
+
+    @Test func anAppAlreadyRegularStaysRegular() {
+        var presence = SettingsPresence()
+        #expect(presence.willOpen(from: .regular) == nil)
+        #expect(presence.isOpen)
         #expect(presence.didClose() == nil)
     }
 }

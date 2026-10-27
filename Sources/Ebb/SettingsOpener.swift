@@ -14,15 +14,17 @@ enum SettingsOpener {
 
     static func open(_ openSettings: OpenSettingsAction) {
         Task {
-            if let policy = presence.willOpen() {
+            watchForClose()
+            if let policy = presence.willOpen(from: NSApp.activationPolicy()) {
                 NSApp.setActivationPolicy(policy)
-                watchForClose()
                 // The policy takes a moment to land; activating before it does nothing.
                 try? await Task.sleep(for: .milliseconds(50))
             }
             NSApp.activate()
             openSettings()
             try? await Task.sleep(for: .milliseconds(150))
+            // Closed again while it opened: SwiftUI keeps the window, hidden, and it must stay so.
+            guard presence.isOpen else { return }
             guard let window = NSApp.windows.first(where: isSettingsWindow) else {
                 // Nothing opened, so nothing will close: don't stay in the Dock.
                 didClose()
@@ -56,20 +58,25 @@ enum SettingsOpener {
 }
 
 /// Which activation policy Ebb needs, by whether a Settings window is open: `.regular` while one
-/// is, so it can take focus from another app, and `.accessory` once it closes. A second open while
-/// it's up changes nothing, nor does a close that matches no open.
-struct SettingsPresence: Equatable {
+/// is, so it can take focus from another app, and the policy it had before once it closes. A
+/// second open while it's up changes nothing, nor does a close that matches no open, and an app
+/// already regular, as a `swift run` build is, stays so.
+struct SettingsPresence {
     private(set) var isOpen = false
+    private var restored: NSApplication.ActivationPolicy?
 
-    mutating func willOpen() -> NSApplication.ActivationPolicy? {
+    mutating func willOpen(from current: NSApplication.ActivationPolicy) -> NSApplication.ActivationPolicy? {
         guard !isOpen else { return nil }
         isOpen = true
+        guard current != .regular else { return nil }
+        restored = current
         return .regular
     }
 
     mutating func didClose() -> NSApplication.ActivationPolicy? {
         guard isOpen else { return nil }
         isOpen = false
-        return .accessory
+        defer { restored = nil }
+        return restored
     }
 }

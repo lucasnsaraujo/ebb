@@ -25,6 +25,7 @@ import Testing
         let pane = height(of: makeSettings().pane(tab))
         #expect(pane > 0)
         #expect(pane <= SettingsView.maxPaneHeight, "\(tab)")
+        #expect(pane <= 600, "\(tab)")
     }
 
     @Test func aFormTallerThanTheCapIsCappedRatherThanGrown() {
@@ -40,4 +41,3 @@ import Testing
         #expect(about == height(of: AboutSettings()))
     }
 }
-
