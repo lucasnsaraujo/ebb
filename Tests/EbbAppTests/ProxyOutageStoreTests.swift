@@ -7,7 +7,10 @@ import Testing
 /// home directory, so this runs only when asked, in a throwaway home:
 ///
 ///     rm -rf /tmp/ebbhome && mkdir -p /tmp/ebbhome && EBB_APP_TESTS=1 HOME=/tmp/ebbhome CFFIXED_USER_HOME=/tmp/ebbhome \
-///       CLIPROXY_CONFIG=/tmp/ebbhome/.cli-proxy-api/config.yaml swift test --disable-keychain --filter EbbAppTests
+///       CLIPROXY_CONFIG=/tmp/ebbhome/.cli-proxy-api/config.yaml swift test --disable-keychain --no-parallel --filter EbbAppTests
+///
+/// Serially: the suites share that home and the panel's process-wide state, and a panel test open
+/// beside this one made its refused key flaky.
 ///
 /// It refuses to run if any of Ebb's paths would land outside that home.
 @MainActor
