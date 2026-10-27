@@ -43,6 +43,23 @@ public enum ManagementURL {
         return trimmed
     }
 
+    /// Plain http to another machine: a private address is whichever machine holds it on the
+    /// current network, so the key may only go there once the peer shows it's CLIProxyAPI.
+    public static func needsPeerCheck(_ url: URL) -> Bool {
+        guard url.scheme?.lowercased() == "http", let host = url.host() else { return false }
+        let name = host.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
+        return !(name == "localhost" || name == "::1" || ipv4(name).map { $0[0] == 127 } == true)
+    }
+
+    /// CLIProxyAPI's `/healthz` names its `X-CPA-*` headers in `Access-Control-Expose-Headers`;
+    /// its other answers carry `X-Cpa-Version`. A router's login page has neither.
+    public static func isCLIProxyAPI(headers: [String: String]) -> Bool {
+        headers.contains { name, value in
+            let name = name.lowercased()
+            return name == "x-cpa-version" || (name == "access-control-expose-headers" && value.uppercased().contains("X-CPA-VERSION"))
+        }
+    }
+
     private static func isPrivate(host: String) -> Bool {
         let name = host.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
         if name == "localhost" || name.hasSuffix(".local") { return true }

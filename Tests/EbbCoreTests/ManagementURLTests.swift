@@ -74,4 +74,22 @@ import Testing
         #expect(ManagementURL.validate("https://proxy.example.com:8317/?x=1#top") == .ok(base))
         #expect(ManagementURL.validate("https://proxy.example.com/cpa/") == .ok(URL(string: "https://proxy.example.com/cpa")!))
     }
+
+    /// A private address names whatever machine holds it on the current network, so plain http
+    /// there must prove it's CLIProxyAPI before the key goes out; loopback and https needn't.
+    @Test func onlyPlainHttpOffThisMacNeedsTheProxyToProveItself() {
+        #expect(ManagementURL.needsPeerCheck(URL(string: "http://192.168.1.20:8317")!))
+        #expect(ManagementURL.needsPeerCheck(URL(string: "http://proxy.local:8317")!))
+        #expect(!ManagementURL.needsPeerCheck(URL(string: "http://127.0.0.1:8317")!))
+        #expect(!ManagementURL.needsPeerCheck(URL(string: "http://localhost:8317")!))
+        #expect(!ManagementURL.needsPeerCheck(URL(string: "http://[::1]:8317")!))
+        #expect(!ManagementURL.needsPeerCheck(URL(string: "https://192.168.1.20:8317")!))
+    }
+
+    @Test func cliProxyAPIIsKnownByTheHeadersItExposes() {
+        #expect(ManagementURL.isCLIProxyAPI(headers: ["Access-Control-Expose-Headers": "X-CPA-TRACE-ID, X-CPA-VERSION, X-CPA-COMMIT"]))
+        #expect(ManagementURL.isCLIProxyAPI(headers: ["X-Cpa-Version": "8.0.40"]))
+        #expect(!ManagementURL.isCLIProxyAPI(headers: ["Server": "nginx", "Content-Type": "text/html"]))
+        #expect(!ManagementURL.isCLIProxyAPI(headers: [:]))
+    }
 }
