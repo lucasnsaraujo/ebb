@@ -61,4 +61,17 @@ import Testing
         ])
         #expect(ProxyConfig.candidatePaths(override: nil, environment: [:], home: home).count == 3)
     }
+
+    /// CLIProxyAPI keeps its management API off until the config has a secret-key, plain or hashed.
+    @Test func managementIsOnOnlyWithASecretKey() {
+        #expect(!ProxyConfig.hasManagementKey("management:\n  allow-remote: false\n  secret-key: \"\"\n"))
+        #expect(!ProxyConfig.hasManagementKey("server:\n  port: 8317\n"))
+        #expect(ProxyConfig.hasManagementKey("management:\n  secret-key: \"$2a$10$hash\"\n"))
+        #expect(ProxyConfig.hasManagementKey("remote-management:\n  secret-key: plain-example\n"))
+    }
+
+    /// The current spelling wins when both are present, even when it's empty.
+    @Test func theCurrentSecretKeyOutranksTheLegacyOne() {
+        #expect(!ProxyConfig.hasManagementKey("management:\n  secret-key: \"\"\nremote-management:\n  secret-key: old-example\n"))
+    }
 }

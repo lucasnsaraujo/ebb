@@ -18,6 +18,13 @@ public enum ProxyInstall: Sendable, Equatable {
         return .other
     }
 
+    /// The `cliproxyapi` binary in a folder on `path`, or where installs usually put it, since an app's PATH is bare.
+    public static func binary(path: String?, home: URL, isExecutable: (String) -> Bool) -> String? {
+        let usual = homebrewPrefixes.map { "\($0)/bin" } + ["go/bin", ".local/bin", "bin"].map { home.appending(path: $0).path }
+        let folders = (path ?? "").split(separator: ":").map(String.init) + usual
+        return folders.map { "\($0)/\(formula)" }.first(where: isExecutable)
+    }
+
     /// What Ebb can run itself: the prefix's own `brew`, since the PATH of an app is bare.
     public var launch: (executable: String, arguments: [String])? {
         guard case let .homebrew(prefix) = self else { return nil }

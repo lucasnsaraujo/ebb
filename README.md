@@ -24,11 +24,13 @@ While Claude's or OpenAI's public status page reports a problem with what a pool
 
 When CLIProxyAPI still holds an account in cooldown although a fresh reading shows its quota is back, the accounts panel says so in one line, with a Copy Fix button for the proxy's documented `reset-quota` call. Ebb never changes that state itself.
 
-Ebb needs the proxy's management key for everything but Claude. Enter it once in Settings → Connection, or keep it in a `.management-key` file in CLIProxyAPI's logins folder and Ebb picks it up until you press Forget Key. Calls "through the proxy" use CLIProxyAPI's `api-call` endpoint: Ebb names the account and the proxy fills in its token, so Ebb never reads those tokens. Plan weights have defaults (Settings → Plans) that you can change.
+Ebb needs the proxy's management key for everything but Claude. Enter it once in the panel's setup steps or Settings → Connection, or keep it in a `.management-key` file in CLIProxyAPI's logins folder and Ebb picks it up until you press Forget Key. Calls "through the proxy" use CLIProxyAPI's `api-call` endpoint: Ebb names the account and the proxy fills in its token, so Ebb never reads those tokens. Plan weights have defaults (Settings → Plans) that you can change.
 
 For CLIProxyAPI on another machine, set its management URL in Settings → Connection. Ebb then reads every login, Claude's included, from the proxy's listing and `api-call`, and never touches a logins folder. Use https; plain http is accepted only on a private network, and the key then crosses it unencrypted.
 
-When the proxy isn't running, the panel says so and offers to start it (`brew services start cliproxyapi` for a Homebrew install, otherwise the command to copy). The ··· menu's Copy Diagnostics puts versions, account states and the last events on the clipboard, with keys, tokens, emails and file names left out.
+Until CLIProxyAPI runs on this Mac and accepts a management key, the panel shows setup steps in place of the pool: install or start the proxy, sign in to an account with CLIProxyAPI's own login command (`cliproxyapi -claude-login` and the like), and enter the key. Ebb never writes CLIProxyAPI's config file or logins, so installing and signing in are commands to copy. With Claude logins already readable, Continue Without a Key skips the rest.
+
+Once set up, when the proxy isn't running, the panel says so and offers to start it (`brew services start cliproxyapi` for a Homebrew install, otherwise the command to copy). The ··· menu's Copy Diagnostics puts versions, account states and the last events on the clipboard, with keys, tokens, emails and file names left out.
 
 This README is a placeholder. Full docs come with the first release.
 

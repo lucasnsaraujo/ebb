@@ -18,7 +18,6 @@ struct EbbApp: App {
             PoolPanel(store: model.store, visibility: model.visibility, connection: model.connection)
         } label: {
             MenuBarLabel(store: model.store, settings: model.menuBarSettings, provider: menuBarProvider)
-                .modifier(FirstRunSetup(connection: model.connection))
         }
         .menuBarExtraStyle(.window)
 
@@ -52,30 +51,14 @@ final class AppModel {
         store = PoolStore(connection: connection, isOffline: LaunchOptions.isOffline)
         visibility.onVisibilityChange = { [store] isVisible in store.setActive(isVisible) }
         store.setActive(visibility.isVisible)
-        Task { [connection] in await connection.test() }
+        Task { [connection] in
+            await connection.test()
+            // Answered before the panel first opens, so its setup steps don't start on a guess.
+            if !connection.hasSavedKey, !LaunchOptions.isOffline { await connection.lookForProxy() }
+        }
         // Only the store hears about wake; the item's visibility never changes for it.
         wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [store] _ in
             MainActor.assumeIsolated { store.didWake() }
-        }
-    }
-}
-
-/// Opens Settings once, the first time Ebb runs without a management key.
-private struct FirstRunSetup: ViewModifier {
-    let connection: ProxyConnection
-
-    private static let offeredKey = "offeredSetup"
-    @Environment(\.openSettings) private var openSettings
-
-    func body(content: Content) -> some View {
-        content.task {
-            guard !LaunchOptions.isOffline, !LaunchOptions.isDemo, connection.keyState == .missing,
-                  !UserDefaults.standard.bool(forKey: Self.offeredKey)
-            else { return }
-            UserDefaults.standard.set(true, forKey: Self.offeredKey)
-            UserDefaults.standard.set(SettingsTab.connection.rawValue, forKey: SettingsTab.storageKey)
-            NSApp.activate()
-            openSettings()
         }
     }
 }
@@ -94,7 +77,7 @@ enum LaunchOptions {
     enum Demo: String {
         case accounts, hover, disclosure, low, down
     }
-    /// Renders the panel, the menu bar styles and Settings → General, Routing and Connection offscreen into this folder and quits: `--snapshot <dir>`.
+    /// Renders the panel, its setup steps, the menu bar styles and Settings → General, Routing and Connection offscreen into this folder and quits: `--snapshot <dir>`.
     static let snapshotDirectory: URL? = value(after: "--snapshot").map { URL(fileURLWithPath: $0) }
     /// With `--snapshot`, renders what the running proxy reports instead of fixed numbers: `--live`.
     static let isLive = CommandLine.arguments.contains("--live")
@@ -139,6 +122,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             Snapshot.writeMenuBar(to: directory)
             Snapshot.writeSettings(model: model, to: directory)
+            Snapshot.writeSetup(model: model, to: directory)
             exit(0)
         }
         if let appearance = LaunchOptions.appearance { NSApp.appearance = NSAppearance(named: appearance) }

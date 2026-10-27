@@ -9,16 +9,20 @@ struct PoolPanel: View {
     let connection: ProxyConnection
 
     @State private var showsAccounts: Bool
+    /// The setup steps to draw instead of working them out: `--snapshot` only.
+    private let fixedSetup: ProxySetup?
     @AppStorage(ProviderDisplay.panelProviderKey) private var panelChoice = ""
     @AppStorage(ProviderDisplay.menuBarProviderKey) private var menuBarChoice = ""
+    @AppStorage(ProxySetupView.skippedKey) private var skippedSetup = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.openSettings) private var openSettings
 
-    init(store: PoolStore, visibility: Visibility, connection: ProxyConnection, showsAccounts: Bool = LaunchOptions.demo == .accounts) {
+    init(store: PoolStore, visibility: Visibility, connection: ProxyConnection, showsAccounts: Bool = LaunchOptions.demo == .accounts, setup: ProxySetup? = nil) {
         self.store = store
         self.visibility = visibility
         self.connection = connection
         _showsAccounts = State(initialValue: showsAccounts)
+        fixedSetup = setup
     }
 
     /// The pool on show: the one picked here, else the menu bar's.
@@ -30,10 +34,55 @@ struct PoolPanel: View {
         provider.flatMap { store.state.summaries[$0] }
     }
 
+    /// The first-run steps, while CLIProxyAPI isn't running here or no key works; see `ProxySetup`.
+    private var setup: ProxySetup? {
+        if let fixedSetup { return fixedSetup }
+        guard !store.isOffline, !LaunchOptions.isDemo, LaunchOptions.snapshotDirectory == nil else { return nil }
+        return ProxySetup.needed(ProxySetup.Facts(
+            answers: connection.answers, install: connection.install, hasBinary: connection.hasBinary,
+            keyCheck: connection.keyCheck, managementKeyIsSet: connection.managementKeyIsSet, hasSavedKey: connection.hasSavedKey,
+            isRemote: connection.isRemote, hasLogins: !store.state.details.isEmpty, isSkipped: skippedSetup
+        ))
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
                 .padding(.bottom, 12)
+            if let setup {
+                ProxySetupView(setup: setup, connection: connection, store: store)
+                    .transition(.opacity)
+            } else {
+                pool
+                    .transition(.opacity)
+            }
+            Divider()
+                .padding(.top, 10)
+                .padding(.bottom, 8)
+            footer
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 14)
+        .padding(.bottom, 10)
+        .frame(width: 300)
+        // The menu bar window sizes itself to this; without it, expanding clips the content.
+        .fixedSize(horizontal: false, vertical: true)
+        .animation(reduceMotion ? .easeInOut(duration: 0.2) : .smooth(duration: 0.35), value: setup == nil)
+        // Setup just ended, by a key or by skipping it: read at once rather than at the next poll.
+        .onChange(of: setup == nil) { _, isDone in
+            if isDone { store.refreshNow() }
+        }
+        .onAppear {
+            PanelOpener.isPanelOpen = true
+            store.panelDidOpen()
+            if LaunchOptions.demo == .disclosure { playDisclosureDemo() }
+        }
+        .onDisappear { PanelOpener.isPanelOpen = false }
+    }
+
+    /// The pool on show, and its accounts on request.
+    private var pool: some View {
+        VStack(alignment: .leading, spacing: 0) {
             if store.outageAdvice != .none {
                 ProxyDownNotice(store: store, connection: connection)
                     .padding(.bottom, 12)
@@ -68,23 +117,7 @@ struct PoolPanel: View {
                     .padding(.top, 4)
                     .transition(.opacity)
             }
-            Divider()
-                .padding(.top, 10)
-                .padding(.bottom, 8)
-            footer
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 14)
-        .padding(.bottom, 10)
-        .frame(width: 300)
-        // The menu bar window sizes itself to this; without it, expanding clips the content.
-        .fixedSize(horizontal: false, vertical: true)
-        .onAppear {
-            PanelOpener.isPanelOpen = true
-            store.panelDidOpen()
-            if LaunchOptions.demo == .disclosure { playDisclosureDemo() }
-        }
-        .onDisappear { PanelOpener.isPanelOpen = false }
     }
 
     private func toggleAccounts() {

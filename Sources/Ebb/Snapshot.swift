@@ -3,8 +3,8 @@ import EbbCore
 import SwiftUI
 
 /// `--snapshot <dir>`: renders the panel offscreen to PNGs, dark and light, collapsed and
-/// expanded, plus every menu bar style and Settings → General, then quits. The windows it
-/// draws in are never put on screen.
+/// expanded, plus its first-run setup steps, every menu bar style and Settings → General, then
+/// quits. The windows it draws in are never put on screen.
 @MainActor
 enum Snapshot {
     static func write(store: PoolStore, connection: ProxyConnection, visibility: Visibility, to directory: URL, prefix: String) {
@@ -75,6 +75,30 @@ enum Snapshot {
         host.cacheDisplay(in: bounds, to: rep)
         window.close()
         return rep.representation(using: .png, properties: [:])
+    }
+
+    /// The panel's setup steps in each state a fresh Mac can be in, dark and light.
+    static func writeSetup(model: AppModel, to directory: URL) {
+        let states: [(String, ProxySetup)] = [
+            ("looking", ProxySetup(proxy: .looking, key: .waiting, hasLogins: false)),
+            ("not-installed", ProxySetup(proxy: .notInstalled, key: .waiting, hasLogins: false)),
+            ("stopped", ProxySetup(proxy: .stopped(.homebrew(prefix: "/opt/homebrew")), key: .waiting, hasLogins: false)),
+            ("stopped-other", ProxySetup(proxy: .stopped(.other), key: .waiting, hasLogins: false)),
+            ("management-off", ProxySetup(proxy: .running, key: .managementOff, hasLogins: false)),
+            ("no-key", ProxySetup(proxy: .running, key: .needed, hasLogins: false)),
+            ("checking", ProxySetup(proxy: .running, key: .checking, hasLogins: false)),
+            ("key-rejected", ProxySetup(proxy: .running, key: .refused, hasLogins: false)),
+            ("stopped-with-logins", ProxySetup(proxy: .stopped(.homebrew(prefix: "/opt/homebrew")), key: .waiting, hasLogins: true)),
+            ("no-key-with-logins", ProxySetup(proxy: .running, key: .needed, hasLogins: true)),
+        ]
+        for scheme in [ColorScheme.dark, .light] {
+            for (name, setup) in states {
+                let panel = PoolPanel(store: model.store, visibility: model.visibility, connection: model.connection, setup: setup)
+                if let data = png(of: panel, scheme: scheme) {
+                    try? data.write(to: directory.appending(path: "setup-\(name)-\(scheme == .dark ? "dark" : "light").png"))
+                }
+            }
+        }
     }
 
     /// Settings → General, Routing and Connection, dark and light, at the Settings window's width.

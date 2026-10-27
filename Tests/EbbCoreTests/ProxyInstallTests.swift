@@ -32,3 +32,25 @@ import Testing
         #expect(ProxyInstall.other.command(configFile: nil) == "cliproxyapi")
     }
 }
+
+@Suite struct ProxyBinaryTests {
+    private let home = URL(fileURLWithPath: "/Users/me")
+
+    private func binary(path: String?, existing: Set<String>) -> String? {
+        ProxyInstall.binary(path: path, home: home) { existing.contains($0) }
+    }
+
+    @Test func theBinaryIsFoundInAFolderOnThePath() {
+        #expect(binary(path: "/usr/bin:/opt/tools/bin", existing: ["/opt/tools/bin/cliproxyapi"]) == "/opt/tools/bin/cliproxyapi")
+    }
+
+    /// An app gets a bare PATH, so the places installs usually land are looked at too.
+    @Test func theUsualInstallFoldersAreLookedAtWhenThePathIsBare() {
+        #expect(binary(path: "/usr/bin:/bin", existing: ["/Users/me/go/bin/cliproxyapi"]) == "/Users/me/go/bin/cliproxyapi")
+        #expect(binary(path: nil, existing: ["/usr/local/bin/cliproxyapi"]) == "/usr/local/bin/cliproxyapi")
+    }
+
+    @Test func noBinaryAnywhereIsNil() {
+        #expect(binary(path: "/usr/bin:/bin", existing: ["/usr/bin/brew"]) == nil)
+    }
+}

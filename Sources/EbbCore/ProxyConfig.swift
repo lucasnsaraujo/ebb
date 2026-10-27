@@ -48,6 +48,13 @@ public struct ProxyConfig: Sendable, Equatable {
         )
     }
 
+    /// Whether the config sets a management secret-key, plain or hashed; without one CLIProxyAPI
+    /// keeps its management API off. Only whether it's set is read, never the key.
+    public static func hasManagementKey(_ yaml: String) -> Bool {
+        let values = flatten(yaml)
+        return !(values["management.secret-key"] ?? values["remote-management.secret-key"] ?? "").isEmpty
+    }
+
     /// Places to look, most specific first: a path set in Settings, `CLIPROXY_CONFIG`,
     /// then the Homebrew and per-user defaults.
     public static func candidatePaths(override: String?, environment: [String: String], home: URL) -> [URL] {

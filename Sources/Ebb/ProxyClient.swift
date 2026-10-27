@@ -35,6 +35,14 @@ struct ProxyClient {
         }
     }
 
+    /// Whether anything answers at the proxy's address. Asks `/healthz`, outside the management API,
+    /// since every keyless management call counts toward CLIProxyAPI's lockout of this Mac.
+    func answers(_ baseURL: URL) async -> Bool {
+        var request = URLRequest(url: baseURL.appending(path: "healthz"), timeoutInterval: 2)
+        request.httpMethod = "HEAD"
+        return (try? await session.data(for: request))?.1 is HTTPURLResponse
+    }
+
     /// A poll of the listing: the logins, a refused key, or no answer at all. Every answer
     /// names the proxy's version, a refusal included.
     enum Listing {

@@ -64,4 +64,20 @@ import Testing
         #expect(store.proxyFailure == nil)
         #expect(store.state.summaries["claude"]?.session.freePercent == 60)
     }
+
+    /// Five refusals lock this Mac out for 30 minutes, after which even the right key is refused.
+    @Test func aRefusedKeyFromTheLoginsFolderIsNeverSentAgain() async throws {
+        let proxy = FakeProxy(listing: Data(), refusesKeys: true)
+        try proxy.start()
+        _ = try makeStore(proxy: proxy)
+        let connection = ProxyConnection()
+
+        await connection.test()
+        #expect(connection.keyState == .rejected)
+        #expect(connection.endpoint == nil)
+        let calls = proxy.managementCallCount
+        for _ in 0..<3 { await connection.lookForProxy() }
+        #expect(connection.answers == true)
+        #expect(proxy.managementCallCount == calls)
+    }
 }

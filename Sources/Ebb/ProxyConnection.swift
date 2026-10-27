@@ -32,14 +32,23 @@ final class ProxyConnection {
     private(set) var startState: StartState = .idle
     /// From the `X-Cpa-Version` header of the last answer, a refusal included.
     private(set) var proxyVersion: String?
-    /// Found at launch: whether the Start button can do anything.
-    let install = ProxyInstall.detect { FileManager.default.fileExists(atPath: $0) }
+    /// Found at launch, and again while the setup steps show: whether the Start button can do anything.
+    private(set) var install = ProxyInstall.detect { FileManager.default.fileExists(atPath: $0) }
+    /// Whether anything answered at `baseURL`; asked only for the setup steps, `nil` until then.
+    private(set) var answers: Bool?
+    /// A `cliproxyapi` on disk, however installed; looked for only while the setup steps show.
+    private(set) var hasBinary = false
+    /// From the config file: whether it sets a management secret-key; `nil` without one.
+    private(set) var managementKeyIsSet: Bool?
     /// Shared with the store: one log for everything Copy Diagnostics reports.
     let diagnostics: DiagnosticLog
 
     @ObservationIgnored private var key: ManagementKey?
     /// A key read from the logins folder, saved only once the proxy accepts it.
     @ObservationIgnored private var unsavedKey: ManagementKey?
+    /// A logins-folder key the proxy refused, never tried again: each refusal counts toward
+    /// CLIProxyAPI's 30-minute lockout of this Mac. A changed file is tried afresh.
+    @ObservationIgnored private var refusedImport: ManagementKey?
     @ObservationIgnored private let client = ProxyClient()
     @ObservationIgnored private let keyFile = ManagementKeyFile(url: EbbPaths.managementKeyFile)
 
@@ -58,11 +67,31 @@ final class ProxyConnection {
         if LaunchOptions.snapshotDirectory != nil || LaunchOptions.isDemo {
             key = LaunchOptions.snapshotKey
         } else {
-            let loaded = keyFile.load(importingFrom: UserDefaults.standard.bool(forKey: Self.forgotKeyKey) ? nil : localAuthDirectory)
-            key = loaded?.key
-            unsavedKey = loaded?.origin == .loginsFolder ? loaded?.key : nil
+            loadKey()
         }
         keyState = key == nil ? .missing : .checking
+    }
+
+    private func loadKey() {
+        var loaded = keyFile.load(importingFrom: UserDefaults.standard.bool(forKey: Self.forgotKeyKey) ? nil : localAuthDirectory)
+        if loaded?.origin == .loginsFolder, loaded?.key == refusedImport { loaded = nil }
+        key = loaded?.key
+        unsavedKey = loaded?.origin == .loginsFolder ? loaded?.key : nil
+    }
+
+    /// Ebb saves a key only once the proxy accepts it, so a saved one means setup was done before.
+    var hasSavedKey: Bool {
+        key != nil && unsavedKey == nil
+    }
+
+    var keyCheck: ProxySetup.KeyCheck {
+        switch keyState {
+        case .missing: .none
+        case .checking: .checking
+        case .valid: .accepted
+        case .rejected: .refused
+        case .unreachable: .unanswered
+        }
     }
 
     var configOverride: String? {
@@ -115,8 +144,36 @@ final class ProxyConnection {
     /// The first config file that exists, or the proxy's defaults.
     func discover() {
         let candidates = ProxyConfig.candidatePaths(override: configOverride, environment: ProcessInfo.processInfo.environment, home: EbbPaths.home)
-        configFile = candidates.first { FileManager.default.isReadableFile(atPath: $0.path) }
-        config = configFile.flatMap { try? String(contentsOf: $0, encoding: .utf8) }.map(ProxyConfig.parse) ?? .defaults
+        let found = candidates.first { FileManager.default.isReadableFile(atPath: $0.path) }
+        let text = found.flatMap { try? String(contentsOf: $0, encoding: .utf8) }
+        let parsed = text.map(ProxyConfig.parse) ?? .defaults
+        let keyIsSet = text.map(ProxyConfig.hasManagementKey)
+        // Called every few seconds while the setup steps show, so only a change is published.
+        if found != configFile { configFile = found }
+        if parsed != config { config = parsed }
+        if keyIsSet != managementKeyIsSet { managementKeyIsSet = keyIsSet }
+    }
+
+    /// For the setup steps, while they show: looks again for an install, a config and the logins
+    /// folder's key file, which a fresh install brings, then asks the address whether anything answers.
+    func lookForProxy() async {
+        let found = ProxyInstall.detect { FileManager.default.fileExists(atPath: $0) }
+        if found != install { install = found }
+        let binary = ProxyInstall.binary(path: ProcessInfo.processInfo.environment["PATH"], home: EbbPaths.home) {
+            FileManager.default.isExecutableFile(atPath: $0)
+        } != nil
+        if binary != hasBinary { hasBinary = binary }
+        let hadManagementKey = managementKeyIsSet
+        discover()
+        if key == nil, keyState != .checking {
+            loadKey()
+            if key != nil { await test() }
+        }
+        let answered = await client.answers(baseURL)
+        let cameUp = answered && answers != true
+        if answered != answers { answers = answered }
+        // A key checked while the proxy was down, or before its management API was turned on, is checked again.
+        if keyState == .unreachable, cameUp || managementKeyIsSet != hadManagementKey { await test() }
     }
 
     /// Checks the key against the live proxy and keeps it only if accepted.
@@ -125,7 +182,7 @@ final class ProxyConnection {
         keyState = .checking
         let result = await client.check(ProxyEndpoint(baseURL: baseURL, key: newKey))
         noteProxyVersion(result.version)
-        diagnostics.record("Key saved from Settings: \(result.check)")
+        diagnostics.record("Key entered: \(result.check)")
         switch result.check {
         case .valid:
             key = (try? keyFile.save(newKey)) == nil ? nil : newKey
@@ -162,6 +219,11 @@ final class ProxyConnection {
         case .valid: .valid
         case .rejected: .rejected
         case .unreachable: .unreachable
+        }
+        if keyState == .rejected, let unsavedKey {
+            refusedImport = unsavedKey
+            key = nil
+            self.unsavedKey = nil
         }
         guard keyState == .valid else { return }
         if let unsavedKey, (try? keyFile.save(unsavedKey)) != nil { self.unsavedKey = nil }
