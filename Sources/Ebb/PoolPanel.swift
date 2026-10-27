@@ -500,7 +500,7 @@ private struct GainLabel: View {
     }
 
     private var isUrgent: Bool {
-        guard window == .session, case let .runsOut(within) = forecast?.outlook else { return false }
+        guard window == .session, case let .runsOut(_, within) = forecast?.outlook else { return false }
         return within.lowerBound < Self.urgentRunOut
     }
 

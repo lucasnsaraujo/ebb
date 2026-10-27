@@ -53,18 +53,18 @@ enum DemoData {
     private static var forecasts: [String: PoolForecast] {
         switch LaunchOptions.demo {
         case .locked:
-            ["claude": PoolForecast(session: Pace.Forecast(outlook: .runsOut(within: (130 * 60)...(130 * 60)), basis: 40 * 60))]
+            ["claude": PoolForecast(session: Pace.Forecast(outlook: .runsOut(in: 130 * 60), basis: 40 * 60))]
         case .lockedLasts:
             ["claude": PoolForecast(session: Pace.Forecast(outlook: .lasts, basis: 40 * 60))]
         default:
             [
                 "claude": PoolForecast(
-                    session: Pace.Forecast(outlook: .runsOut(within: (110 * 60)...(110 * 60)), basis: 40 * 60),
+                    session: Pace.Forecast(outlook: .runsOut(in: 110 * 60), basis: 40 * 60),
                     weekly: nil
                 ),
                 "codex": PoolForecast(
                     session: Pace.Forecast(outlook: .lasts, basis: 35 * 60),
-                    weekly: Pace.Forecast(outlook: .runsOut(within: (3.6 * 86400)...(3.6 * 86400)), basis: 5 * 86400)
+                    weekly: Pace.Forecast(outlook: .runsOut(in: 3.6 * 86400), basis: 5 * 86400)
                 ),
             ]
         }

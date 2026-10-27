@@ -9,9 +9,15 @@ import Foundation
 /// and weekends count. Neither ever looks at the other's ledger.
 public enum Pace {
     public enum Outlook: Sendable, Equatable {
-        /// Seconds from now; a range when the recent and the longer pace disagree.
-        case runsOut(within: ClosedRange<TimeInterval>)
+        /// Seconds from now at the main pace. `within` spans the fast and the slow pace when they
+        /// disagree, and is that one time when they don't.
+        case runsOut(in: TimeInterval, within: ClosedRange<TimeInterval>)
         case lasts
+
+        /// Paces that agree.
+        public static func runsOut(in time: TimeInterval) -> Outlook {
+            .runsOut(in: time, within: time...time)
+        }
     }
 
     public struct Forecast: Sendable, Equatable {
@@ -39,7 +45,7 @@ public enum Pace {
     static let minimumPoints = 1.0
     /// Half-lives of the fast, main and slow 5-hour paces.
     static let halfLives: (fast: TimeInterval, main: TimeInterval, slow: TimeInterval) = (10 * 60, 20 * 60, 45 * 60)
-    /// Fast and slow run-outs this far apart show a range instead of one time.
+    /// Fast and slow run-outs this far apart make `within` a range, and the shown time coarser.
     public static let bracketRatio = 1.5
 
     static let weeklyLookback: TimeInterval = 7 * 24 * 60 * 60
@@ -90,7 +96,7 @@ public enum Pace {
         let low = min(main, others.min() ?? main)
         let high = max(main, others.max() ?? main)
         let within = high / max(low, 1) >= bracketRatio ? low...high : main...main
-        return Forecast(outlook: .runsOut(within: within), basis: activeTime)
+        return Forecast(outlook: .runsOut(in: main, within: within), basis: activeTime)
     }
 
     /// The weekly pool, at its usual rhythm over the last week.
@@ -119,7 +125,7 @@ public enum Pace {
         guard let time = timeToEmpty(free: window.freePercent, resets: window.resets, rate: rate, horizon: weeklyLookback, now: now) else {
             return Forecast(outlook: .lasts, basis: basis)
         }
-        return Forecast(outlook: .runsOut(within: time...time), basis: basis)
+        return Forecast(outlook: .runsOut(in: time), basis: basis)
     }
 
     private static func isReadable(_ summary: PoolSummary) -> Bool {

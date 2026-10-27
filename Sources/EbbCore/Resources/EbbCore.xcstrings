@@ -21,27 +21,6 @@
         }
       }
     },
-    "%@ left" : {
-      "comment" : "Under the 5-hour meter, 124 pt wide: a range such as 1–2 h",
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Restam %@"
-          }
-        }
-      }
-    },
-    "%@ left at this pace" : {
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ restantes neste ritmo"
-          }
-        }
-      }
-    },
     "%@ weekly back +%lld%%" : {
       "localizations" : {
         "pt-BR" : {
@@ -266,16 +245,6 @@
         }
       }
     },
-    "%lld min–%lld h" : {
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld min–%2$lld h"
-          }
-        }
-      }
-    },
     "%lld of %lld accounts at their weekly limit" : {
       "comment" : "The verb agrees with the first number in Portuguese: \"1 de 4 contas está\", \"2 de 4 contas estão\"",
       "localizations" : {
@@ -450,26 +419,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lldmin"
-          }
-        }
-      }
-    },
-    "%lld–%lld h" : {
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld–%2$lld h"
-          }
-        }
-      }
-    },
-    "%lld–%lld min" : {
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld–%2$lld min"
           }
         }
       }

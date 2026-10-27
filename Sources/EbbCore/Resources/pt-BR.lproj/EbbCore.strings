@@ -6,10 +6,6 @@
 	<string>Cota de 5 horas do %@ prestes a acabar</string>
 	<key>%@ daily pool about to run out</key>
 	<string>Cota diária do %@ prestes a acabar</string>
-	<key>%@ left</key>
-	<string>Restam %@</string>
-	<key>%@ left at this pace</key>
-	<string>%@ restantes neste ritmo</string>
 	<key>%@ weekly back +%lld%%</key>
 	<string>%1$@: +%2$lld%% na cota semanal</string>
 	<key>%@, %lld percent free</key>
@@ -46,8 +42,6 @@
 	<string>%lld min</string>
 	<key>%lld min ago</key>
 	<string>há %lld min</string>
-	<key>%lld min–%lld h</key>
-	<string>%1$lld min–%2$lld h</string>
 	<key>%lld of %lld accounts ready</key>
 	<string>%1$lld de %2$lld contas prontas</string>
 	<key>%lld of %lld at weekly limit</key>
@@ -76,10 +70,6 @@
 	<string>%1$lldh %2$lldmin</string>
 	<key>%lldm</key>
 	<string>%lldmin</string>
-	<key>%lld–%lld h</key>
-	<string>%1$lld–%2$lld h</string>
-	<key>%lld–%lld min</key>
-	<string>%1$lld–%2$lld min</string>
 	<key>2,048 requests a week (CodexBar's Kimi notes).</key>
 	<string>2.048 solicitações por semana (notas do CodexBar sobre o Kimi).</string>
 	<key>20 times Pro a session, about twice Max 5x a week.</key>

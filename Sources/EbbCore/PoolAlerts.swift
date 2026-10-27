@@ -140,7 +140,7 @@ public struct AlertTracker: Codable, Sendable, Equatable {
             runOutFree[pool] = nil
         }
         switch forecast?.session?.outlook {
-        case let .runsOut(within) where within.upperBound <= Self.runOutWithin:
+        case let .runsOut(_, within) where within.upperBound <= Self.runOutWithin:
             if now >= runOutQuietUntil[pool] ?? .distantPast, let forecast = forecast?.session {
                 runOutQuietUntil[pool] = now + short.horizon
                 runOutFree[pool] = summary.session.freePercent
