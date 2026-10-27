@@ -127,7 +127,7 @@ Ebb never writes CLIProxyAPI's config file or login files, so installing and sig
 
 Claude works without a key: Ebb reads the Claude logins in the logins folder directly. Everything else needs one. Calls "through the proxy" go through CLIProxyAPI's `api-call` endpoint, where Ebb names the account and the proxy fills in its token, so Ebb never reads those tokens.
 
-For CLIProxyAPI on another machine, set its management URL in Settings → Connection. Ebb then reads every login, Claude's included, from the proxy's listing and `api-call`, and never touches a logins folder. Use https; plain http is accepted only on a private network, and the key then crosses it unencrypted.
+For CLIProxyAPI on another machine, set its management URL in Settings → Connection. Ebb then reads every login, Claude's included, from the proxy's listing and `api-call`, and never touches a logins folder. Use https; plain http is accepted only on a private network, and the key then crosses it unencrypted. Over plain http Ebb first checks that the address answers like CLIProxyAPI 7.3.4 or later, so a different network's router that holds the same private address never gets the key.
 
 ## Command line
 

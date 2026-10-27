@@ -20,7 +20,7 @@ struct ProxyClient {
 
     /// Asks for the proxy's config, which only a valid key may read.
     func check(_ endpoint: ProxyEndpoint) async -> (check: KeyCheck, version: String?) {
-        guard let (_, response) = try? await session.data(for: request("config", endpoint, method: "GET")),
+        guard let (_, response) = await keyed(request("config", endpoint, method: "GET"), endpoint),
               let http = response as? HTTPURLResponse
         else { return (.unreachable, nil) }
         let version = Self.version(of: http)
@@ -49,7 +49,7 @@ struct ProxyClient {
     }
 
     func authFiles(_ endpoint: ProxyEndpoint) async -> Listing {
-        guard let (data, response) = try? await session.data(for: request("auth-files", endpoint, method: "GET")),
+        guard let (data, response) = await keyed(request("auth-files", endpoint, method: "GET"), endpoint),
               let http = response as? HTTPURLResponse
         else { return .unreachable }
         let version = Self.version(of: http)
@@ -97,14 +97,14 @@ struct ProxyClient {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = call.body()
         request.timeoutInterval = 30
-        guard let (data, response) = try? await session.data(for: request),
+        guard let (data, response) = await keyed(request, endpoint),
               let status = (response as? HTTPURLResponse)?.statusCode
         else { return nil }
         return (status, data)
     }
 
     private func get(_ path: String, _ endpoint: ProxyEndpoint) async -> Data? {
-        guard let (data, response) = try? await session.data(for: request(path, endpoint, method: "GET")),
+        guard let (data, response) = await keyed(request(path, endpoint, method: "GET"), endpoint),
               (response as? HTTPURLResponse)?.statusCode == 200
         else { return nil }
         return data
@@ -114,10 +114,28 @@ struct ProxyClient {
         var request = request(path, endpoint, method: method)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        guard let (_, response) = try? await session.data(for: request),
+        guard let (_, response) = await keyed(request, endpoint),
               let status = (response as? HTTPURLResponse)?.statusCode
         else { return false }
         return (200..<300).contains(status)
+    }
+
+    /// Every request that carries the key. Over plain http to another machine, it goes out only
+    /// after `/healthz` there shows CLIProxyAPI's headers, so a café router that happens to hold
+    /// the saved private address never sees it. `nil` counts as no answer.
+    private func keyed(_ request: URLRequest, _ endpoint: ProxyEndpoint) async -> (Data, URLResponse)? {
+        if ManagementURL.needsPeerCheck(endpoint.baseURL), await !provesCLIProxyAPI(endpoint.baseURL) { return nil }
+        return try? await session.data(for: request)
+    }
+
+    /// Whether `/healthz` at this address shows CLIProxyAPI's headers, which 7.3.4 and later do.
+    func provesCLIProxyAPI(_ baseURL: URL) async -> Bool {
+        var probe = URLRequest(url: baseURL.appending(path: "healthz"), timeoutInterval: 3)
+        probe.httpMethod = "HEAD"
+        guard let (_, response) = try? await session.data(for: probe),
+              let headers = (response as? HTTPURLResponse)?.allHeaderFields as? [String: String]
+        else { return false }
+        return ManagementURL.isCLIProxyAPI(headers: headers)
     }
 
     private func request(_ path: String, _ endpoint: ProxyEndpoint, method: String) -> URLRequest {

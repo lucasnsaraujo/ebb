@@ -5,12 +5,16 @@ on:
     branches: [main]
   pull_request:
 
+# Tests only read the code; a pull request's run gets no write access and no secrets.
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: macos-26
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Show toolchain
         run: swift --version
       - name: Build
@@ -23,7 +27,7 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Build release
         run: swift build -c release
       - name: Check the lightweight budget
