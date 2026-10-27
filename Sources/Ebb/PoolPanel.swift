@@ -41,6 +41,11 @@ struct PoolPanel: View {
             } else {
                 noReading
             }
+            if let provider, let health = store.incidents[provider], let line = health.line(title: ProviderDisplay.title(provider)),
+               let page = StatusPage.forProvider(provider) {
+                IncidentLine(text: line, page: page.pageURL)
+                    .padding(.top, 10)
+            }
             AccountsDisclosure(isExpanded: showsAccounts, action: toggleAccounts)
                 .padding(.top, 12)
             if showsAccounts {
@@ -568,6 +573,31 @@ private struct AccountsSection: View {
     }
 }
 
+/// The provider's status page reports a problem with what this pool runs on.
+private struct IncidentLine: View {
+    let text: String
+    let page: URL
+
+    var body: some View {
+        Link(destination: page) {
+            Label(text, systemImage: "exclamationmark.triangle.fill")
+                .labelStyle(IncidentLabelStyle())
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .help("Open \(page.host() ?? "the status page")")
+    }
+}
+
+private struct IncidentLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 4) {
+            configuration.icon.foregroundStyle(.orange)
+            configuration.title
+        }
+    }
+}
+
 private struct AccountRow: View {
     let detail: AccountDetail
     let short: ShortWindow
@@ -596,7 +626,7 @@ private struct AccountRow: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .help(detail.email)
+            .help(detail.extraUsage.map { "\(detail.email)\n\($0.text)" } ?? detail.email)
             if let note {
                 Text(note)
                     .font(.caption)

@@ -61,6 +61,16 @@ public struct ClaudeProvider: Provider {
         limits(fromSignals: signals)
     }
 
+    /// `anthropic-ratelimit-unified-overage-status`: `allowed` or `allowed_warning` while extra
+    /// usage is on; `rejected`, with a disabled reason, when it's off or spent.
+    public func extraUsage(fromSignals signals: [String: Any]) -> ExtraUsage? {
+        switch Signals.lowercased(signals)["anthropic-ratelimit-unified-overage-status"] {
+        case "allowed": .claudeOverage(isNearLimit: false)
+        case "allowed_warning": .claudeOverage(isNearLimit: true)
+        default: nil
+        }
+    }
+
     /// `Anthropic-Ratelimit-Unified-5h-*` and `-7d-*`. `nil` without a 5-hour utilization, the one
     /// window every plan has. `7d` is the general weekly window; `7d_oi` and per-model caps are ignored.
     public func limits(fromSignals signals: [String: Any]) -> [UsageLimit]? {

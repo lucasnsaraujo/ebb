@@ -52,4 +52,11 @@ enum AlertSettings {
     static var isEnabled: Bool {
         UserDefaults.standard.object(forKey: isEnabledKey) as? Bool ?? true
     }
+
+    static let sendsIncidentAlertsKey = "sendsIncidentAlerts"
+
+    /// Off unless turned on: status pages report often, and most incidents never reach a pool.
+    static var sendsIncidentAlerts: Bool {
+        UserDefaults.standard.bool(forKey: sendsIncidentAlertsKey)
+    }
 }

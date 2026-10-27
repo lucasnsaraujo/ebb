@@ -79,6 +79,18 @@ public struct ProxyAuthFile: Sendable, Equatable {
     /// Google Cloud project, needed for Antigravity's quota summary.
     public var projectID: String?
     public var health: AccountHealth
+    /// From the latest response's signals; never part of a pool's numbers. Read it through `extraUsage(at:)`.
+    public var extraUsage: ExtraUsage?
+    /// When the proxy saw the response those signals came from.
+    public var signalsObservedAt: Date?
+
+    /// Signals older than a day may predate a change to the account's billing, so they say nothing.
+    public static let extraUsageLifetime: TimeInterval = 24 * 60 * 60
+
+    public func extraUsage(at now: Date) -> ExtraUsage? {
+        guard let signalsObservedAt, now.timeIntervalSince(signalsObservedAt) < Self.extraUsageLifetime else { return nil }
+        return extraUsage
+    }
 
     /// Logins of providers with usage windows count toward a pool; the rest show health only.
     public var hasUsageWindows: Bool {
@@ -119,7 +131,9 @@ public struct ProxyAuthFile: Sendable, Equatable {
                 planName: provider?.planName(fromEntry: file),
                 accountID: idToken?["chatgpt_account_id"] as? String,
                 projectID: (file["project_id"] as? String).flatMap { $0.isEmpty ? nil : $0 },
-                health: AccountHealth.read(file)
+                health: AccountHealth.read(file),
+                extraUsage: (quota?["signals"] as? [String: Any]).flatMap { provider?.extraUsage(fromSignals: $0) },
+                signalsObservedAt: observedAt
             )
         }
     }

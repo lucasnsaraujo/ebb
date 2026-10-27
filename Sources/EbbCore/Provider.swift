@@ -19,6 +19,8 @@ public protocol Provider: Sendable {
     func usageCall(for login: ProxyAuthFile) -> ProxyAPICall?
     /// `nil` when the body can't be read, so a changed API never reads as an empty account.
     func readUsageCall(_ body: Data) -> UsageCallReading?
+    /// Paid usage past the plan's limits that the signals say is on, or `nil` when it's off or spent.
+    func extraUsage(fromSignals signals: [String: Any]) -> ExtraUsage?
 }
 
 extension Provider {
@@ -28,6 +30,24 @@ extension Provider {
     public func planName(fromEntry entry: [String: Any]) -> String? { nil }
     public func usageCall(for login: ProxyAuthFile) -> ProxyAPICall? { nil }
     public func readUsageCall(_ body: Data) -> UsageCallReading? { nil }
+    public func extraUsage(fromSignals signals: [String: Any]) -> ExtraUsage? { nil }
+}
+
+/// Paid usage past a plan's limits. Shown only beside an account, never in a pool's numbers.
+public enum ExtraUsage: Sendable, Equatable {
+    /// Claude keeps answering past the limits, billed as extra usage; near its own limit with `allowed_warning`.
+    case claudeOverage(isNearLimit: Bool)
+    /// Codex credits left, in the units OpenAI reports.
+    case codexCredits(balance: Double)
+    case codexUnlimitedCredits
+
+    public var text: String {
+        switch self {
+        case let .claudeOverage(isNearLimit): isNearLimit ? "Extra usage on, near its limit" : "Extra usage on"
+        case let .codexCredits(balance): "Credits: \(balance.formatted(.number.precision(.fractionLength(0...2)).locale(Locale(identifier: "en_US_POSIX"))))"
+        case .codexUnlimitedCredits: "Credits: unlimited"
+        }
+    }
 }
 
 /// The pool's shorter window. Devin meters by day; the rest by five hours.
@@ -85,6 +105,12 @@ enum Signals {
         case (6 * 24 * 60)...(8 * 24 * 60): .weeklyAll
         default: nil
         }
+    }
+
+    /// "true", "True" or "1": flags arrive as strings, and a JSON bool turns into "1".
+    static func isTrue(_ value: String?) -> Bool {
+        guard let value else { return false }
+        return value.caseInsensitiveCompare("true") == .orderedSame || value == "1"
     }
 
     static func number(_ value: Any?) -> Double? {

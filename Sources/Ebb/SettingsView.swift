@@ -50,6 +50,7 @@ struct GeneralSettings: View {
 
     @AppStorage(ProviderDisplay.menuBarProviderKey) private var menuBarChoice = ""
     @AppStorage(AlertSettings.isEnabledKey) private var sendsAlerts = true
+    @AppStorage(AlertSettings.sendsIncidentAlertsKey) private var sendsIncidentAlerts = false
     @State private var areAlertsBlocked = false
     @State private var launchesAtLogin = SMAppService.mainApp.status == .enabled
 
@@ -91,12 +92,17 @@ struct GeneralSettings: View {
                         guard isOn else { return }
                         Task { areAlertsBlocked = await !store.enableAlerts() }
                     }
+                Toggle("Provider incidents", isOn: $sendsIncidentAlerts)
+                    .onChange(of: sendsIncidentAlerts) { _, isOn in
+                        guard isOn else { return }
+                        Task { areAlertsBlocked = await !store.enableIncidentAlerts() }
+                    }
             } header: {
                 Text("Notifications")
             } footer: {
-                Text(areAlertsBlocked && sendsAlerts
+                Text(areAlertsBlocked && (sendsAlerts || sendsIncidentAlerts)
                     ? "Notifications for Ebb are off in System Settings → Notifications."
-                    : "When a 5-hour pool is about to run out at the current pace, and when weekly capacity comes back.")
+                    : "Pool alerts: when a 5-hour pool is about to run out at the current pace, and when weekly capacity comes back. Provider incidents: when Claude's or OpenAI's status page reports a problem with what your pools run on.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

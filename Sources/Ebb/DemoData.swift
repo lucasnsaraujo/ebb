@@ -90,7 +90,7 @@ enum DemoData {
             forecasts: forecasts
         )
         let urgent = UrgentLogin(provider: "Codex", freePercent: 40, factor: 1.73, weeklyResetsAt: now + 13 * 3600)
-        return PoolStore(connection: connection, state: state, proxyReadAt: now - 150, strongestUrgency: urgent)
+        return PoolStore(connection: connection, state: state, proxyReadAt: now - 150, strongestUrgency: urgent, incidents: ["codex": .degradedPerformance])
     }
 
     /// `--demo low`: a nearly empty pool, to show the menu bar's warning colours.

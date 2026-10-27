@@ -98,6 +98,13 @@ final class PoolStore {
     /// Made on the first alert, so a snapshot or demo never touches UserNotifications.
     @ObservationIgnored private var alertDelivery: AlertDelivery?
     private static let alertTrackerKey = "alertTracker"
+    /// Each pool's public status while it has a problem; empty while all is well or unknown.
+    private(set) var incidents: [String: ServiceHealth] = [:]
+    @ObservationIgnored private var statusPageReads = StatusPageReads()
+    @ObservationIgnored private var incidentTracker = UserDefaults.standard.data(forKey: PoolStore.incidentTrackerKey)
+        .flatMap { try? JSONDecoder().decode(IncidentTracker.self, from: $0) } ?? IncidentTracker()
+    @ObservationIgnored private var incidentDelivery: AlertDelivery?
+    private static let incidentTrackerKey = "incidentTracker"
     @ObservationIgnored private var ledgerSavedAt = Date.now
     /// Written at most this often while polling, and when Ebb hides or quits.
     static let ledgerSaveInterval: TimeInterval = 5 * 60
@@ -120,7 +127,7 @@ final class PoolStore {
     }
 
     /// Shows the given numbers and never reads anything: `--demo` and `--snapshot`.
-    init(connection: ProxyConnection, state: PoolState, proxyReadAt: Date?, strongestUrgency: UrgentLogin? = nil) {
+    init(connection: ProxyConnection, state: PoolState, proxyReadAt: Date?, strongestUrgency: UrgentLogin? = nil, incidents: [String: ServiceHealth] = [:]) {
         self.connection = connection
         isOffline = false
         isFixed = true
@@ -128,6 +135,7 @@ final class PoolStore {
         self.state = state
         self.proxyReadAt = proxyReadAt
         self.strongestUrgency = strongestUrgency
+        self.incidents = incidents
     }
 
     /// A fixed Claude-only pool.
@@ -157,7 +165,45 @@ final class PoolStore {
         loops = [
             Task { await repeatEvery(Self.proxyInterval) { await $0.pollProxy() } },
             Task { await repeatEvery(Self.providerInterval) { await $0.runNextProviderJob(usageMinimumAge: RefreshPlan.period - 30) } },
+            // Checked each minute, read at most every five, so showing and hiding the item never adds reads.
+            Task { await repeatEvery(.seconds(60)) { await $0.readStatusPagesIfDue() } },
         ]
+    }
+
+    // MARK: - Status pages
+
+    private func readStatusPagesIfDue() async {
+        var alerts: [PoolAlert] = []
+        for provider in statusPageReads.due(state.providers, now: .now) {
+            guard let page = StatusPage.forProvider(provider) else { continue }
+            let request = URLRequest(url: page.summaryURL, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 15)
+            let result = try? await URLSession.shared.data(for: request)
+            // Hidden mid-read: the read didn't happen, so it isn't recorded.
+            guard !Task.isCancelled else { return }
+            let health = result.flatMap { data, response in
+                (response as? HTTPURLResponse)?.statusCode == 200 ? page.health(from: data) : nil
+            }
+            statusPageReads.record(provider, health: health, now: .now)
+            if let health {
+                alerts += incidentTracker.alerts(provider: provider, title: ProviderDisplay.title(provider), health: health, now: .now)
+            }
+        }
+        if statusPageReads.incidents != incidents { incidents = statusPageReads.incidents }
+        UserDefaults.standard.set(try? JSONEncoder().encode(incidentTracker), forKey: Self.incidentTrackerKey)
+        await incidentAlerts.deliver(alerts)
+    }
+
+    private var incidentAlerts: AlertDelivery {
+        if let incidentDelivery { return incidentDelivery }
+        let notifier: any Notifier = Bundle.main.bundleURL.pathExtension == "app" ? SystemNotifier() : SilentNotifier()
+        let delivery = AlertDelivery(notifier: notifier, isEnabled: { AlertSettings.sendsIncidentAlerts })
+        incidentDelivery = delivery
+        return delivery
+    }
+
+    /// The user turned incident alerts on in Settings: asks for permission now.
+    func enableIncidentAlerts() async -> Bool {
+        await incidentAlerts.enable()
     }
 
     /// Called when the panel opens: polls the proxy and re-reads one idle account,
@@ -715,7 +761,8 @@ final class PoolStore {
                 sessionFree: reading == nil ? nil : free(.session) ?? 100,
                 weeklyFree: free(.weeklyAll),
                 share: shares[account.email],
-                readAt: reading?.reading.date
+                readAt: reading?.reading.date,
+                extraUsage: proxyFiles[account.name]?.extraUsage(at: now)
             )
         }
         let userDisabled = disabledByUser.map { AccountDetail(email: $0.email, plan: plans[$0.email]?.value, status: .disabledByUser) }
@@ -762,7 +809,8 @@ final class PoolStore {
                 readAt: reading?.reading.date,
                 provider: file.provider,
                 fileName: file.name,
-                planTitle: title
+                planTitle: title,
+                extraUsage: file.extraUsage(at: now)
             )
         }
     }

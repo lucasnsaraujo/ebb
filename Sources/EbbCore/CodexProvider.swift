@@ -11,6 +11,16 @@ public struct CodexProvider: Provider {
     public var proxyName: String { "codex" }
     public var title: String { "Codex" }
 
+    /// `x-codex-credits-*`: credits bought on top of the plan, which Codex spends past its limits.
+    public func extraUsage(fromSignals signals: [String: Any]) -> ExtraUsage? {
+        let values = Signals.lowercased(signals)
+        if Signals.isTrue(values["x-codex-credits-unlimited"]) { return .codexUnlimitedCredits }
+        guard Signals.isTrue(values["x-codex-credits-has-credits"]),
+              let balance = values["x-codex-credits-balance"].flatMap(Double.init), balance > 0
+        else { return nil }
+        return .codexCredits(balance: balance)
+    }
+
     /// `X-Codex-Primary-*` and `-Secondary-*`. The window's length, not its slot, says which
     /// pool window it is: plans without a 5-hour cap send the weekly window as the primary one.
     /// Model-specific limits (`X-Codex-<name>-Primary-*`) are left out, like Claude's.

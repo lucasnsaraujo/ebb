@@ -12,6 +12,7 @@ Include the Ebb version, macOS version, and the steps to trigger it. Don't inclu
 - **OAuth tokens.** Ebb reads the access tokens in CLIProxyAPI's Claude auth files to ask Anthropic for an account's limits; they go to Anthropic's API and nowhere else. Other providers are asked through CLIProxyAPI's `api-call` endpoint, which fills in the token, so Ebb never reads those tokens.
 - **Usage history.** `~/Library/Application Support/Ebb/demand.json` keeps 14 days of pooled usage in 5-minute bins for the pace forecasts. Accounts appear in it only as hashes.
 - **Pool status.** Ebb saves each pool's free percentages and reset times to `~/Library/Application Support/Ebb/status.json`, for the `ebb` command. The file holds no account names, emails or tokens.
+- **Status pages.** For Claude and Codex pools, Ebb reads `status.claude.com` and `status.openai.com` public `summary.json` at most every 5 minutes while its item shows. The requests carry no account data.
 - **No telemetry.** Ebb has no analytics or crash reporting and talks to no server of its own. Account data never leaves your machine except in those requests.
 
 In scope: a path where the key, tokens or account emails are logged, written in plain text, or sent anywhere other than your CLIProxyAPI or the account's own provider.

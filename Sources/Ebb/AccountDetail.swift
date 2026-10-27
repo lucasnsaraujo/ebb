@@ -35,6 +35,8 @@ struct AccountDetail: Identifiable, Equatable {
     var planTitle: String?
     /// The proxy's message for a login it holds back.
     var healthMessage: String?
+    /// Paid usage past the plan's limits, shown on hover only.
+    var extraUsage: ExtraUsage?
 
     var id: String { provider == ClaudeProvider().proxyName ? email : "\(provider)/\(fileName ?? email)" }
 

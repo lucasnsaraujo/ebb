@@ -20,6 +20,8 @@ Ebb can also notify you when a 5-hour pool is about to run out at the current pa
 | Meta Muse | 5-hour, weekly | `muse-code/key` through the proxy; shows "Limits not available" while the proxy can't send the device-code token |
 | xAI, Vertex, Gemini API key, AI Studio, OpenAI-compatible, plugins | none | Health only: status and cooldown. Never counted in a pool. |
 
+While Claude's or OpenAI's public status page reports a problem with what a pool runs on (the Claude API and Claude Code, or Codex and the Responses API), the panel shows one line such as "Claude: degraded performance", linked to the page. Ebb reads those pages at most every 5 minutes, only while its menu bar item shows, and can send a notification (Settings → General, off by default). Hovering an account in the accounts panel shows paid extra usage when it's on: Claude's overage status, or Codex credits left.
+
 Ebb needs the proxy's management key for everything but Claude. Enter it once in Settings → Connection, or keep it in a `.management-key` file in CLIProxyAPI's logins folder and Ebb picks it up until you press Forget Key. Calls "through the proxy" use CLIProxyAPI's `api-call` endpoint: Ebb names the account and the proxy fills in its token, so Ebb never reads those tokens. Plan weights have defaults (Settings → Plans) that you can change.
 
 This README is a placeholder. Full docs come with the first release.
