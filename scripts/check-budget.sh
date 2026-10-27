@@ -17,16 +17,15 @@ seconds=60
 warmup=12       # CPU is also averaged after this many seconds, once launch work is done
 sample_at=$((seconds - 5))
 
-# Measured on the macos-26 runner (commit and run in the PR that added this), with each ceiling at
-# about 1.5x. A number over its ceiling fails the build: lower it only with a reason, raise it only on purpose.
-#                       measured  ceiling
+# Measured on the macos-26 runner, six runs of 60 s (range), and each ceiling at 1.5x the worst run, rounded up.
+# A number over its ceiling fails the build: raise one only on purpose, and say why in the commit.
 typeset -A ceiling
-ceiling[binary_mb]=1000          # MB, unstripped, one architecture
-ceiling[footprint_mb]=1000       # MB, physical footprint near the end of the run
-ceiling[cpu_percent]=1000        # CPU time over the whole run, launch included
-ceiling[steady_cpu_percent]=1000 # CPU time after the first $warmup seconds
-ceiling[requests]=1000           # network requests in the run
-ceiling[wakes]=1000              # timer and loop wakes in the run
+ceiling[binary_mb]=7             # 4.58 MB, unstripped, one architecture
+ceiling[footprint_mb]=21         # 13-14 MB physical footprint near the end of the run (footprint prints whole MB)
+ceiling[cpu_percent]=3           # 0.85-1.93 %, the whole run, launch included
+ceiling[steady_cpu_percent]=0.5  # 0.02-0.09 %; 1.5x would be inside the noise of ps's centisecond clock, so the 0.5 % target stands
+ceiling[requests]=15             # 9-10 requests: 3 polls, 1 key check, 1 strategy read, 1 usage read, 1 status page, 2-3 weight sets
+ceiling[wakes]=12                # 8 wakes: 3 proxy polls, 2 provider reads, 2 status page checks, 1 menu bar clock
 # A run that did nothing would pass every ceiling above, so the proxy must have been polled at least this often.
 min_proxy_polls=2
 

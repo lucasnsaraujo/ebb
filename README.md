@@ -179,7 +179,7 @@ swift test      # runs the unit tests
 
 `./build.sh --bundle <dir>` only writes `Ebb.app` into `<dir>`. Releases and updates are described in [docs/updates.md](docs/updates.md).
 
-`scripts/check-budget.sh` is the lightweight budget CI runs; it launches Ebb with `--budget-report <file> --budget-seconds 60`, once with `--hidden`, so run it only in a disposable session. `Ebb --demo` shows fake accounts of every provider with no network, for screenshots and testing. `Ebb --snapshot <dir>` renders the panel, every menu bar style and Settings → General, Routing and Connection offscreen to PNGs and quits; add `--demo` for the fake accounts. `Ebb --record <dir>` renders the README hero offscreen from the fake accounts, plus the demo video's frames in `frames/` (60 fps) and the GIF's in `gif-frames/` (20 fps) for ffmpeg, and quits.
+Measured on a macOS 26 CI runner over 60 s idle against a stand-in proxy: a 4.6 MB binary, 13–14 MB physical footprint, 0.02–0.09% CPU once launched, 9–10 network requests and 8 timer wakes, and none of either while the item is hidden. `scripts/check-budget.sh` is the lightweight budget CI runs; it launches Ebb with `--budget-report <file> --budget-seconds 60`, once with `--hidden`, so run it only in a disposable session. `Ebb --demo` shows fake accounts of every provider with no network, for screenshots and testing. `Ebb --snapshot <dir>` renders the panel, every menu bar style and Settings → General, Routing and Connection offscreen to PNGs and quits; add `--demo` for the fake accounts. `Ebb --record <dir>` renders the README hero offscreen from the fake accounts, plus the demo video's frames in `frames/` (60 fps) and the GIF's in `gif-frames/` (20 fps) for ffmpeg, and quits.
 
 ## Contributing
 
