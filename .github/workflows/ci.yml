@@ -20,6 +20,10 @@ jobs:
   # The app really runs here, so only on a disposable runner session: it puts an item in the menu bar.
   budget:
     runs-on: macos-26
+    strategy:
+      fail-fast: false
+      matrix:
+        sample: [1, 2, 3, 4, 5, 6]
     steps:
       - uses: actions/checkout@v4
       - name: Build release
