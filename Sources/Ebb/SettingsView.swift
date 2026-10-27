@@ -519,8 +519,7 @@ struct PlanWeightSettings: View {
                     ForEach(PlanWeights.defaults[provider] ?? []) { row in
                         LabeledContent {
                             HStack {
-                                field(provider, row, .session)
-                                field(provider, row, .weekly)
+                                ForEach(windows(provider), id: \.self) { field(provider, row, $0) }
                             }
                         } label: {
                             Text(row.localizedTitle)
@@ -531,11 +530,10 @@ struct PlanWeightSettings: View {
                     HStack {
                         Text(ProviderDisplay.title(provider))
                         Spacer()
-                        Group {
-                            Text(columnTitle(.session, provider))
-                            Text(columnTitle(.weekly, provider))
+                        ForEach(windows(provider), id: \.self) { window in
+                            Text(columnTitle(window, provider))
+                                .frame(width: Self.columnWidth, alignment: .trailing)
                         }
-                        .frame(width: Self.columnWidth, alignment: .trailing)
                     }
                 } footer: {
                     if provider == ClaudeProvider().proxyName {
@@ -553,6 +551,12 @@ struct PlanWeightSettings: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    /// Both windows, or the weekly one alone when the pool's logins report no short window, as
+    /// the panel shows it.
+    private func windows(_ provider: String) -> [PoolWindow] {
+        store.state.summaries[provider]?.hasShortWindow == false ? [.weekly] : [.session, .weekly]
     }
 
     private func columnTitle(_ window: PoolWindow, _ provider: String) -> String {
