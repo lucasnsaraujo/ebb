@@ -16,3 +16,16 @@ jobs:
         run: swift build
       - name: Test
         run: swift test
+
+  # The app really runs here, so only on a disposable runner session: it puts an item in the menu bar.
+  budget:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build release
+        run: swift build -c release
+      - name: Check the lightweight budget
+        run: scripts/check-budget.sh "$(swift build -c release --show-bin-path)/Ebb"
+      - name: Check ebb --uninstall-data
+        if: ${{ !cancelled() }}
+        run: scripts/check-uninstall.sh "$(swift build -c release --show-bin-path)/EbbCLI"

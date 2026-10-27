@@ -21,6 +21,7 @@ struct MenuBarLabel: View {
             .task {
                 while !Task.isCancelled {
                     try? await Task.sleep(for: .seconds(60))
+                    Budget.wake("menu bar clock")
                     now = .now
                 }
             }

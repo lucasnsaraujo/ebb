@@ -22,12 +22,7 @@ enum AccountFetch<Value> {
 
 /// Asks an account's provider directly, for accounts the proxy has no fresh headers for.
 struct AccountClient {
-    private let session: URLSession = {
-        let configuration = URLSessionConfiguration.ephemeral
-        configuration.timeoutIntervalForRequest = 15
-        configuration.httpMaximumConnectionsPerHost = 1
-        return URLSession(configuration: configuration)
-    }()
+    private let session = Transport.session(timeout: 15, maxConnectionsPerHost: 1)
 
     func fetchUsage(_ account: ProxyAccount) async -> AccountFetch<[UsageLimit]> {
         await fetch(account.provider.usageRequest(accessToken: account.accessToken)) { data in

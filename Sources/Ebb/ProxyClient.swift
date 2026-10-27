@@ -16,11 +16,7 @@ struct ProxyClient {
 
     static let weightedRoundRobin = "weighted-round-robin"
 
-    private let session: URLSession = {
-        let configuration = URLSessionConfiguration.ephemeral
-        configuration.timeoutIntervalForRequest = 5
-        return URLSession(configuration: configuration)
-    }()
+    private let session = Transport.session(timeout: 5)
 
     /// Asks for the proxy's config, which only a valid key may read.
     func check(_ endpoint: ProxyEndpoint) async -> (check: KeyCheck, version: String?) {

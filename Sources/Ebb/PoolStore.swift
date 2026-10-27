@@ -194,10 +194,10 @@ final class PoolStore {
         recompute()
         guard isActive, !isOffline, !isFixed else { return }
         loops = [
-            Task { await repeatEvery(Self.proxyInterval) { await $0.pollProxy() } },
-            Task { await repeatEvery(Self.providerInterval) { await $0.runNextProviderJob(usageMinimumAge: RefreshPlan.period - 30) } },
+            Task { await repeatEvery(Self.proxyInterval, named: "proxy poll") { await $0.pollProxy() } },
+            Task { await repeatEvery(Self.providerInterval, named: "provider read") { await $0.runNextProviderJob(usageMinimumAge: RefreshPlan.period - 30) } },
             // Checked each minute, read at most every five, so showing and hiding the item never adds reads.
-            Task { await repeatEvery(.seconds(60)) { await $0.readStatusPagesIfDue() } },
+            Task { await repeatEvery(.seconds(60), named: "status pages") { await $0.readStatusPagesIfDue() } },
         ]
     }
 
@@ -208,7 +208,7 @@ final class PoolStore {
         for provider in statusPageReads.due(state.providers, now: .now) {
             guard let page = StatusPage.forProvider(provider) else { continue }
             let request = URLRequest(url: page.summaryURL, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 15)
-            let result = try? await URLSession.shared.data(for: request)
+            let result = try? await Transport.statusPages.data(for: request)
             // Hidden mid-read: the read didn't happen, so it isn't recorded.
             guard !Task.isCancelled else { return }
             let health = result.flatMap { data, response in
@@ -308,8 +308,9 @@ final class PoolStore {
         }
     }
 
-    private func repeatEvery(_ interval: Duration, _ step: (PoolStore) async -> Void) async {
+    private func repeatEvery(_ interval: Duration, named name: String, _ step: (PoolStore) async -> Void) async {
         while !Task.isCancelled {
+            Budget.wake(name)
             await step(self)
             try? await Task.sleep(for: interval)
         }
@@ -546,6 +547,7 @@ final class PoolStore {
         while let lastProviderRequest, !isProviderSlotFree(at: .now) {
             let wait = RefreshPlan.minimumSpacing - Date.now.timeIntervalSince(lastProviderRequest)
             guard (try? await Task.sleep(for: .seconds(wait))) != nil else { return false }
+            Budget.wake("provider slot")
         }
         return !Task.isCancelled
     }
