@@ -14,7 +14,7 @@ public enum Plan: Sendable, Equatable {
     }
 }
 
-/// A plan check worth keeping between launches, cached as `<email>.plan.json`.
+/// A plan check worth keeping between launches, cached as `<hash of email>.plan.json`.
 public struct PlanProfile: Codable, Sendable, Equatable {
     private var status: String
     private var weight: Double

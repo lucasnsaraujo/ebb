@@ -173,6 +173,9 @@ final class ProxyConnection {
         }
         let answered = await client.answers(baseURL)
         let cameUp = answered && answers != true
+        if cameUp, ManagementURL.needsPeerCheck(baseURL), await !client.provesCLIProxyAPI(baseURL) {
+            diagnostics.record("Something answers at the proxy's plain-http address without CLIProxyAPI's headers (7.3.4 or later sends them), so the key isn't sent there")
+        }
         if answered != answers { answers = answered }
         // A key checked while the proxy was down, or before its management API was turned on, is checked again.
         if keyState == .unreachable, cameUp || managementKeyIsSet != hadManagementKey { await test() }

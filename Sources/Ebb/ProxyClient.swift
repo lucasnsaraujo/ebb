@@ -117,15 +117,18 @@ struct ProxyClient {
     /// after `/healthz` there shows CLIProxyAPI's headers, so a café router that happens to hold
     /// the saved private address never sees it. `nil` counts as no answer.
     private func keyed(_ request: URLRequest, _ endpoint: ProxyEndpoint) async -> (Data, URLResponse)? {
-        if ManagementURL.needsPeerCheck(endpoint.baseURL) {
-            var probe = URLRequest(url: endpoint.baseURL.appending(path: "healthz"), timeoutInterval: 3)
-            probe.httpMethod = "HEAD"
-            guard let (_, response) = try? await session.data(for: probe),
-                  let headers = (response as? HTTPURLResponse)?.allHeaderFields as? [String: String],
-                  ManagementURL.isCLIProxyAPI(headers: headers)
-            else { return nil }
-        }
+        if ManagementURL.needsPeerCheck(endpoint.baseURL), await !provesCLIProxyAPI(endpoint.baseURL) { return nil }
         return try? await session.data(for: request)
+    }
+
+    /// Whether `/healthz` at this address shows CLIProxyAPI's headers, which 7.3.4 and later do.
+    func provesCLIProxyAPI(_ baseURL: URL) async -> Bool {
+        var probe = URLRequest(url: baseURL.appending(path: "healthz"), timeoutInterval: 3)
+        probe.httpMethod = "HEAD"
+        guard let (_, response) = try? await session.data(for: probe),
+              let headers = (response as? HTTPURLResponse)?.allHeaderFields as? [String: String]
+        else { return false }
+        return ManagementURL.isCLIProxyAPI(headers: headers)
     }
 
     private func request(_ path: String, _ endpoint: ProxyEndpoint, method: String) -> URLRequest {
