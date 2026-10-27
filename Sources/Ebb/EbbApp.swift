@@ -14,7 +14,7 @@ struct EbbApp: App {
     }
 
     var body: some Scene {
-        MenuBarExtra(isInserted: Binding(get: { model.visibility.isVisible && LaunchOptions.snapshotDirectory == nil }, set: { _ in })) {
+        MenuBarExtra(isInserted: Binding(get: { model.visibility.isVisible && !LaunchOptions.rendersOffscreen }, set: { _ in })) {
             PoolPanel(store: model.store, visibility: model.visibility, connection: model.connection)
         } label: {
             MenuBarLabel(store: model.store, settings: model.menuBarSettings, provider: menuBarProvider)
@@ -69,8 +69,8 @@ final class AppModel {
 enum LaunchOptions {
     /// Shows cached numbers and never touches the network.
     static let isOffline = CommandLine.arguments.contains("--offline")
-    /// Fake logins of every provider tier, with no network and no saved key: `--demo`.
-    static let isDemo = CommandLine.arguments.contains("--demo")
+    /// Fake logins of every provider tier, with no network and no saved key: `--demo`, and always with `--record`.
+    static let isDemo = CommandLine.arguments.contains("--demo") || recordDirectory != nil
     /// Puts the demo in a state worth a screenshot or recording: `--demo accounts|hover|disclosure|low|down`.
     /// `low` fakes a nearly empty pool in the menu bar to show its warning colors; `down` a proxy
     /// that isn't answering (give it a `--key-file`, since the notice needs a key).
@@ -81,6 +81,10 @@ enum LaunchOptions {
     }
     /// Renders the panel, its setup steps, the menu bar styles and Settings → General, Routing and Connection offscreen into this folder and quits: `--snapshot <dir>`.
     static let snapshotDirectory: URL? = value(after: "--snapshot").map { URL(fileURLWithPath: $0) }
+    /// Renders the launch media offscreen into this folder and quits: `--record <dir>`. See `Recorder`.
+    static let recordDirectory: URL? = value(after: "--record").map { URL(fileURLWithPath: $0) }
+    /// Draws into files only, so the menu bar item stays out of the menu bar.
+    static var rendersOffscreen: Bool { snapshotDirectory != nil || recordDirectory != nil }
     /// With `--snapshot`, renders what the running proxy reports instead of fixed numbers: `--live`.
     static let isLive = CommandLine.arguments.contains("--live")
     /// With `--snapshot`, reads the live proxy using the management key in this file: `--key-file <path>`.
@@ -102,6 +106,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private static let loginItemKey = "registeredLoginItem"
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        if let directory = LaunchOptions.recordDirectory {
+            Recorder.write(model: AppModel.shared, to: directory)
+            exit(0)
+        }
         if let directory = LaunchOptions.snapshotDirectory {
             let model = AppModel.shared
             if LaunchOptions.isLive {

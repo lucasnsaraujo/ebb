@@ -8,7 +8,7 @@ https://github.com/lucasnsaraujo/ebb/releases/latest/download/appcast.xml
 
 GitHub redirects that URL to the newest release that isn't a draft or prerelease, so each release only needs its own `appcast.xml` asset and no separate site. Settings → General has "Check for Updates…" and a switch for the daily check. `SUEnableAutomaticChecks` is set in `Info.plist`, so Sparkle never asks for permission on the second launch; the switch is the only control. Sparkle's system profile is off (its default), so the request carries the app and Sparkle versions in the User-Agent and nothing else.
 
-The updater only starts in an installed `.app`. `swift run`, `--demo` and `--snapshot` never check. Ebb has no Dock icon, so Sparkle opens a scheduled update alert behind other windows; if Ebb may already post notifications, it also posts one that leads to the alert. An update never asks for notification permission.
+The updater only starts in an installed `.app`. `swift run`, `--demo`, `--snapshot` and `--record` never check. Ebb has no Dock icon, so Sparkle opens a scheduled update alert behind other windows; if Ebb may already post notifications, it also posts one that leads to the alert. An update never asks for notification permission.
 
 ## Signing
 
