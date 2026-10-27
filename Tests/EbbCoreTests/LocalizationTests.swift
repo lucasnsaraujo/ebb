@@ -96,10 +96,16 @@ private func summary(read: Int, weeklyLimited: Int = 0, unread: Int = 0) -> Pool
         #expect(PoolNotes.lines(summary(read: 3), window: .weekly, now: now, locale: english).isEmpty)
         var fresh = summary(read: 3)
         fresh.oldestReadingAt = now - 12
-        #expect(PoolNotes.lines(fresh, window: .weekly, now: now, locale: english) == ["As of 12 s ago"])
-        #expect(PoolNotes.lines(fresh, window: .weekly, now: now, locale: brazil) == ["Atualizado há 12 s"])
+        #expect(PoolNotes.lines(fresh, window: .weekly, now: now, locale: english).isEmpty)
+        #expect(PoolNotes.lines(fresh, window: .weekly, now: now, locale: brazil).isEmpty)
         fresh.oldestReadingAt = now - 3 * 60
-        #expect(PoolNotes.lines(fresh, window: .weekly, now: now, locale: brazil) == ["Atualizado há 3 min"])
+        #expect(PoolNotes.lines(fresh, window: .weekly, now: now, locale: brazil).isEmpty)
+        var stale = summary(read: 3)
+        stale.oldestReadingAt = now - 11 * 60
+        #expect(PoolNotes.lines(stale, window: .weekly, now: now, locale: english) == ["As of 11 min ago"])
+        #expect(PoolNotes.lines(stale, window: .weekly, now: now, locale: brazil) == ["Atualizado há 11 min"])
+        stale.oldestReadingAt = now - 2 * 3600
+        #expect(PoolNotes.lines(stale, window: .weekly, now: now, locale: brazil) == ["Atualizado há 2 h"])
     }
 }
 

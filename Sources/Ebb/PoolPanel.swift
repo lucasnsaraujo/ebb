@@ -583,7 +583,7 @@ struct GainBreakdown: View {
     let forecast: Pace.Forecast?
     /// A daily share that lasts until the capped accounts reset; weekly only, see `WeeklyBudget`.
     var budget: WeeklyBudget?
-    /// How old the numbers are and what's left out of them; see `PoolNotes`.
+    /// What's left out of the numbers, and how old they are once that's stale; see `PoolNotes`.
     var notes: [String] = []
     let now: Date
 

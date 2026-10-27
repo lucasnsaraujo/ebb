@@ -84,14 +84,15 @@ enum LaunchOptions {
     static let isOffline = CommandLine.arguments.contains("--offline")
     /// Fake logins of every provider tier, with no network and no saved key: `--demo`, and always with `--record`.
     static let isDemo = CommandLine.arguments.contains("--demo") || recordDirectory != nil
-    /// Puts the demo in a state worth a screenshot or recording: `--demo accounts|hover|disclosure|low|down|locked|locked-lasts`.
+    /// Puts the demo in a state worth a screenshot or recording: `--demo accounts|hover|disclosure|low|down|stale|locked|locked-lasts`.
     /// `low` fakes a nearly empty pool in the menu bar to show its warning colors; `down` a proxy
-    /// that isn't answering (give it a `--key-file`, since the notice needs a key); `locked` a Claude
-    /// pool with a Max 20x whose week is spent, running out at this pace, and `locked-lasts` the same pool lasting.
+    /// that isn't answering (give it a `--key-file`, since the notice needs a key); `stale` readings
+    /// old enough for the hover cards to date them; `locked` a Claude pool with a Max 20x whose
+    /// week is spent, running out at this pace, and `locked-lasts` the same pool lasting.
     static let demo: Demo? = value(after: "--demo").flatMap(Demo.init(rawValue:))
 
     enum Demo: String {
-        case accounts, hover, disclosure, low, down, locked
+        case accounts, hover, disclosure, low, down, stale, locked
         case lockedLasts = "locked-lasts"
     }
     /// Renders the panel, its setup steps, the menu bar styles and every Settings tab offscreen into this folder and quits: `--snapshot <dir>`.

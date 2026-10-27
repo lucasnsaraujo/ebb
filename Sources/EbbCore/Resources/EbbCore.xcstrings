@@ -537,7 +537,7 @@
       }
     },
     "As of %@" : {
-      "comment" : "How old the numbers are: \"As of 3 min ago\"",
+      "comment" : "How old the numbers are, shown once they are stale: \"As of 12 min ago\"",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {

@@ -72,6 +72,8 @@ enum DemoData {
 
     static func store(connection: ProxyConnection, now: Date = .now) -> PoolStore {
         let logins = shownLogins
+        // `stale`: older than `MenuBarItem.staleAfter`, so the hover cards date the numbers.
+        let readAt = LaunchOptions.demo == .stale ? now - 11 * 60 : now - 150
         var providerLogins: [ProviderLogin] = []
         var details: [AccountDetail] = []
         var routing: [String: Int] = [:]
@@ -82,7 +84,7 @@ enum DemoData {
             ].compactMap { $0 }
             let isPooled = Providers.named(login.provider) != nil
             let plan = PlanWeights.defaultWeight(provider: login.provider, plan: login.plan).map { Plan.paid(weight: $0) } ?? .unknown
-            let member = isPooled ? PoolMember(plan: plan, signals: limits.isEmpty ? nil : DatedLimits(limits: limits, date: now - 150), usage: nil) : nil
+            let member = isPooled ? PoolMember(plan: plan, signals: limits.isEmpty ? nil : DatedLimits(limits: limits, date: readAt), usage: nil) : nil
             providerLogins.append(ProviderLogin(provider: login.provider, member: member))
             if !limits.isEmpty {
                 routing[login.email] = ProxyWeight.target(plan.weight, limits: limits, provider: login.provider, at: now)
@@ -94,7 +96,7 @@ enum DemoData {
                 status: login.status,
                 sessionFree: login.sessionUsed.map { 100 - $0 },
                 weeklyFree: login.weeklyUsed.map { 100 - $0 },
-                readAt: limits.isEmpty ? nil : now - 150,
+                readAt: limits.isEmpty ? nil : readAt,
                 provider: login.provider,
                 fileName: "\(login.provider)-\(login.email).json",
                 planTitle: isClaude ? nil : PlanWeights.defaults[login.provider]?.first { $0.plan == login.plan }?.title
@@ -123,7 +125,7 @@ enum DemoData {
         )
         let urgent = UrgentLogin(provider: "Codex", freePercent: 40, factor: 1.73, weeklyResetsAt: now + 13 * 3600)
         let isDown = LaunchOptions.demo == .down
-        return PoolStore(connection: connection, state: state, proxyReadAt: isDown ? nil : now - 150, proxyFailure: isDown ? .unreachable : nil, strongestUrgency: urgent, incidents: ["codex": .degradedPerformance])
+        return PoolStore(connection: connection, state: state, proxyReadAt: isDown ? nil : readAt, proxyFailure: isDown ? .unreachable : nil, strongestUrgency: urgent, incidents: ["codex": .degradedPerformance])
     }
 
     /// `--demo low`: a nearly empty pool, to show the menu bar's warning colours.
