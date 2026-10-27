@@ -352,6 +352,15 @@ private func runOut(_ forecast: Pace.Forecast?) -> TimeInterval? {
         #expect(PaceText.sentence(forecast, window: .session, short: .fiveHours, now: now) == "About 3 h left at this pace")
     }
 
+    /// Under an hour, disagreeing paces round to the quarter hour, never to nothing.
+    @Test func disagreeingPacesUnderAnHourRoundToTheQuarterHour() {
+        let now = ledgerStart
+        let fortyMinutes = Pace.Forecast(outlook: .runsOut(in: 40 * 60, within: (30 * 60)...(70 * 60)), basis: 2700)
+        let twelveMinutes = Pace.Forecast(outlook: .runsOut(in: 12 * 60, within: (8 * 60)...(20 * 60)), basis: 2700)
+        #expect(PaceText.inline(fortyMinutes, window: .session, now: now) == "About 45 min left")
+        #expect(PaceText.inline(twelveMinutes, window: .session, now: now) == "About 15 min left")
+    }
+
     @Test func sessionLinesSayAboutOrUnder() {
         let now = ledgerStart
         let single = Pace.Forecast(outlook: .runsOut(in: 7800), basis: 2700)
