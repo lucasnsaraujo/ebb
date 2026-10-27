@@ -46,7 +46,7 @@
   </tr>
   <tr>
     <td>Settings</td>
-    <td><img src="docs/images/settings-menubar-light.png" width="380" alt="Settings, Menu Bar section: when to show Ebb, which pool, eight menu bar styles and the limit."></td>
+    <td><img src="docs/images/settings-menubar-light.png" width="380" alt="Settings, Menu Bar tab: when to show Ebb, which pool, eight menu bar styles and the limit."></td>
     <td><img src="docs/images/settings-menubar-dark.png" width="380" alt="The same settings in dark mode."></td>
   </tr>
   <tr>
@@ -158,7 +158,7 @@ The management key is stored in a file only your user can read, and is never log
 
 ## FAQ
 
-**Ebb doesn't appear in the menu bar.** On macOS 26 and later, check System Settings → Menu Bar and make sure Ebb is allowed. Ebb can also hide itself on purpose: Settings → General → Show Ebb can be set to only while chosen apps run.
+**Ebb doesn't appear in the menu bar.** On macOS 26 and later, check System Settings → Menu Bar and make sure Ebb is allowed. Ebb can also hide itself on purpose: Settings → Menu Bar → Show Ebb can be set to only while chosen apps run.
 
 **The numbers look stale.** CLIProxyAPI reports quota as accounts serve requests. An idle account is read from its provider's usage endpoint at a slower pace, so it can lag by a few minutes. The panel says how old each reading is.
 
@@ -179,7 +179,7 @@ swift test      # runs the unit tests
 
 `./build.sh --bundle <dir>` only writes `Ebb.app` into `<dir>`. Releases and updates are described in [docs/updates.md](docs/updates.md).
 
-Measured on a macOS 26 CI runner over 60 s idle against a stand-in proxy: a 4.6 MB single-architecture binary (the shipped app is universal, about twice that), 13–14 MB physical footprint, 0.02–0.09% CPU once launched, 9–10 network requests and 8 timer wakes, and none of either while the item is hidden. Sparkle and the login item only start inside the app bundle, so the budget doesn't cover them. `scripts/check-budget.sh` is the lightweight budget CI runs; it launches Ebb with `--budget-report <file> --budget-seconds 60`, once with `--hidden`, so run it only in a disposable session. `Ebb --demo` shows fake accounts of every provider with no network, for screenshots and testing. `Ebb --snapshot <dir>` renders the panel, every menu bar style and Settings → General, Routing, Plans and Connection offscreen to PNGs and quits; add `--demo` for the fake accounts. `Ebb --record <dir>` renders the README hero offscreen from the fake accounts, plus the demo video's frames in `frames/` (60 fps) and the GIF's in `gif-frames/` (20 fps) for ffmpeg, and quits.
+Measured on a macOS 26 CI runner over 60 s idle against a stand-in proxy: a 4.6 MB single-architecture binary (the shipped app is universal, about twice that), 13–14 MB physical footprint, 0.02–0.09% CPU once launched, 9–10 network requests and 8 timer wakes, and none of either while the item is hidden. Sparkle and the login item only start inside the app bundle, so the budget doesn't cover them. `scripts/check-budget.sh` is the lightweight budget CI runs; it launches Ebb with `--budget-report <file> --budget-seconds 60`, once with `--hidden`, so run it only in a disposable session. `Ebb --demo` shows fake accounts of every provider with no network, for screenshots and testing. `Ebb --snapshot <dir>` renders the panel, every menu bar style and every Settings tab offscreen to PNGs and quits; add `--demo` for the fake accounts. `Ebb --record <dir>` renders the README hero offscreen from the fake accounts, plus the demo video's frames in `frames/` (60 fps) and the GIF's in `gif-frames/` (20 fps) for ffmpeg, and quits.
 
 ## Contributing
 

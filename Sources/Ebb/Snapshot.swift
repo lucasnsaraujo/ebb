@@ -3,8 +3,8 @@ import EbbCore
 import SwiftUI
 
 /// `--snapshot <dir>`: renders the panel offscreen to PNGs, dark and light, collapsed, expanded
-/// and at Increase Contrast, plus its first-run setup steps, every menu bar style and
-/// Settings → General, then quits. The windows it draws in are never put on screen.
+/// and at Increase Contrast, plus its first-run setup steps, every menu bar style and every
+/// Settings tab, then quits. The windows it draws in are never put on screen.
 @MainActor
 enum Snapshot {
     static func write(store: PoolStore, connection: ProxyConnection, visibility: Visibility, to directory: URL, prefix: String) {
@@ -107,24 +107,21 @@ enum Snapshot {
         }
     }
 
-    /// Settings → General, Routing, Plans and Connection, dark and light, at the Settings window's width.
+    /// Every Settings tab, dark and light, at the Settings window's width and capped as the window caps it.
     static func writeSettings(model: AppModel, to directory: URL) {
+        let settings = SettingsView(connection: model.connection, visibility: model.visibility, store: model.store, menuBarSettings: model.menuBarSettings)
         for scheme in [ColorScheme.dark, .light] {
-            func write(_ pane: some View, as name: String) {
-                let view = pane
+            for tab in SettingsTab.allCases {
+                let view = settings.pane(tab)
                     .frame(width: 480)
                     .fixedSize(horizontal: false, vertical: true)
                     .background(Color(nsColor: .windowBackgroundColor))
                     .environment(\.colorScheme, scheme)
                     .transaction { $0.disablesAnimations = true }
                 if let data = png(of: view, width: 480, scheme: scheme) {
-                    try? data.write(to: directory.appending(path: "settings-\(name)-\(scheme == .dark ? "dark" : "light").png"))
+                    try? data.write(to: directory.appending(path: "settings-\(tab.rawValue.lowercased())-\(scheme == .dark ? "dark" : "light").png"))
                 }
             }
-            write(GeneralSettings(visibility: model.visibility, store: model.store, menuBarSettings: model.menuBarSettings), as: "general")
-            write(RoutingSettingsPane(connection: model.connection, store: model.store), as: "routing")
-            write(PlanWeightSettings(store: model.store), as: "plans")
-            write(ConnectionSettings(connection: model.connection, store: model.store), as: "connection")
         }
     }
 

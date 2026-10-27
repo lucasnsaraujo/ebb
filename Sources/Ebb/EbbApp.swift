@@ -94,7 +94,7 @@ enum LaunchOptions {
         case accounts, hover, disclosure, low, down, locked
         case lockedLasts = "locked-lasts"
     }
-    /// Renders the panel, its setup steps, the menu bar styles and Settings → General, Routing and Connection offscreen into this folder and quits: `--snapshot <dir>`.
+    /// Renders the panel, its setup steps, the menu bar styles and every Settings tab offscreen into this folder and quits: `--snapshot <dir>`.
     static let snapshotDirectory: URL? = value(after: "--snapshot").map { URL(fileURLWithPath: $0) }
     /// Renders the launch media offscreen into this folder and quits: `--record <dir>`. See `Recorder`.
     static let recordDirectory: URL? = value(after: "--record").map { URL(fileURLWithPath: $0) }
