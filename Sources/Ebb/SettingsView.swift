@@ -304,7 +304,7 @@ struct ConnectionSettings: View {
                 HStack {
                     Spacer()
                     if connection.configOverride != nil {
-                        Button("Use Detected") { connection.setConfigOverride(nil) }
+                        Button("Use Detected") { useConfig(nil) }
                     }
                     Button("Choose Config…", action: chooseConfig)
                 }
@@ -396,7 +396,13 @@ struct ConnectionSettings: View {
         panel.allowedContentTypes = [.yaml, .data]
         panel.prompt = "Use"
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        connection.setConfigOverride(url.path)
+        useConfig(url.path)
+    }
+
+    /// Another config can name another proxy, so the old proxy's numbers mustn't linger.
+    private func useConfig(_ path: String?) {
+        connection.setConfigOverride(path)
+        store.connectionDidChange()
     }
 }
 

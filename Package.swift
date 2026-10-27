@@ -22,5 +22,6 @@ let package = Package(
             dependencies: ["EbbCore"],
             resources: [.copy("Fixtures")]
         ),
+        .testTarget(name: "EbbAppTests", dependencies: ["Ebb", "EbbCore"]),
     ]
 )

@@ -72,7 +72,8 @@ final class PoolStore {
     /// By email. Accounts the user disabled by hand are left out of everything but the panel.
     @ObservationIgnored private var accounts: [String: ProxyAccount] = [:]
     @ObservationIgnored private var disabledByUser: [ProxyAccount] = []
-    /// The proxy's latest listing by auth file name; empty while it's unreachable.
+    /// The proxy's latest listing by auth file name. Kept while it's unreachable, so the numbers
+    /// last read stay on show, dimmed by their age; weights aren't synced from it meanwhile.
     @ObservationIgnored private var proxyFiles: [String: ProxyAuthFile] = [:]
     @ObservationIgnored private var retired: Set<String> = []
     @ObservationIgnored private var usageReadings: [String: DatedLimits] = [:]
@@ -336,12 +337,10 @@ final class PoolStore {
         case let .refused(version):
             connection.noteProxyVersion(version)
             if wasReachable || proxyFailure != .refused { diagnostics.record("Proxy refused the key") }
-            proxyFiles = [:]
             proxyReadAt = nil
             proxyFailure = .refused
         case .unreachable:
             if wasReachable || proxyFailure != .unreachable { diagnostics.record("Proxy poll failed: no answer") }
-            proxyFiles = [:]
             proxyReadAt = nil
             proxyFailure = .unreachable
         case nil:
@@ -354,7 +353,7 @@ final class PoolStore {
         ledger.heartbeat(at: .now)
         recompute()
         if Date.now.timeIntervalSince(ledgerSavedAt) >= Self.ledgerSaveInterval { saveLedger() }
-        if syncsWeights { await syncProxyWeights() }
+        if syncsWeights, proxyReadAt != nil { await syncProxyWeights() }
     }
 
     /// Never from a snapshot or demo, which must leave the user's files alone.
@@ -469,7 +468,7 @@ final class PoolStore {
         if let direct { return .profile(direct) }
         let listed = callPlanStates
             .filter { name, state in
-                guard let file = proxyFiles[name], !file.isDisabled || retired.contains(name) else { return false }
+                guard proxyReadAt != nil, let file = proxyFiles[name], !file.isDisabled || retired.contains(name) else { return false }
                 if let retry = state.retryNotBefore, retry > now { return false }
                 // An answer that named no tier still counts as checked, so it's asked again in hours, not minutes.
                 let plan: Plan? = state.lastOutcome == .ok ? plan(for: file) : nil
@@ -496,7 +495,7 @@ final class PoolStore {
     /// Idle logins with a usage call, each read at most every five minutes whatever asks;
     /// retired ones are re-read daily, ended ones after the confirmation interval, Meta at most hourly.
     private func isCallEligible(_ name: String, minimumAge: TimeInterval, now: Date) -> Bool {
-        guard connection.endpoint != nil, let file = proxyFiles[name],
+        guard connection.endpoint != nil, proxyReadAt != nil, let file = proxyFiles[name],
               let provider = Providers.named(file.provider), provider.usageCall(for: file) != nil,
               !file.isDisabled || retired.contains(name),
               !ReadingChoice.hasFreshSignals(file.quota, now: now)
@@ -953,7 +952,8 @@ final class PoolStore {
                 share: shares[account.email],
                 readAt: reading?.reading.date,
                 extraUsage: proxyFiles[account.name]?.extraUsage(at: now),
-                isStuckInCooldown: proxyFiles[account.name].map {
+                // A cooldown seen before the proxy went down says nothing about it now.
+                isStuckInCooldown: proxyReadAt == nil ? false : proxyFiles[account.name].map {
                     StuckCooldown.isStuck(health: $0.health, usage: usageReadings[account.email], signalsObservedAt: $0.signalsObservedAt, now: now)
                 } ?? false,
                 authIndex: proxyFiles[account.name]?.authIndex
