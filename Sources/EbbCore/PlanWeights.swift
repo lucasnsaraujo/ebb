@@ -82,13 +82,37 @@ public enum PlanWeights {
     /// `UserDefaults` key of the overrides dictionary.
     public static let overridesKey = "planWeightOverrides"
 
-    /// A 5-hour override keeps the key a plan's one weight was saved under before plans had a
-    /// weekly size, so a weight set back then sizes the 5-hour window and the week keeps its default.
+    /// Each window's override has a key of its own. "provider/plan" alone is a weight saved before
+    /// plans had a weekly size, which `splittingLegacyOverrides` turns into these.
     public static func overrideKey(provider: String, plan: String, window: PoolWindow) -> String {
         switch window {
-        case .session: "\(provider)/\(plan)"
+        case .session: "\(provider)/\(plan)/session"
         case .weekly: "\(provider)/\(plan)/weekly"
         }
+    }
+
+    /// The overrides Settings saved, per window.
+    public static func savedOverrides(in userDefaults: UserDefaults = .standard) -> [String: Double] {
+        splittingLegacyOverrides(userDefaults.dictionary(forKey: overridesKey) as? [String: Double] ?? [:])
+    }
+
+    /// Overrides with each weight saved before plans had a weekly size split per window. It sized
+    /// both windows where a provider's plans weigh the same in each, and still does, so routing and
+    /// the weekly pool don't move; Claude's weeks are measured apart, so there it sizes the 5-hour
+    /// window and the week keeps its default. A window's own override wins.
+    public static func splittingLegacyOverrides(_ overrides: [String: Double]) -> [String: Double] {
+        var split = overrides
+        for (key, value) in overrides {
+            let parts = key.split(separator: "/", omittingEmptySubsequences: false).map(String.init)
+            guard parts.count == 2 else { continue }
+            split[key] = nil
+            let isSameInBothWindows = (defaults[parts[0]] ?? []).allSatisfy { $0.weight.session == $0.weight.weekly }
+            for window in isSameInBothWindows ? [PoolWindow.session, .weekly] : [.session] {
+                let windowKey = overrideKey(provider: parts[0], plan: parts[1], window: window)
+                if overrides[windowKey] == nil { split[windowKey] = value }
+            }
+        }
+        return split
     }
 
     /// The default for a plan: its table entry, then for a Claude tier the table doesn't list, the

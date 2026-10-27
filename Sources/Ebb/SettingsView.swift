@@ -503,7 +503,8 @@ struct RoutingSettingsPane: View {
 struct PlanWeightSettings: View {
     let store: PoolStore
 
-    @State private var overrides = UserDefaults.standard.dictionary(forKey: PlanWeights.overridesKey) as? [String: Double] ?? [:]
+    /// Saving writes these back, so a weight saved before plans had a weekly size is split for good.
+    @State private var overrides = PlanWeights.savedOverrides()
 
     private static let columnWidth: CGFloat = 56
 

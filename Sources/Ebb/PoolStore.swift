@@ -852,7 +852,7 @@ final class PoolStore {
 
     /// Plan sizes the user set in Settings, by `PlanWeights.overrideKey`.
     private var weightOverrides: [String: Double] {
-        UserDefaults.standard.dictionary(forKey: PlanWeights.overridesKey) as? [String: Double] ?? [:]
+        PlanWeights.savedOverrides()
     }
 
     /// A Claude plan, resized by the user's override for its tier.

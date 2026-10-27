@@ -339,7 +339,10 @@ private let observed = Date(timeIntervalSince1970: 1_793_040_000)
     }
 
     @Test func overridesWinPerPlanRow() {
-        let overrides = ["codex/pro": 15.0, "claude/max_5x": 4, "devin/*": 3, "codex/plus": 0]
+        func fiveHour(_ provider: String, _ plan: String) -> String {
+            PlanWeights.overrideKey(provider: provider, plan: plan, window: .session)
+        }
+        let overrides = [fiveHour("codex", "pro"): 15.0, fiveHour("claude", "max_5x"): 4, fiveHour("devin", "*"): 3, fiveHour("codex", "plus"): 0]
         #expect(PlanWeights.weight(provider: "codex", plan: "pro", overrides: overrides) == PlanWeight(session: 15, weekly: 20))
         #expect(PlanWeights.weight(provider: "codex", plan: "PRO", overrides: overrides) == PlanWeight(session: 15, weekly: 20))
         #expect(PlanWeights.weight(provider: "codex", plan: "plus", overrides: overrides) == PlanWeight(1))
@@ -360,13 +363,27 @@ private let observed = Date(timeIntervalSince1970: 1_793_040_000)
         #expect(PlanWeights.weight(provider: "claude", plan: "pro", overrides: overrides) == PlanWeight(1))
     }
 
-    /// Settings saved one weight per plan before plans had a weekly size: it was meant for the
-    /// plan's sessions, so it sizes the 5-hour window, and the week keeps its default.
-    @Test func aWeightSavedBeforePlansHadAWeeklySizeSetsTheFiveHourWindowOnly() {
-        let saved = ["claude/max_20x": 10.0, "codex/pro": 30]
+    /// Settings saved one weight per plan, under "provider/plan", before plans had a weekly size.
+    /// Where a provider's plans weigh the same in both windows it sized both, and still does, so
+    /// routing and the weekly pool don't move. Claude's weeks are measured apart: there it was
+    /// meant for sessions, so it sizes the 5-hour window and the week keeps its default.
+    @Test func aWeightSavedBeforePlansHadAWeeklySizeKeepsWhatItSized() {
+        let saved = PlanWeights.splittingLegacyOverrides(["claude/max_20x": 10.0, "claude/pro": 2, "codex/pro": 30, "devin/*": 3])
         #expect(PlanWeights.weight(provider: "claude", plan: "max_20x", overrides: saved) == PlanWeight(session: 10, weekly: 7))
-        #expect(PlanWeights.weight(provider: "codex", plan: "pro", overrides: saved) == PlanWeight(session: 30, weekly: 20))
-        #expect(PlanWeights.overrideKey(provider: "claude", plan: "max_20x", window: .session) == "claude/max_20x")
+        #expect(PlanWeights.weight(provider: "claude", plan: "pro", overrides: saved) == PlanWeight(session: 2, weekly: 1))
+        #expect(PlanWeights.weight(provider: "codex", plan: "pro", overrides: saved) == PlanWeight(30))
+        #expect(PlanWeights.weight(provider: "devin", plan: "team", overrides: saved) == PlanWeight(3))
+    }
+
+    /// Once split, a 5-hour edit is the 5-hour window's alone, and a window's own override wins.
+    @Test func aSplitWeightNeverComesBackOverAWindowsOwnOverride() {
+        let weeklyKey = PlanWeights.overrideKey(provider: "codex", plan: "pro", window: .weekly)
+        let saved = PlanWeights.splittingLegacyOverrides(["codex/pro": 30, weeklyKey: 25])
+        #expect(PlanWeights.weight(provider: "codex", plan: "pro", overrides: saved) == PlanWeight(session: 30, weekly: 25))
+        #expect(saved["codex/pro"] == nil)
+
+        let edited = [PlanWeights.overrideKey(provider: "codex", plan: "pro", window: .session): 30.0]
+        #expect(PlanWeights.weight(provider: "codex", plan: "pro", overrides: PlanWeights.splittingLegacyOverrides(edited)) == PlanWeight(session: 30, weekly: 20))
     }
 
     @Test func everyDefaultCitesItsSource() {
