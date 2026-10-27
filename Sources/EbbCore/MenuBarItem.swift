@@ -15,14 +15,14 @@ public enum MenuBarStyle: String, CaseIterable, Identifiable, Sendable {
 
     public var title: String {
         switch self {
-        case .standard: "Default"
-        case .ring: "Ring"
-        case .both: "Both"
-        case .stacked: "Stacked"
-        case .refillTime: "Refill time"
-        case .numberOnly: "Number only"
-        case .bars: "Bars"
-        case .iconOnly: "Icon only"
+        case .standard: Localization.text("Default")
+        case .ring: Localization.text("Ring")
+        case .both: Localization.text("Both")
+        case .stacked: Localization.text("Stacked")
+        case .refillTime: Localization.text("Refill time")
+        case .numberOnly: Localization.text("Number only")
+        case .bars: Localization.text("Bars")
+        case .iconOnly: Localization.text("Icon only")
         }
     }
 
@@ -43,9 +43,9 @@ public enum MenuBarLimit: String, CaseIterable, Identifiable, Sendable {
 
     public var title: String {
         switch self {
-        case .fiveHour: "5-Hour"
-        case .weekly: "Weekly"
-        case .tighter: "Tighter of the Two"
+        case .fiveHour: Localization.text("5-Hour")
+        case .weekly: Localization.text("Weekly")
+        case .tighter: Localization.text("Tighter of the Two")
         }
     }
 
@@ -105,7 +105,14 @@ public struct WindowReading: Sendable, Equatable {
     public var label: String { window == .session ? shortWindow.abbreviation : "W" }
     public var state: LowState { LowState(percent: percent) }
 
-    var spokenTitle: String { window == .session ? shortWindow.title.lowercased() : "weekly" }
+    /// "5-hour", "daily" or "weekly", as VoiceOver names the window.
+    func spokenTitle(locale: Locale) -> String {
+        switch (window, shortWindow) {
+        case (.session, .fiveHours): Localization.text("5-hour", locale: locale)
+        case (.session, .day): Localization.text("daily", locale: locale)
+        case (.weekly, _): Localization.text("weekly", locale: locale)
+        }
+    }
 }
 
 /// Everything the menu bar item draws from: one provider's two windows, which of its
@@ -225,11 +232,12 @@ public struct MenuBarItem: Sendable, Equatable {
         parts.contains { $0.isTinted }
     }
 
-    public init(style: MenuBarStyle, limit: MenuBarLimit, pool: MenuBarPool?, now: Date) {
+    /// `locale` picks the language of the refill times and the accessibility label; the app leaves it at the user's.
+    public init(style: MenuBarStyle, limit: MenuBarLimit, pool: MenuBarPool?, now: Date, locale: Locale = .autoupdatingCurrent) {
         guard let pool else {
             parts = [.mark(percent: Self.restPercent, state: .normal)]
             isStale = true
-            accessibilityLabel = "Ebb, no reading"
+            accessibilityLabel = Localization.text("Ebb, no reading", locale: locale)
             return
         }
         let weekly = pool.weekly
@@ -238,7 +246,7 @@ public struct MenuBarItem: Sendable, Equatable {
         let windows = pool.hasShortWindow ? [session, weekly] : [weekly]
 
         func refill(_ reading: WindowReading) -> String? {
-            reading.refillsAt.map { "· " + RefillText.until($0, now: now) }
+            reading.refillsAt.map { "· " + RefillText.until($0, now: now, locale: locale) }
         }
         /// "5h 88%", plus the refill time when the window is empty, since a bare 0 isn't actionable.
         func runs(_ reading: WindowReading) -> [Run] {
@@ -273,16 +281,17 @@ public struct MenuBarItem: Sendable, Equatable {
         isStale = pool.lastReadAt.map { now.timeIntervalSince($0) > Self.staleAfter } ?? true
         if isStale { parts = parts.map(\.untinted) }
 
+        // "Ebb, 5-hour, 88 percent free": the window the Limit setting picks, or both for the two-window styles.
         let spoken = style.showsBothWindows ? windows : [shown]
-        var label = "Ebb, " + spoken.map { "\($0.spokenTitle) \($0.percent)% free" }.joined(separator: ", ")
+        var pieces = ["Ebb"] + spoken.map { Localization.text("\($0.spokenTitle(locale: locale)), \($0.percent) percent free", locale: locale) }
         if style == .refillTime || shown.percent == 0, !style.showsBothWindows, let date = shown.refillsAt {
-            label += ", more in " + RefillText.until(date, now: now)
+            pieces.append(Localization.text("more in \(RefillText.until(date, now: now, locale: locale))", locale: locale))
         }
         if style == .ring, pool.accounts.count > 1 {
-            label += ", \(pool.accounts.filter { $0 }.count) of \(pool.accounts.count) accounts ready"
+            pieces.append(Localization.text("\(pool.accounts.filter { $0 }.count) of \(pool.accounts.count) accounts ready", locale: locale))
         }
-        if isStale { label += ", not updated recently" }
-        accessibilityLabel = label
+        if isStale { pieces.append(Localization.text("not updated recently", locale: locale)) }
+        accessibilityLabel = pieces.joined(separator: ", ")
     }
 }
 
@@ -341,14 +350,14 @@ public enum RingAccounts: Sendable, Equatable {
 
 public enum RefillText {
     /// "38m", "2h 10m", "3d 4h": short enough for the menu bar. Rounds up, so it never promises early.
-    public static func until(_ date: Date, now: Date) -> String {
+    public static func until(_ date: Date, now: Date, locale: Locale = .autoupdatingCurrent) -> String {
         let minutes = max(1, Int((date.timeIntervalSince(now) / 60).rounded(.up)))
-        if minutes < 60 { return "\(minutes)m" }
+        if minutes < 60 { return Localization.text("\(minutes)m", locale: locale) }
         if minutes < 24 * 60 {
             let (hours, rest) = minutes.quotientAndRemainder(dividingBy: 60)
-            return rest == 0 ? "\(hours)h" : "\(hours)h \(rest)m"
+            return rest == 0 ? Localization.text("\(hours)h", locale: locale) : Localization.text("\(hours)h \(rest)m", locale: locale)
         }
         let (days, hours) = Int((Double(minutes) / 60).rounded(.up)).quotientAndRemainder(dividingBy: 24)
-        return hours == 0 ? "\(days)d" : "\(days)d \(hours)h"
+        return hours == 0 ? Localization.text("\(days)d", locale: locale) : Localization.text("\(days)d \(hours)h", locale: locale)
     }
 }

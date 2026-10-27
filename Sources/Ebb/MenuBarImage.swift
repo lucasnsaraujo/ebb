@@ -10,13 +10,14 @@ import EbbCore
 enum MenuBarImage {
     nonisolated static let height: CGFloat = 22
 
-    private static var last: (item: MenuBarItem, image: NSImage)?
+    private static var last: (item: MenuBarItem, increasesContrast: Bool, image: NSImage)?
 
     /// The same image for the same item, so the status item only redraws when something changed.
     static func cached(_ item: MenuBarItem) -> NSImage {
-        if let last, last.item == item { return last.image }
+        let increasesContrast = NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast
+        if let last, last.item == item, last.increasesContrast == increasesContrast { return last.image }
         let image = make(item)
-        last = (item, image)
+        last = (item, increasesContrast, image)
         return image
     }
 
@@ -24,10 +25,11 @@ enum MenuBarImage {
     static func make(_ item: MenuBarItem, appearance: NSAppearance? = nil) -> NSImage {
         let layout = Layout(item)
         let isTemplate = !item.isTinted
+        let increasesContrast = NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast
         let image = NSImage(size: NSSize(width: layout.width, height: height), flipped: true) { _ in
             // AppKit may call this on any thread that draws the image, so nothing in it is actor-bound.
             guard let context = NSGraphicsContext.current?.cgContext else { return false }
-            let draw = { layout.draw(in: context, palette: Palette(isTemplate: isTemplate), dimmed: item.isStale) }
+            let draw = { layout.draw(in: context, palette: Palette(isTemplate: isTemplate, increasesContrast: increasesContrast), dimmed: item.isStale) }
             if let appearance { appearance.performAsCurrentDrawingAppearance(draw) } else { draw() }
             return true
         }
@@ -45,14 +47,19 @@ private struct Palette {
     let capsule: CGColor
     /// Fills and arcs at 5% or less: a darker red in light mode, where it stands without white text.
     let red: CGColor
+    /// Secondary text and tracks as shares of the label colour; Increase Contrast lifts both.
+    let secondary: CGFloat
+    let track: CGFloat
 
-    init(isTemplate: Bool) {
+    init(isTemplate: Bool, increasesContrast: Bool) {
         let match = NSAppearance.currentDrawing().bestMatch(from: [.aqua, .darkAqua, .vibrantLight, .vibrantDark])
         let isDark = match == .darkAqua || match == .vibrantDark
         label = isTemplate ? NSColor.black.cgColor : NSColor.labelColor.cgColor
         orange = isDark ? Self.rgb(0xFF9F0A) : Self.rgb(0xC93400)
         capsule = isDark ? Self.rgb(0xFF453A) : Self.rgb(0xFF3B30)
         red = isDark ? Self.rgb(0xFF453A) : Self.rgb(0xD70015)
+        secondary = increasesContrast ? 0.75 : 0.55
+        track = increasesContrast ? 0.5 : 0.3
     }
 
     func fill(_ state: LowState) -> CGColor {
@@ -227,7 +234,7 @@ private struct Layout {
                 context.setFillColor(.white)
                 Self.draw(run.line, x: x + 3, baseline: top + Self.baselineOffset(Fonts.capsule, lineBox: lineBox), in: context)
             } else {
-                context.setFillColor(run.isSecondary ? palette.label(times: 0.55) : palette.text(run.state))
+                context.setFillColor(run.isSecondary ? palette.label(times: palette.secondary) : palette.text(run.state))
                 Self.draw(run.line, x: x, baseline: top + Self.baselineOffset(Fonts.body, lineBox: lineBox), in: context)
             }
             x += run.slotWidth
@@ -239,13 +246,13 @@ private struct Layout {
         var top = (MenuBarImage.height - lineBox * CGFloat(rows.count)) / 2
         for row in rows {
             let baseline = top + Self.baselineOffset(Fonts.stack, lineBox: lineBox)
-            context.setFillColor(palette.label(times: 0.55))
+            context.setFillColor(palette.label(times: palette.secondary))
             Self.draw(row.label.line, x: x, baseline: baseline, in: context)
 
             var right = x + width
             if let refill = row.refill {
                 right -= refill.width
-                context.setFillColor(palette.label(times: 0.55))
+                context.setFillColor(palette.label(times: palette.secondary))
                 Self.draw(refill.line, x: right, baseline: baseline, in: context)
                 right -= 3
             }
@@ -276,7 +283,7 @@ private struct Layout {
         context.setLineCap(.round)
         // An empty week leaves no arc to tint, so the track takes the warning.
         let isEmpty = ring.arc.percent == 0 && ring.arc.state == .critical
-        context.setStrokeColor(isEmpty ? palette.red.copy(alpha: 0.5) ?? palette.red : palette.label(times: 0.3))
+        context.setStrokeColor(isEmpty ? palette.red.copy(alpha: 0.5) ?? palette.red : palette.label(times: palette.track))
         context.addArc(center: center, radius: radius, startAngle: start, endAngle: start + sweep, clockwise: false)
         context.strokePath()
         if ring.arc.percent > 0 {
@@ -294,7 +301,7 @@ private struct Layout {
             for (index, isReady) in dots.enumerated() {
                 let angle = (90 + (CGFloat(dots.count - 1) / 2 - CGFloat(index)) * step) * .pi / 180
                 let dot = CGPoint(x: center.x + radius * cos(angle), y: center.y + radius * sin(angle))
-                context.setFillColor(isReady ? palette.label : palette.label(times: 0.3))
+                context.setFillColor(isReady ? palette.label : palette.label(times: palette.track))
                 context.fillEllipse(in: CGRect(x: dot.x - 0.825, y: dot.y - 0.825, width: 1.65, height: 1.65))
             }
         case let .count(ready, total):
@@ -315,7 +322,7 @@ private struct Layout {
         let shape = CGPath(roundedRect: track, cornerWidth: 2, cornerHeight: 2, transform: nil)
         // An empty bar leaves no fill to tint, so the track takes the warning.
         let isEmpty = gauge.percent == 0 && gauge.state == .critical
-        context.setFillColor(isEmpty ? palette.red.copy(alpha: 0.5) ?? palette.red : palette.label(times: 0.28))
+        context.setFillColor(isEmpty ? palette.red.copy(alpha: 0.5) ?? palette.red : palette.label(times: palette.track))
         context.addPath(shape)
         context.fillPath()
         let height = track.height * CGFloat(gauge.percent) / 100

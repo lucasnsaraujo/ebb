@@ -46,11 +46,14 @@ public enum ExtraUsage: Sendable, Equatable {
     case codexCredits(balance: Double)
     case codexUnlimitedCredits
 
-    public var text: String {
+    public var text: String { text(locale: .autoupdatingCurrent) }
+
+    public func text(locale: Locale) -> String {
         switch self {
-        case let .claudeOverage(isNearLimit): isNearLimit ? "Extra usage on, near its limit" : "Extra usage on"
-        case let .codexCredits(balance): "Credits: \(balance.formatted(.number.precision(.fractionLength(0...2)).locale(Locale(identifier: "en_US_POSIX"))))"
-        case .codexUnlimitedCredits: "Credits: unlimited"
+        case .claudeOverage(isNearLimit: true): Localization.text("Extra usage on, near its limit", locale: locale)
+        case .claudeOverage(isNearLimit: false): Localization.text("Extra usage on", locale: locale)
+        case let .codexCredits(balance): Localization.text("Credits: \(balance.formatted(.number.precision(.fractionLength(0...2)).locale(locale)))", locale: locale)
+        case .codexUnlimitedCredits: Localization.text("Credits: unlimited", locale: locale)
         }
     }
 }
@@ -67,10 +70,12 @@ public enum ShortWindow: String, Sendable, Equatable, Codable {
         }
     }
 
-    public var title: String {
+    public var title: String { title(locale: .autoupdatingCurrent) }
+
+    public func title(locale: Locale) -> String {
         switch self {
-        case .fiveHours: "5-hour"
-        case .day: "Daily"
+        case .fiveHours: Localization.text("5-hour", locale: locale)
+        case .day: Localization.text("Daily", locale: locale)
         }
     }
 

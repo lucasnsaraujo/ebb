@@ -33,7 +33,7 @@ struct ProxySetupView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .animation(reduceMotion ? .easeInOut(duration: 0.2) : Motion.reveal, value: setup)
+        .animation(reduceMotion ? nil : Motion.reveal, value: setup)
         .task {
             // Looks again every few seconds while open, so a command run in Terminal shows here on its own.
             guard LaunchOptions.snapshotDirectory == nil else { return }
@@ -67,7 +67,7 @@ struct ProxySetupView: View {
             }
         } accessory: {
             if case let .stopped(install) = setup.proxy, install.launch != nil {
-                Button(connection.startState == .starting ? "Starting…" : "Start", action: start)
+                Button(connection.startState == .starting ? String(localized: "Starting…") : String(localized: "Start"), action: start)
                     .buttonStyle(.borderedProminent)
                     .controlSize(.small)
                     .disabled(connection.startState == .starting)
@@ -210,6 +210,8 @@ private struct SetupStep<Content: View, Accessory: View>: View {
     @ViewBuilder var content: Content
     @ViewBuilder var accessory: Accessory
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     init(
         number: Int, title: LocalizedStringKey, progress: SetupProgress, hasContent: Bool = true,
         @ViewBuilder content: () -> Content, @ViewBuilder accessory: () -> Accessory = { EmptyView() }
@@ -240,7 +242,7 @@ private struct SetupStep<Content: View, Accessory: View>: View {
                     VStack(alignment: .leading, spacing: 7) {
                         content
                     }
-                    .transition(.opacity.combined(with: .offset(y: -4)))
+                    .transition(reduceMotion ? .opacity.animation(.easeInOut(duration: 0.2)) : .opacity.combined(with: .offset(y: -4)))
                 }
             }
         }
@@ -261,7 +263,8 @@ private struct SetupStep<Content: View, Accessory: View>: View {
             case .looking:
                 Image(systemName: "circle.dotted")
                     .foregroundStyle(.secondary)
-                    .symbolEffect(.rotate, options: .repeat(.continuous))
+                    .symbolEffect(.rotate, options: .repeat(.continuous), isActive: !reduceMotion)
+                    .symbolEffect(.pulse, options: .repeat(.continuous), isActive: reduceMotion)
             case .current:
                 Image(systemName: "\(number).circle.fill")
                     .foregroundStyle(.primary)
@@ -275,17 +278,17 @@ private struct SetupStep<Content: View, Accessory: View>: View {
         }
         .font(.body)
         .imageScale(.large)
-        .contentTransition(.symbolEffect(.replace))
+        .contentTransition(reduceMotion ? .opacity : .symbolEffect(.replace))
         .frame(width: 18)
         .accessibilityLabel(accessibilityStatus)
     }
 
     private var accessibilityStatus: String {
         switch progress {
-        case .looking: "Checking"
-        case .current: "Step \(number)"
-        case .done: "Done"
-        case .upcoming: "Step \(number), later"
+        case .looking: String(localized: "Checking")
+        case .current: String(localized: "Step \(number)")
+        case .done: String(localized: "Done")
+        case .upcoming: String(localized: "Step \(number), later")
         }
     }
 }
@@ -296,6 +299,7 @@ private struct CopyableCommand: View {
 
     @State private var didCopy = false
     @State private var resetCopy: Task<Void, Never>?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -306,14 +310,14 @@ private struct CopyableCommand: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             Button(action: copy) {
                 Image(systemName: didCopy ? "checkmark" : "doc.on.doc")
-                    .contentTransition(.symbolEffect(.replace))
+                    .contentTransition(reduceMotion ? .opacity : .symbolEffect(.replace))
                     .foregroundStyle(didCopy ? AnyShapeStyle(.green) : AnyShapeStyle(.secondary))
                     .frame(width: 16, height: 16)
                     .contentShape(.rect)
             }
             .buttonStyle(.borderless)
             .help("Copy")
-            .accessibilityLabel(didCopy ? "Copied" : "Copy")
+            .accessibilityLabel(didCopy ? String(localized: "Copied") : String(localized: "Copy"))
         }
         .padding(.vertical, 7)
         .padding(.leading, 10)

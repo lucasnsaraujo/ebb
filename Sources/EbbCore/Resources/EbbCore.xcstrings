@@ -1,0 +1,1199 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%@ 5-hour pool about to run out" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cota de 5 horas do %@ prestes a acabar"
+          }
+        }
+      }
+    },
+    "%@ daily pool about to run out" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cota diária do %@ prestes a acabar"
+          }
+        }
+      }
+    },
+    "%@ left" : {
+      "comment" : "Under the 5-hour meter, 124 pt wide: a range such as 1–2 h",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restam %@"
+          }
+        }
+      }
+    },
+    "%@ left at this pace" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ restantes neste ritmo"
+          }
+        }
+      }
+    },
+    "%@ weekly back +%lld%%" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: +%2$lld%% na cota semanal"
+          }
+        }
+      }
+    },
+    "%@, %lld percent free" : {
+      "comment" : "VoiceOver, after \"Ebb\": the window and its free share",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$lld por cento livre"
+          }
+        }
+      }
+    },
+    "%@: %@" : {
+      "comment" : "A title and its value: \"Claude: degraded performance\", \"Weekly: 29 percent free\"",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@"
+          }
+        }
+      }
+    },
+    "%@: %lld%% of the %@ and %lld%% of the %@ are free." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$lld%% da %3$@ e %4$lld%% da %5$@ estão livres."
+          }
+        }
+      }
+    },
+    "%@: %lld%% of this week's pool resets unused %@" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$lld%% da cota desta semana expira sem uso %3$@"
+          }
+        }
+      }
+    },
+    "%lld accounts can't be read right now" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld account can't be read right now"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld accounts can't be read right now"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld conta não pode ser lida agora"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld contas não podem ser lidas agora"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld h" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld h"
+          }
+        }
+      }
+    },
+    "%lld h %lld min" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld h %2$lld min"
+          }
+        }
+      }
+    },
+    "%lld h ago" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "há %lld h"
+          }
+        }
+      }
+    },
+    "%lld min" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld min"
+          }
+        }
+      }
+    },
+    "%lld min ago" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "há %lld min"
+          }
+        }
+      }
+    },
+    "%lld min–%lld h" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld min–%2$lld h"
+          }
+        }
+      }
+    },
+    "%lld of %lld accounts at their weekly limit" : {
+      "comment" : "The verb agrees with the first number in Portuguese: \"1 de 4 contas está\", \"2 de 4 contas estão\"",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@limited@ no limite semanal"
+          },
+          "substitutions" : {
+            "limited" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg de %2$lld contas está"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg de %2$lld contas estão"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld of %lld accounts ready" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld de %2$lld contas prontas"
+          }
+        }
+      }
+    },
+    "%lld of %lld at weekly limit" : {
+      "comment" : "Under the 5-hour meter, 124 pt wide",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld de %2$lld no limite semanal"
+          }
+        }
+      }
+    },
+    "%lld percent free" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld por cento livre"
+          }
+        }
+      }
+    },
+    "%lld percent free, %lld percent coming back" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld por cento livre, %2$lld por cento voltando"
+          }
+        }
+      }
+    },
+    "%lld s ago" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "há %lld s"
+          }
+        }
+      }
+    },
+    "%lld%% of the weekly pool is free." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld%% da cota semanal está livre."
+          }
+        }
+      }
+    },
+    "%lldd" : {
+      "comment" : "Menu bar refill time in days: 2d",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lldd"
+          }
+        }
+      }
+    },
+    "%lldd %lldh" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lldd %2$lldh"
+          }
+        }
+      }
+    },
+    "%lldh" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lldh"
+          }
+        }
+      }
+    },
+    "%lldh %lldm" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lldh %2$lldmin"
+          }
+        }
+      }
+    },
+    "%lldm" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lldmin"
+          }
+        }
+      }
+    },
+    "%lld–%lld h" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld–%2$lld h"
+          }
+        }
+      }
+    },
+    "%lld–%lld min" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld–%2$lld min"
+          }
+        }
+      }
+    },
+    "2,048 requests a week (CodexBar's Kimi notes)." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2.048 solicitações por semana (notas do CodexBar sobre o Kimi)."
+          }
+        }
+      }
+    },
+    "5-Hour" : {
+      "comment" : "Settings → Limit",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "5 Horas"
+          }
+        }
+      }
+    },
+    "5-hour" : {
+      "comment" : "The short window's title, in the panel and spoken by VoiceOver",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "5 horas"
+          }
+        }
+      }
+    },
+    "5-hour pool" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "cota de 5 horas"
+          }
+        }
+      }
+    },
+    "7,168 requests a week (CodexBar's Kimi notes)." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "7.168 solicitações por semana (notas do CodexBar sobre o Kimi)."
+          }
+        }
+      }
+    },
+    "About %@ left" : {
+      "comment" : "Under the 5-hour meter, 124 pt wide",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restam ~%@"
+          }
+        }
+      }
+    },
+    "About %@ left at this pace" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerca de %@ restantes neste ritmo"
+          }
+        }
+      }
+    },
+    "Any plan" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qualquer plano"
+          }
+        }
+      }
+    },
+    "As of %@" : {
+      "comment" : "How old the numbers are: \"As of 3 min ago\"",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizado %@"
+          }
+        }
+      }
+    },
+    "Bars" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Barras"
+          }
+        }
+      }
+    },
+    "Base plan." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plano base."
+          }
+        }
+      }
+    },
+    "Base plan: 1,024 requests a week (CodexBar's Kimi notes)." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plano base: 1.024 solicitações por semana (notas do CodexBar sobre o Kimi)."
+          }
+        }
+      }
+    },
+    "Based on %@ of activity" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Com base em %@ de atividade"
+          }
+        }
+      }
+    },
+    "Based on the last %lld days" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Com base nos últimos %lld dias"
+          }
+        }
+      }
+    },
+    "Based on the last day" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Com base no último dia"
+          }
+        }
+      }
+    },
+    "Both" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ambos"
+          }
+        }
+      }
+    },
+    "CLIProxyAPI is still holding %lld accounts in cooldown." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "CLIProxyAPI is still holding %lld account in cooldown."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "CLIProxyAPI is still holding %lld accounts in cooldown."
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "O CLIProxyAPI ainda mantém %lld conta em espera."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "O CLIProxyAPI ainda mantém %lld contas em espera."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Credits: %@" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Créditos: %@"
+          }
+        }
+      }
+    },
+    "Credits: unlimited" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Créditos: ilimitados"
+          }
+        }
+      }
+    },
+    "Daily" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diário"
+          }
+        }
+      }
+    },
+    "Default" : {
+      "comment" : "Menu bar style",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Padrão"
+          }
+        }
+      }
+    },
+    "Ebb, no reading" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ebb, sem leitura"
+          }
+        }
+      }
+    },
+    "Enter the proxy's address, such as https://proxy.example.com:8317." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digite o endereço do proxy, como https://proxy.example.com:8317."
+          }
+        }
+      }
+    },
+    "Estimate from CLIProxyPoolWidget's defaults; OpenAI publishes no multiplier." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estimativa a partir dos padrões do CLIProxyPoolWidget; a OpenAI não publica multiplicador."
+          }
+        }
+      }
+    },
+    "Extra usage on" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uso extra ativado"
+          }
+        }
+      }
+    },
+    "Extra usage on, near its limit" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uso extra ativado, perto do limite"
+          }
+        }
+      }
+    },
+    "Guess: OpenAI gives Free no number." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palpite: a OpenAI não dá número ao Free."
+          }
+        }
+      }
+    },
+    "Guess: OpenAI gives Go no number." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palpite: a OpenAI não dá número ao Go."
+          }
+        }
+      }
+    },
+    "Guess: Pro 200's weight scaled by price." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palpite: peso do Pro 200 ajustado pelo preço."
+          }
+        }
+      }
+    },
+    "Guess: counted like the base plan." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palpite: contado como o plano base."
+          }
+        }
+      }
+    },
+    "Guess: free tier, no published quota." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palpite: nível gratuito, sem cota publicada."
+          }
+        }
+      }
+    },
+    "Guess: the provider reports no plan sizes, so every login counts the same." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palpite: o provedor não informa o tamanho dos planos, então cada login conta igual."
+          }
+        }
+      }
+    },
+    "Guess: twice Allegretto." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palpite: o dobro do Allegretto."
+          }
+        }
+      }
+    },
+    "Icon only" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Só ícone"
+          }
+        }
+      }
+    },
+    "Its only account is at its weekly limit" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A única conta está no limite semanal"
+          }
+        }
+      }
+    },
+    "Last read %@ ago." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Última leitura há %@."
+          }
+        }
+      }
+    },
+    "Lasts through the next %lld hours at this pace" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dura pelas próximas %lld horas neste ritmo"
+          }
+        }
+      }
+    },
+    "Lasts until reset at this pace" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dura até a renovação neste ritmo"
+          }
+        }
+      }
+    },
+    "Leave the user name and password out of the address; the management key is the credential." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deixe o nome de usuário e a senha fora do endereço; a chave de gestão é a credencial."
+          }
+        }
+      }
+    },
+    "Next refill: +%lld%% of the %@ at %@." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próxima renovação: +%1$lld%% da %2$@ às %3$@."
+          }
+        }
+      }
+    },
+    "Next refill: +%lld%% of the %@ on %@." : {
+      "comment" : "Weekday and time",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próxima renovação: +%1$lld%% da %2$@ em %3$@."
+          }
+        }
+      }
+    },
+    "No recent reading." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem leitura recente."
+          }
+        }
+      }
+    },
+    "Now ×%@ for a %@ login whose week resets in %@." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agora ×%1$@ para um login %2$@ cuja semana renova em %3$@."
+          }
+        }
+      }
+    },
+    "Number only" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Só número"
+          }
+        }
+      }
+    },
+    "OpenAI's Codex pricing page gives this plan Plus's per-seat limits." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A página de preços do Codex da OpenAI dá a este plano os limites por usuário do Plus."
+          }
+        }
+      }
+    },
+    "Other plans" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outros planos"
+          }
+        }
+      }
+    },
+    "Refill time" : {
+      "comment" : "Menu bar style; its tile is about 100 pt wide",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renovação"
+          }
+        }
+      }
+    },
+    "Reported on %@. Sessions may fail or slow down until it clears." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Informado em %@. As sessões podem falhar ou ficar lentas até ser resolvido."
+          }
+        }
+      }
+    },
+    "Ring" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anel"
+          }
+        }
+      }
+    },
+    "Runs out around %@ at this pace" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acaba por volta de %@ neste ritmo"
+          }
+        }
+      }
+    },
+    "Runs out ~%@" : {
+      "comment" : "Under the weekly meter, 124 pt wide",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acaba ~%@"
+          }
+        }
+      }
+    },
+    "Stacked" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empilhado"
+          }
+        }
+      }
+    },
+    "The address needs a host name." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O endereço precisa de um nome de host."
+          }
+        }
+      }
+    },
+    "The tier name carries the multiplier." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O nome do nível traz o multiplicador."
+          }
+        }
+      }
+    },
+    "Tighter of the Two" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Mais Restrito"
+          }
+        }
+      }
+    },
+    "Under 10 min" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menos de 10 min"
+          }
+        }
+      }
+    },
+    "Under 10 min left" : {
+      "comment" : "Under the 5-hour meter, 124 pt wide",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restam < 10 min"
+          }
+        }
+      }
+    },
+    "Under 10 min left at this pace" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menos de 10 min restantes neste ritmo"
+          }
+        }
+      }
+    },
+    "Use https: over plain http the management key would cross the internet in the clear." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use https: por http simples, a chave de gestão cruzaria a internet sem criptografia."
+          }
+        }
+      }
+    },
+    "Weekly" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semanal"
+          }
+        }
+      }
+    },
+    "Work started before then can still use it." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trabalho iniciado antes disso ainda pode usá-la."
+          }
+        }
+      }
+    },
+    "daily" : {
+      "comment" : "Spoken by VoiceOver for Devin's day-long window",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "diário"
+          }
+        }
+      }
+    },
+    "daily pool" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "cota diária"
+          }
+        }
+      }
+    },
+    "degraded performance" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "desempenho degradado"
+          }
+        }
+      }
+    },
+    "its status page" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sua página de status"
+          }
+        }
+      }
+    },
+    "major outage" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "interrupção total"
+          }
+        }
+      }
+    },
+    "more in %@" : {
+      "comment" : "VoiceOver: when an empty window refills",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mais em %@"
+          }
+        }
+      }
+    },
+    "no reading" : {
+      "comment" : "VoiceOver: an account's window without a bar",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sem leitura"
+          }
+        }
+      }
+    },
+    "no share" : {
+      "comment" : "VoiceOver: the proxy sends this account no share of new threads yet",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sem parcela"
+          }
+        }
+      }
+    },
+    "no weekly limit" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sem limite semanal"
+          }
+        }
+      }
+    },
+    "not updated recently" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sem atualização recente"
+          }
+        }
+      }
+    },
+    "operational" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "operacional"
+          }
+        }
+      }
+    },
+    "partial outage" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "interrupção parcial"
+          }
+        }
+      }
+    },
+    "share %lld percent" : {
+      "comment" : "VoiceOver: the share of new threads the proxy sends to this account",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "parcela de %lld por cento"
+          }
+        }
+      }
+    },
+    "today %@" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hoje %@"
+          }
+        }
+      }
+    },
+    "tomorrow %@" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "amanhã %@"
+          }
+        }
+      }
+    },
+    "under maintenance" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "em manutenção"
+          }
+        }
+      }
+    },
+    "weekly" : {
+      "comment" : "Spoken by VoiceOver",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "semanal"
+          }
+        }
+      }
+    },
+    "weekly pool" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "cota semanal"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

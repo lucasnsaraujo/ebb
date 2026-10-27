@@ -72,7 +72,7 @@ private func postUpdateAvailable(version: String) async {
     let center = UNUserNotificationCenter.current()
     guard await center.notificationSettings().authorizationStatus == .authorized else { return }
     let content = UNMutableNotificationContent()
-    content.title = "Ebb \(version) is available"
-    content.body = "Click to see what's new and install it."
+    content.title = String(localized: "Ebb \(version) is available")
+    content.body = String(localized: "Click to see what's new and install it.")
     try? await center.add(UNNotificationRequest(identifier: updateNotificationID, content: content, trigger: nil))
 }

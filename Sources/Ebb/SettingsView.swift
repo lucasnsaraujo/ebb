@@ -100,11 +100,15 @@ struct GeneralSettings: View {
             } header: {
                 Text("Notifications")
             } footer: {
-                Text(areAlertsBlocked && (sendsAlerts || sendsIncidentAlerts)
-                    ? "Notifications for Ebb are off in System Settings → Notifications."
-                    : "Pool alerts: when a 5-hour pool is about to run out at the current pace, when weekly capacity comes back, and once per weekly reset when a meaningful share is about to reset unused. Provider incidents: when Claude's or OpenAI's status page reports a problem with what your pools run on.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Group {
+                    if areAlertsBlocked && (sendsAlerts || sendsIncidentAlerts) {
+                        Text("Notifications for Ebb are off in System Settings → Notifications.")
+                    } else {
+                        Text("Pool alerts: when a 5-hour pool is about to run out at the current pace, when weekly capacity comes back, and once per weekly reset when a meaningful share is about to reset unused. Provider incidents: when Claude's or OpenAI's status page reports a problem with what your pools run on.")
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
             Section("Startup") {
                 Toggle("Launch at login", isOn: $launchesAtLogin)
@@ -162,13 +166,13 @@ private struct CommandLineToolSection: View {
                 if let failure {
                     Text(failure).foregroundStyle(.red)
                 } else {
-                    Text(link.map { "Installed at \(abbreviated($0.path))" } ?? "Not installed")
+                    Text(link.map { String(localized: "Installed at \(abbreviated($0.path))") } ?? String(localized: "Not installed"))
                         .textSelection(.enabled)
                 }
             }
             HStack {
                 Spacer()
-                Button(link == nil ? "Install Command Line Tool" : "Reinstall Command Line Tool", action: install)
+                Button(link == nil ? String(localized: "Install Command Line Tool") : String(localized: "Reinstall Command Line Tool"), action: install)
                     .disabled(!isBundled)
             }
         } header: {
@@ -181,9 +185,9 @@ private struct CommandLineToolSection: View {
     }
 
     private var footer: String {
-        var text = "Prints the pools in Terminal and in Claude Code's status line, from numbers Ebb already has. Installs into /usr/local/bin if you can write to it, otherwise ~/.local/bin, so no admin password is needed."
+        var text = String(localized: "Prints the pools in Terminal and in Claude Code's status line, from numbers Ebb already has. Installs into /usr/local/bin if you can write to it, otherwise ~/.local/bin, so no admin password is needed.")
         if let link, link.deletingLastPathComponent().path.hasSuffix("/.local/bin") {
-            text += " If your shell can't find ebb, add ~/.local/bin to your PATH."
+            text += " " + String(localized: "If your shell can't find ebb, add ~/.local/bin to your PATH.")
         }
         return text
     }
@@ -193,11 +197,11 @@ private struct CommandLineToolSection: View {
             link = try Self.installer.install()
             failure = nil
         } catch CommandLineTool.InstallError.occupied(let url) {
-            failure = "\(abbreviated(url.path)) is another program"
+            failure = String(localized: "\(abbreviated(url.path)) is another program")
         } catch CommandLineTool.InstallError.noWritableFolder {
-            failure = "No folder on your PATH Ebb can write to"
+            failure = String(localized: "No folder on your PATH Ebb can write to")
         } catch {
-            failure = "Couldn't install: \(error.localizedDescription)"
+            failure = String(localized: "Couldn't install: \(error.localizedDescription)")
         }
     }
 }
@@ -237,7 +241,7 @@ private struct WatchedAppsList: View {
         panel.allowedContentTypes = [.application]
         panel.directoryURL = URL(fileURLWithPath: "/Applications")
         panel.allowsMultipleSelection = true
-        panel.prompt = "Add"
+        panel.prompt = String(localized: "Add")
         guard panel.runModal() == .OK else { return }
         let added = panel.urls.compactMap { Bundle(url: $0)?.bundleIdentifier }
         visibility.setWatchedApps(visibility.watchedApps + added.filter { !visibility.watchedApps.contains($0) })
@@ -290,15 +294,15 @@ struct ConnectionSettings: View {
 
     var body: some View {
         Form {
-            Section("CLIProxyAPI") {
+            Section {
                 LabeledContent("Config file") {
-                    Text(connection.configFile.map { abbreviated($0.path) } ?? "Not found; using defaults")
+                    Text(connection.configFile.map { abbreviated($0.path) } ?? String(localized: "Not found; using defaults"))
                         .textSelection(.enabled)
                         .foregroundStyle(connection.configFile == nil ? .secondary : .primary)
                 }
                 LabeledContent("Address", value: connection.baseURL.absoluteString)
                 LabeledContent("Logins folder") {
-                    Text(connection.localAuthDirectory.map { abbreviated($0.path) } ?? "Not read: the proxy is on another machine")
+                    Text(connection.localAuthDirectory.map { abbreviated($0.path) } ?? String(localized: "Not read: the proxy is on another machine"))
                         .foregroundStyle(connection.isRemote ? .secondary : .primary)
                 }
                 HStack {
@@ -308,9 +312,11 @@ struct ConnectionSettings: View {
                     }
                     Button("Choose Config…", action: chooseConfig)
                 }
+            } header: {
+                Text(verbatim: "CLIProxyAPI")
             }
             Section {
-                TextField("Management URL", text: $draftURL, prompt: Text("https://proxy.example.com:8317"))
+                TextField("Management URL", text: $draftURL, prompt: Text(verbatim: "https://proxy.example.com:8317"))
                     .onSubmit(useURL)
                 if let urlNote {
                     switch urlNote {
@@ -394,7 +400,7 @@ struct ConnectionSettings: View {
     private func chooseConfig() {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.yaml, .data]
-        panel.prompt = "Use"
+        panel.prompt = String(localized: "Use")
         guard panel.runModal() == .OK, let url = panel.url else { return }
         useConfig(url.path)
     }
@@ -422,11 +428,11 @@ private struct KeyStatus: View {
 
     private var text: String {
         switch state {
-        case .missing: "Not set"
-        case .checking: "Checking…"
-        case .valid: "Connected"
-        case .rejected: "Rejected by the proxy"
-        case .unreachable: "Proxy not reachable"
+        case .missing: String(localized: "Not set")
+        case .checking: String(localized: "Checking…")
+        case .valid: String(localized: "Connected")
+        case .rejected: String(localized: "Rejected by the proxy")
+        case .unreachable: String(localized: "Proxy not reachable")
         }
     }
 
@@ -466,7 +472,7 @@ struct RoutingSettingsPane: View {
                 }
             }
             Section("Proxy Routing") {
-                LabeledContent("Strategy", value: connection.routingStrategy ?? "Unknown")
+                LabeledContent("Strategy", value: connection.routingStrategy ?? String(localized: "Unknown"))
                 if !connection.hasManagementAccess {
                     Text("Needs the management key.")
                         .foregroundStyle(.secondary)
@@ -505,13 +511,13 @@ private struct PlanWeightSettings: View {
                 Section(ProviderDisplay.title(provider)) {
                     ForEach(PlanWeights.defaults[provider] ?? []) { row in
                         LabeledContent {
-                            TextField(row.title, value: weight(provider, row), format: .number.precision(.fractionLength(0...2)))
+                            TextField(row.localizedTitle, value: weight(provider, row), format: .number.precision(.fractionLength(0...2)))
                                 .labelsHidden()
                                 .multilineTextAlignment(.trailing)
                                 .frame(width: 56)
                         } label: {
-                            Text(row.title)
-                            Text(row.source)
+                            Text(row.localizedTitle)
+                            Text(row.localizedSource)
                         }
                     }
                 }
@@ -554,9 +560,9 @@ private struct AboutSettings: View {
             Section {
                 LabeledContent("Version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev")
                 LabeledContent("Source") {
-                    Link("github.com/lucasnsaraujo/ebb", destination: Self.repository)
+                    Link(destination: Self.repository) { Text(verbatim: "github.com/lucasnsaraujo/ebb") }
                 }
-                LabeledContent("License", value: "MIT")
+                LabeledContent("License") { Text(verbatim: "MIT") }
             } footer: {
                 Text("Ebb is not affiliated with Anthropic, OpenAI, Cognition, Google, Moonshot AI or Meta. Provider names and logos are trademarks of their owners.")
                     .font(.caption)

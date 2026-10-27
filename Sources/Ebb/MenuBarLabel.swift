@@ -24,6 +24,12 @@ struct MenuBarLabel: View {
                     now = .now
                 }
             }
+            // Increase Contrast changes the item's greys; the system announces the switch, and the item redraws.
+            .task {
+                for await _ in NSWorkspace.shared.notificationCenter.notifications(named: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification) {
+                    now = .now
+                }
+            }
     }
 }
 

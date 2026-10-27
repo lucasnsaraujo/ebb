@@ -3,15 +3,18 @@ import PackageDescription
 
 let package = Package(
     name: "Ebb",
+    defaultLocalization: "en",
     platforms: [.macOS(.v26)],
     dependencies: [
         .package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.10.1"),
     ],
     targets: [
-        .target(name: "EbbCore"),
+        // Each target's String Catalog compiles into its resource bundle; build.sh puts both in the app.
+        .target(name: "EbbCore", resources: [.process("Resources")]),
         .executableTarget(
             name: "Ebb",
             dependencies: ["EbbCore", .product(name: "Sparkle", package: "Sparkle")],
+            resources: [.process("Resources")],
             // build.sh copies Sparkle.framework into Contents/Frameworks.
             linkerSettings: [.unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])]
         ),

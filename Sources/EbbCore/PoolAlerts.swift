@@ -132,7 +132,7 @@ public struct AlertTracker: Codable, Sendable, Equatable {
     /// `uptime` is time since boot including sleep, to tell a changed clock from a sleep.
     public mutating func alerts(
         pool: String, title: String, short: ShortWindow, summary: PoolSummary, forecast: PoolForecast?,
-        accounts: [PoolAccount], now: Date, uptime: TimeInterval
+        accounts: [PoolAccount], now: Date, uptime: TimeInterval, locale: Locale = .autoupdatingCurrent
     ) -> [PoolAlert] {
         var alerts: [PoolAlert] = []
         if let free = runOutFree[pool], summary.session.freePercent >= free + DemandLedger.bigDrop {
@@ -146,8 +146,10 @@ public struct AlertTracker: Codable, Sendable, Equatable {
                 runOutFree[pool] = summary.session.freePercent
                 alerts.append(PoolAlert(
                     id: "runout.\(pool).\(Int(now.timeIntervalSince1970))",
-                    title: "\(title) \(short == .day ? "daily" : "5-hour") pool about to run out",
-                    body: PaceText.sentence(forecast, window: .session, short: short, now: now) + "."
+                    title: short == .day
+                        ? Localization.text("\(title) daily pool about to run out", locale: locale)
+                        : Localization.text("\(title) 5-hour pool about to run out", locale: locale),
+                    body: PaceText.sentence(forecast, window: .session, short: short, now: now, locale: locale) + "."
                 ))
             }
         case .lasts:
@@ -166,8 +168,8 @@ public struct AlertTracker: Codable, Sendable, Equatable {
         if Double(points) >= Self.minimumWeeklyReturn {
             alerts.append(PoolAlert(
                 id: "weekly.\(pool).\(Int(now.timeIntervalSince1970))",
-                title: "\(title) weekly back +\(points)%",
-                body: "\(Int(summary.weekly.freePercent.rounded()))% of the weekly pool is free."
+                title: Localization.text("\(title) weekly back +\(points)%", locale: locale),
+                body: Localization.text("\(Int(summary.weekly.freePercent.rounded()))% of the weekly pool is free.", locale: locale)
             ))
         }
         return alerts

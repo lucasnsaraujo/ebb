@@ -11,24 +11,24 @@ public enum ManagementURL {
 
     /// `https` is always fine. Plain `http` only on loopback, RFC 1918, link-local and unique-local
     /// addresses or `.local` names, where the traffic stays on the user's own network.
-    public static func validate(_ text: String) -> Verdict {
+    public static func validate(_ text: String, locale: Locale = .autoupdatingCurrent) -> Verdict {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, var components = URLComponents(string: trimmed),
               let scheme = components.scheme?.lowercased(), ["http", "https"].contains(scheme)
-        else { return .refused("Enter the proxy's address, such as https://proxy.example.com:8317.") }
-        guard let host = components.host, !host.isEmpty else { return .refused("The address needs a host name.") }
+        else { return .refused(Localization.text("Enter the proxy's address, such as https://proxy.example.com:8317.", locale: locale)) }
+        guard let host = components.host, !host.isEmpty else { return .refused(Localization.text("The address needs a host name.", locale: locale)) }
         // The key is the credential; a user name or password here would only end up on screen in Settings.
         guard components.user == nil, components.password == nil else {
-            return .refused("Leave the user name and password out of the address; the management key is the credential.")
+            return .refused(Localization.text("Leave the user name and password out of the address; the management key is the credential.", locale: locale))
         }
         components.scheme = scheme
         components.query = nil
         components.fragment = nil
         components.path = base(of: components.path)
-        guard let url = components.url else { return .refused("The address needs a host name.") }
+        guard let url = components.url else { return .refused(Localization.text("The address needs a host name.", locale: locale)) }
         if scheme == "https" { return .ok(url) }
         guard isPrivate(host: host) else {
-            return .refused("Use https: over plain http the management key would cross the internet in the clear.")
+            return .refused(Localization.text("Use https: over plain http the management key would cross the internet in the clear.", locale: locale))
         }
         return .unencrypted(url)
     }

@@ -45,7 +45,7 @@ import Testing
     @Test func eachKindReadsAsOneShortLine() {
         #expect(ExtraUsage.claudeOverage(isNearLimit: false).text == "Extra usage on")
         #expect(ExtraUsage.claudeOverage(isNearLimit: true).text == "Extra usage on, near its limit")
-        #expect(ExtraUsage.codexCredits(balance: 12.5).text == "Credits: 12.5")
+        #expect(ExtraUsage.codexCredits(balance: 12.5).text(locale: Locale(identifier: "en_US")) == "Credits: 12.5")
         #expect(ExtraUsage.codexUnlimitedCredits.text == "Credits: unlimited")
     }
 

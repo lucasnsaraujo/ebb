@@ -18,7 +18,7 @@ public struct ExpiryNudge: Codable, Sendable, Equatable {
 
     public mutating func alerts(
         pool: String, title: String, accounts: [PoolAccount], totalWeight: Double,
-        forecast: Pace.Forecast?, now: Date, timeZone: TimeZone = .current
+        forecast: Pace.Forecast?, now: Date, timeZone: TimeZone = .current, locale: Locale = .autoupdatingCurrent
     ) -> [PoolAlert] {
         nudged = nudged.filter { $0.value > now - Self.sameCycle }
         guard totalWeight > 0 else { return [] }
@@ -43,21 +43,21 @@ public struct ExpiryNudge: Codable, Sendable, Equatable {
         let points = Int(unused.rounded())
         return [PoolAlert(
             id: "expiry.\(pool).\(Int(lastReset.timeIntervalSince1970))",
-            title: "\(title): \(points)% of this week's pool resets unused \(Self.moment(lastReset, now: now, timeZone: timeZone))",
-            body: "Work started before then can still use it."
+            title: Localization.text("\(title): \(points)% of this week's pool resets unused \(Self.moment(lastReset, now: now, timeZone: timeZone, locale: locale))", locale: locale),
+            body: Localization.text("Work started before then can still use it.", locale: locale)
         )]
     }
 
-    /// "today 22:00", "tomorrow 22:00", or a weekday when a day-long window spans two midnights.
-    static func moment(_ date: Date, now: Date, timeZone: TimeZone) -> String {
+    /// "today 10:00 PM", "tomorrow 10:00 PM", or a weekday when a day-long window spans two midnights,
+    /// with the clock as the locale writes it.
+    static func moment(_ date: Date, now: Date, timeZone: TimeZone, locale: Locale = .autoupdatingCurrent) -> String {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = timeZone
-        let style = { (format: Date.FormatString) in
-            date.formatted(Date.VerbatimFormatStyle(format: format, locale: Locale(identifier: "en_US_POSIX"), timeZone: timeZone, calendar: calendar))
+        let time = ClockText.time(date, locale: locale, timeZone: timeZone)
+        if calendar.isDate(date, inSameDayAs: now) { return Localization.text("today \(time)", locale: locale) }
+        if let tomorrow = calendar.date(byAdding: .day, value: 1, to: now), calendar.isDate(date, inSameDayAs: tomorrow) {
+            return Localization.text("tomorrow \(time)", locale: locale)
         }
-        let time = style("\(hour: .twoDigits(clock: .twentyFourHour, hourCycle: .zeroBased)):\(minute: .twoDigits)")
-        if calendar.isDate(date, inSameDayAs: now) { return "today \(time)" }
-        if let tomorrow = calendar.date(byAdding: .day, value: 1, to: now), calendar.isDate(date, inSameDayAs: tomorrow) { return "tomorrow \(time)" }
-        return "\(style("\(weekday: .abbreviated)")) \(time)"
+        return ClockText.weekdayAndTime(date, locale: locale, timeZone: timeZone)
     }
 }

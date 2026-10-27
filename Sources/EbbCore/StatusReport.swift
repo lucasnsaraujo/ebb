@@ -1,8 +1,11 @@
 import Foundation
 
 /// What the `ebb` command prints from the app's saved status. Numbers are worked out at `now`:
-/// resets that landed since the app wrote the file count as free.
+/// resets that landed since the app wrote the file count as free. Always English: scripts and
+/// Claude Code's status line parse it.
 public enum StatusReport {
+    private static let english = Locale(identifier: "en")
+
     /// "5h 88% · W 45%" for the menu bar's pool, or `provider`'s; old numbers add their age.
     public static func statusline(_ status: PoolStatus?, provider: String?, now: Date) -> String {
         guard let status, !status.providers.isEmpty else { return "Ebb: no data" }
@@ -11,31 +14,32 @@ public enum StatusReport {
         let weekly = WindowReading(window: .weekly, percent: whole(pool.weekly.free(at: now)), refillsAt: nil)
         var parts = [session, weekly].map { "\($0.label) \($0.percent)%" }
         if pool.isStale(at: now) {
-            parts.append(pool.readAt.map { "\(RefillText.until(now, now: $0)) old" } ?? "stale")
+            parts.append(pool.readAt.map { "\(RefillText.until(now, now: $0, locale: english)) old" } ?? "stale")
         }
         return parts.joined(separator: " · ")
     }
 
     /// Each pool's two windows and the capacity that comes back next. Never lists accounts.
-    public static func text(_ status: PoolStatus, now: Date, timeZone: TimeZone = .current) -> String {
+    /// The words stay English; the clock follows the user's locale and 12/24-hour setting.
+    public static func text(_ status: PoolStatus, now: Date, timeZone: TimeZone = .current, locale: Locale = .autoupdatingCurrent) -> String {
         var lines: [String] = []
         for pool in status.providers {
             var heading = pool.title
             if pool.id == status.menuBarProvider { heading += " (menu bar)" }
             if pool.isStale(at: now) {
-                heading += pool.readAt.map { " (last read \(RefillText.until(now, now: $0)) ago)" } ?? " (no recent reading)"
+                heading += pool.readAt.map { " (last read \(RefillText.until(now, now: $0, locale: english)) ago)" } ?? " (no recent reading)"
             }
             if pool.isPartial { heading += " (partial: some accounts can't be read, so they're left out)" }
             lines.append(heading)
-            for (title, window) in [(pool.shortWindow.title, pool.session), ("Weekly", pool.weekly)] {
+            for (title, window) in [(pool.shortWindow.title(locale: english), pool.session), ("Weekly", pool.weekly)] {
                 var line = "  " + title.padding(toLength: 6, withPad: " ", startingAt: 0) + "  \(whole(window.free(at: now)))% free"
                 if let refill = window.nextRefill(at: now) {
-                    line += "  +\(whole(refill.gain))% \(moment(refill.date, now: now, timeZone: timeZone))"
+                    line += "  +\(whole(refill.gain))% \(moment(refill.date, now: now, timeZone: timeZone, locale: locale))"
                 }
                 lines.append(line)
             }
         }
-        var updated = "Updated \(RefillText.until(now, now: status.updatedAt)) ago."
+        var updated = "Updated \(RefillText.until(now, now: status.updatedAt, locale: english)) ago."
         if status.isStale(at: now) { updated += " Ebb may have quit, or its menu bar item is hidden." }
         lines.append(updated)
         return lines.joined(separator: "\n")
@@ -60,7 +64,7 @@ public enum StatusReport {
                     "is_partial": pool.isPartial,
                     "read_at": pool.readAt?.formatted(.iso8601) ?? NSNull(),
                     "is_stale": pool.isStale(at: now),
-                    "short_window": window(pool.shortWindow.jsonKind, pool.shortWindow.title, pool.session),
+                    "short_window": window(pool.shortWindow.jsonKind, pool.shortWindow.title(locale: english), pool.session),
                     "weekly": window("weekly", "Weekly", pool.weekly),
                 ]
             },
@@ -68,15 +72,12 @@ public enum StatusReport {
         return (try? JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes])) ?? Data()
     }
 
-    /// "at 20:05" later the same day, else "Tue 22:00".
-    static func moment(_ date: Date, now: Date, timeZone: TimeZone) -> String {
+    /// "at 8:05 PM" later the same day, else "Tue 10:00 PM", with the clock as the locale writes it.
+    static func moment(_ date: Date, now: Date, timeZone: TimeZone, locale: Locale = .autoupdatingCurrent) -> String {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = timeZone
-        let isToday = calendar.isDate(date, inSameDayAs: now)
-        let format: Date.FormatString = isToday
-            ? "at \(hour: .twoDigits(clock: .twentyFourHour, hourCycle: .zeroBased)):\(minute: .twoDigits)"
-            : "\(weekday: .abbreviated) \(hour: .twoDigits(clock: .twentyFourHour, hourCycle: .zeroBased)):\(minute: .twoDigits)"
-        return date.formatted(Date.VerbatimFormatStyle(format: format, locale: Locale(identifier: "en_US_POSIX"), timeZone: timeZone, calendar: calendar))
+        if calendar.isDate(date, inSameDayAs: now) { return "at \(ClockText.time(date, locale: locale, timeZone: timeZone))" }
+        return ClockText.weekdayAndTime(date, locale: locale, timeZone: timeZone)
     }
 
     static func whole(_ percent: Double) -> Int {

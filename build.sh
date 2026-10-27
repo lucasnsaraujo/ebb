@@ -39,6 +39,13 @@ else
     echo "actool not found; using Resources/Ebb.icns"
     cp Resources/Ebb.icns "$stage/Contents/Resources/Ebb.icns"
 fi
+# String Catalogs: SwiftPM compiles each target's into a resource bundle. The app's own strings go
+# into Resources as .lproj folders, where SwiftUI, App Intents and Shortcuts look them up in the main
+# bundle; EbbCore's bundle is copied whole, since that's where Bundle.module looks for it.
+for lproj in "$bin_path"/Ebb_Ebb.bundle/Contents/Resources/*.lproj(N); do
+    cp -R "$lproj" "$stage/Contents/Resources/"
+done
+ditto "$bin_path/Ebb_EbbCore.bundle" "$stage/Contents/Resources/Ebb_EbbCore.bundle"
 # Shortcuts and Spotlight find the App Intents through metadata Xcode extracts at build time;
 # SwiftPM doesn't, so run the same extractor on the compiler's constant values.
 const_values="$(mktemp)"
@@ -65,6 +72,8 @@ cat > "$stage/Contents/Info.plist" <<PLIST
 <dict>
     <key>CFBundleIdentifier</key>
     <string>io.github.lucasnsaraujo.ebb</string>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
     <key>CFBundleName</key>
     <string>$app_name</string>
     <key>CFBundleDisplayName</key>

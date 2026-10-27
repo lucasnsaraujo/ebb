@@ -20,8 +20,8 @@ public enum StuckCooldown {
         return Pool.effectiveFree(usage.limits, at: now) >= 1
     }
 
-    public static func line(count: Int) -> String {
-        "CLIProxyAPI is still holding \(count) \(count == 1 ? "account" : "accounts") in cooldown."
+    public static func line(count: Int, locale: Locale = .autoupdatingCurrent) -> String {
+        Localization.text("CLIProxyAPI is still holding \(count) accounts in cooldown.", locale: locale)
     }
 
     /// One line for the user to paste with their key in `MANAGEMENT_KEY`, which it never contains.

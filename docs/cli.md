@@ -25,6 +25,8 @@ Codex
 Updated 1m ago.
 ```
 
+The words are always English; the clock follows your Mac's language and 12- or 24-hour setting, so the same refill reads `at 8:05 PM` on a US English Mac. `--json` always writes ISO 8601.
+
 `ebb statusline` prints one line, such as `5h 88% · W 45%`. When the pool's newest reading is more than 10 minutes old, the same rule that dims the menu bar item, it adds the age: `5h 88% · W 45% · 25m old`, or `· stale` when there's no reading at all (the proxy isn't answering). Readings go old when the proxy stops answering, when Ebb quits, or when its menu bar item is hidden.
 
 Both work the numbers out at the moment you run them, so a reset that landed after Ebb saved the file already counts as free.

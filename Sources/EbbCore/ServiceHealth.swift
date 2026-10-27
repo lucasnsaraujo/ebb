@@ -19,19 +19,19 @@ public enum ServiceHealth: Int, Sendable, Equatable, Comparable, Codable {
         lhs.rawValue < rhs.rawValue
     }
 
-    var words: String {
+    func words(locale: Locale) -> String {
         switch self {
-        case .operational: "operational"
-        case .underMaintenance: "under maintenance"
-        case .degradedPerformance: "degraded performance"
-        case .partialOutage: "partial outage"
-        case .majorOutage: "major outage"
+        case .operational: Localization.text("operational", locale: locale)
+        case .underMaintenance: Localization.text("under maintenance", locale: locale)
+        case .degradedPerformance: Localization.text("degraded performance", locale: locale)
+        case .partialOutage: Localization.text("partial outage", locale: locale)
+        case .majorOutage: Localization.text("major outage", locale: locale)
         }
     }
 
     /// "Claude: degraded performance", or `nil` while all is well.
-    public func line(title: String) -> String? {
-        self == .operational ? nil : "\(title): \(words)"
+    public func line(title: String, locale: Locale = .autoupdatingCurrent) -> String? {
+        self == .operational ? nil : Localization.text("\(title): \(words(locale: locale))", locale: locale)
     }
 }
 
@@ -106,16 +106,19 @@ public struct IncidentTracker: Codable, Sendable, Equatable {
 
     public init() {}
 
-    public mutating func alerts(provider: String, title: String, health: ServiceHealth, now: Date) -> [PoolAlert] {
+    public mutating func alerts(provider: String, title: String, health: ServiceHealth, now: Date, locale: Locale = .autoupdatingCurrent) -> [PoolAlert] {
         if let last = lastProblemAt[provider], now.timeIntervalSince(last) >= Self.recoveryQuiet {
             announced[provider] = nil
             lastProblemAt[provider] = nil
         }
         guard health > .underMaintenance else { return [] }
         lastProblemAt[provider] = now
-        guard health > announced[provider] ?? .underMaintenance, let line = health.line(title: title) else { return [] }
+        guard health > announced[provider] ?? .underMaintenance, let line = health.line(title: title, locale: locale) else { return [] }
         announced[provider] = health
-        let host = StatusPage.forProvider(provider)?.pageURL.host() ?? "its status page"
-        return [PoolAlert(id: "incident.\(provider).\(health.rawValue)", title: line, body: "Reported on \(host). Sessions may fail or slow down until it clears.")]
+        let host = StatusPage.forProvider(provider)?.pageURL.host() ?? Localization.text("its status page", locale: locale)
+        return [PoolAlert(
+            id: "incident.\(provider).\(health.rawValue)", title: line,
+            body: Localization.text("Reported on \(host). Sessions may fail or slow down until it clears.", locale: locale)
+        )]
     }
 }

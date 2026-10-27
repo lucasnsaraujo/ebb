@@ -67,6 +67,7 @@ private let pools = PoolStatus(
 }
 
 @Suite struct StatusTextTests {
+    private let english = Locale(identifier: "en_US")
     private let utc = TimeZone(identifier: "UTC")!
 
     @Test func listsEveryPoolWithBothWindowsAndTheNextRefill() {
@@ -74,10 +75,10 @@ private let pools = PoolStatus(
         var status = pools
         status.providers[0].weekly.resets = [weekly]
         status.providers[2].isPartial = true
-        #expect(StatusReport.text(status, now: at(1), timeZone: utc) == """
+        #expect(StatusReport.text(status, now: at(1), timeZone: utc, locale: english) == """
         Claude
-          5-hour  88% free  +12% at 20:05
-          Weekly  45% free  +30% Tue 22:00
+          5-hour  88% free  +12% at 8:05\u{202F}PM
+          Weekly  45% free  +30% Tue 10:00\u{202F}PM
         Codex (menu bar)
           5-hour  15% free
           Weekly  63% free
@@ -89,16 +90,16 @@ private let pools = PoolStatus(
     }
 
     @Test func oldNumbersSayWhyTheyMayBeOutOfDate() {
-        let text = StatusReport.text(pools, now: at(130), timeZone: utc)
+        let text = StatusReport.text(pools, now: at(130), timeZone: utc, locale: english)
         #expect(text.hasPrefix("Claude (last read 2h 10m ago)\n"))
         #expect(text.hasSuffix("Updated 2h 10m ago. Ebb may have quit, or its menu bar item is hidden."))
     }
 
     @Test func aRefillOnAnotherDayNamesTheDay() {
         let late = UsageLimit.parseTimestamp("2026-10-26T23:50:00+00:00")!
-        #expect(StatusReport.moment(late, now: now, timeZone: utc) == "at 23:50")
+        #expect(StatusReport.moment(late, now: now, timeZone: utc, locale: english) == "at 11:50\u{202F}PM")
         let tomorrow = UsageLimit.parseTimestamp("2026-10-27T18:00:00+00:00")!
-        #expect(StatusReport.moment(tomorrow, now: now, timeZone: utc) == "Tue 18:00")
+        #expect(StatusReport.moment(tomorrow, now: now, timeZone: utc, locale: english) == "Tue 6:00\u{202F}PM")
     }
 }
 

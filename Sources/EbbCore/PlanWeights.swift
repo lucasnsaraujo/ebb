@@ -12,6 +12,11 @@ public struct PlanDefault: Sendable, Equatable, Identifiable {
     public var isGuess: Bool
 
     public var id: String { plan }
+
+    /// `title` and `source` as Settings shows them; the English above is the catalog key.
+    /// Plan names the provider coined, like "Max 5x", have no entry and read as they are.
+    public var localizedTitle: String { Localization.text(String.LocalizationValue(title)) }
+    public var localizedSource: String { Localization.text(String.LocalizationValue(source)) }
 }
 
 /// Every default plan weight, in one place. Weights only ever compare plans of the same

@@ -49,12 +49,13 @@ struct PoolPanel: View {
         VStack(alignment: .leading, spacing: 0) {
             header
                 .padding(.bottom, 12)
+            // With Reduce Motion the swap between the two cross-fades without the height easing along.
             if let setup {
                 ProxySetupView(setup: setup, connection: connection, store: store)
-                    .transition(.opacity)
+                    .transition(reduceMotion ? .opacity.animation(.easeInOut(duration: 0.2)) : .opacity)
             } else {
                 pool
-                    .transition(.opacity)
+                    .transition(reduceMotion ? .opacity.animation(.easeInOut(duration: 0.2)) : .opacity)
             }
             Divider()
                 .padding(.top, 10)
@@ -67,7 +68,7 @@ struct PoolPanel: View {
         .frame(width: 300)
         // The menu bar window sizes itself to this; without it, expanding clips the content.
         .fixedSize(horizontal: false, vertical: true)
-        .animation(reduceMotion ? .easeInOut(duration: 0.2) : .smooth(duration: 0.35), value: setup == nil)
+        .animation(reduceMotion ? nil : .smooth(duration: 0.35), value: setup == nil)
         // Setup just ended, by a key or by skipping it: read at once rather than at the next poll.
         .onChange(of: setup == nil) { _, isDone in
             if isDone { store.refreshNow() }
@@ -115,7 +116,8 @@ struct PoolPanel: View {
                     proxyURL: connection.baseURL
                 )
                     .padding(.top, 4)
-                    .transition(.opacity)
+                    // With Reduce Motion the panel's height snaps and only the rows cross-fade.
+                    .transition(reduceMotion ? .opacity.animation(.easeInOut(duration: 0.2)) : .opacity)
             }
         }
     }
@@ -142,7 +144,7 @@ struct PoolPanel: View {
             HStack(spacing: 6) {
                 EbbMark()
                     .frame(width: 14, height: 14)
-                Text("Ebb")
+                Text(verbatim: "Ebb")
                     .font(.headline)
             }
             .accessibilityElement(children: .combine)
@@ -175,10 +177,10 @@ struct PoolPanel: View {
 
     private var noReading: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("–")
+            Text(verbatim: "–")
                 .font(.system(size: 34, weight: .semibold, design: .rounded))
                 .foregroundStyle(.tertiary)
-            Text(hasOnlyRefusedTokens ? "Limits not available for these logins." : "No account could be read yet.")
+            Text(hasOnlyRefusedTokens ? String(localized: "Limits not available for these logins.") : String(localized: "No account could be read yet."))
                 .font(.callout)
                 .foregroundStyle(.secondary)
         }
@@ -190,7 +192,8 @@ struct PoolPanel: View {
                 store.refreshNow()
             } label: {
                 Image(systemName: "arrow.clockwise")
-                    .symbolEffect(.rotate.byLayer, options: .repeat(.continuous), isActive: store.isRefreshing)
+                    .symbolEffect(.rotate.byLayer, options: .repeat(.continuous), isActive: store.isRefreshing && !reduceMotion)
+                    .symbolEffect(.pulse, options: .repeat(.continuous), isActive: store.isRefreshing && reduceMotion)
                     .frame(width: 22, height: 22)
                     .contentShape(.rect)
             }
@@ -269,10 +272,10 @@ private struct ProxyDownNotice: View {
                         openSettings()
                     }
                 case .start:
-                    Button(connection.startState == .starting ? "Starting…" : "Start", action: start)
+                    Button(connection.startState == .starting ? String(localized: "Starting…") : String(localized: "Start"), action: start)
                         .disabled(connection.startState == .starting)
                 case let .command(command):
-                    Button(didCopy ? "Copied" : "Copy") { copy(command) }
+                    Button(didCopy ? String(localized: "Copied") : String(localized: "Copy")) { copy(command) }
                 case .none, .remoteUnreachable:
                     EmptyView()
                 }
@@ -280,7 +283,7 @@ private struct ProxyDownNotice: View {
             .buttonStyle(.bordered)
             .controlSize(.small)
             if case let .command(command) = advice {
-                Text(command)
+                Text(verbatim: command)
                     .font(.caption.monospaced())
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
@@ -297,9 +300,9 @@ private struct ProxyDownNotice: View {
 
     private func title(_ advice: ProxyOutage.Advice) -> String {
         switch advice {
-        case .keyRefused: "The proxy refused the management key"
-        case let .remoteUnreachable(host): "Can't reach the proxy at \(host)"
-        case .start, .command, .none: "CLIProxyAPI isn't running"
+        case .keyRefused: String(localized: "The proxy refused the management key")
+        case let .remoteUnreachable(host): String(localized: "Can't reach the proxy at \(host)")
+        case .start, .command, .none: String(localized: "CLIProxyAPI isn't running")
         }
     }
 
@@ -322,9 +325,10 @@ enum Motion {
     static let stagger = 0.03
     static let reveal = Animation.spring(response: 0.35, dampingFraction: 0.85)
 
-    /// Springs open, closes quicker; a plain cross-fade with Reduce Motion.
-    static func disclosure(expanding: Bool, reduceMotion: Bool) -> Animation {
-        if reduceMotion { return .easeInOut(duration: 0.2) }
+    /// Springs open, closes quicker. With Reduce Motion nothing moves: the height snaps, and the
+    /// rows bring their own cross-fade.
+    static func disclosure(expanding: Bool, reduceMotion: Bool) -> Animation? {
+        if reduceMotion { return nil }
         return expanding ? reveal : .smooth(duration: 0.2)
     }
 }
@@ -374,30 +378,38 @@ private struct WindowColumn: View {
     let now: Date
     var inlineNote: String?
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         let level = PoolLevel(freePercent)
         VStack(alignment: .leading, spacing: 0) {
-            Text(window.title(short))
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(.secondary)
-            HStack(alignment: .firstTextBaseline, spacing: 3) {
-                Text("\(level.percent)%")
-                    .font(.system(size: 34, weight: .semibold, design: .rounded))
-                    .monospacedDigit()
-                    .contentTransition(.numericText(value: Double(level.percent)))
-                    .foregroundStyle(level.warningTint ?? .primary)
-                Text("free")
-                    .font(.callout)
+            // One element for the title, the number and the meter, so VoiceOver reads the share once.
+            VStack(alignment: .leading, spacing: 0) {
+                Text(window.title(short))
+                    .font(.subheadline.weight(.medium))
                     .foregroundStyle(.secondary)
+                HStack(alignment: .firstTextBaseline, spacing: 3) {
+                    Text(verbatim: "\(level.percent)%")
+                        .font(.system(size: 34, weight: .semibold, design: .rounded))
+                        .monospacedDigit()
+                        .contentTransition(reduceMotion ? .identity : .numericText(value: Double(level.percent)))
+                        .foregroundStyle(level.warningTint ?? .primary)
+                    Text("free")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+                Meter(free: freePercent, comingBack: Double(line?.points ?? 0), tint: level.warningTint ?? .primary)
+                    .frame(height: 6)
+                    .padding(.top, 5)
             }
-            Meter(free: freePercent, comingBack: Double(line?.points ?? 0), tint: level.warningTint ?? .primary)
-                .frame(height: 6)
-                .padding(.top, 5)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(window.title(short))
+            .accessibilityValue(AccessibilityText.meter(freePercent: level.percent, comingBackPercent: line?.points ?? 0))
             GainLabel(window: window, short: short, line: line, forecast: forecast, notes: notes, now: now, inlineNote: inlineNote)
                 .padding(.top, 7)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .animation(.smooth, value: level.percent)
+        .animation(reduceMotion ? nil : .smooth, value: level.percent)
     }
 }
 
@@ -407,22 +419,24 @@ private struct Meter: View {
     let comingBack: Double
     let tint: Color
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorSchemeContrast) private var contrast
+
     var body: some View {
         Capsule()
-            .fill(.quaternary)
+            .fill(contrast.track)
             .overlay(alignment: .leading) {
                 GeometryReader { geometry in
                     let width = geometry.size.width
                     let freeWidth = width * min(max(free, 0), 100) / 100
                     HStack(spacing: 0) {
                         Rectangle().fill(tint).frame(width: freeWidth)
-                        Rectangle().fill(tint.opacity(0.28)).frame(width: min(width * comingBack / 100, width - freeWidth))
+                        Rectangle().fill(tint.opacity(contrast == .increased ? 0.5 : 0.28)).frame(width: min(width * comingBack / 100, width - freeWidth))
                     }
                 }
             }
             .clipShape(.capsule)
-            .animation(.smooth, value: free)
-            .accessibilityHidden(true)
+            .animation(reduceMotion ? nil : .smooth, value: free)
     }
 }
 
@@ -473,7 +487,11 @@ private struct GainLabel: View {
                 .onAppear {
                     if LaunchOptions.demo == .hover, window == .session { openSoon() }
                 }
-                .accessibilityHint(accessibilitySummary)
+                // The hover card's content, without hovering: read as the value, or opened by name.
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(text)
+                .accessibilityValue(details)
+                .accessibilityAction(named: showsBreakdown ? Text("Hide Details") : Text("Show Details")) { showsBreakdown.toggle() }
         } else {
             // Keeps both columns the same height.
             Text(verbatim: " ").font(.callout).hidden()
@@ -482,15 +500,23 @@ private struct GainLabel: View {
 
     private func text(for line: GainLine) -> String {
         switch window {
-        case .session: "+\(line.points)% \(line.lastDate.map { TimeText.span(until: $0, now: now) } ?? "")"
-        case .weekly: "+\(line.points)% · \(line.lastDate.map { TimeText.later($0, now: now) } ?? "")"
+        case .session: String(localized: "+\(line.points)% \(line.lastDate.map { TimeText.span(until: $0, now: now) } ?? "")")
+        case .weekly: String(localized: "+\(line.points)% · \(line.lastDate.map { TimeText.later($0, now: now) } ?? "")")
         }
     }
 
-    private var accessibilitySummary: String {
-        let resets = line.map { ($0.items + $0.later).map { "+\($0.points)% \(TimeText.later($0.date, now: now))" } } ?? []
-        let pace = forecast.map { [PaceText.sentence($0, window: window, short: short, now: now)] } ?? []
-        return (resets + pace).joined(separator: ", ")
+    /// Everything the card says, in its order: the resets, the pace and its basis, the notes.
+    private var details: String {
+        var lines: [String] = []
+        if let line {
+            lines.append(String(localized: "\(window.title(short)) resets"))
+            lines += (line.items + line.later).map { "+\($0.points)% \(window == .session ? TimeText.soon($0.date, now: now) : TimeText.later($0.date, now: now))" }
+        }
+        if let forecast {
+            lines.append(PaceText.sentence(forecast, window: window, short: short, now: now))
+            lines.append(PaceText.basis(forecast, window: window))
+        }
+        return (lines + notes).joined(separator: ", ")
     }
 
     private func hover(_ hovering: Bool) {
@@ -531,13 +557,14 @@ struct GainBreakdown: View {
                     .padding(.bottom, 1)
                 ForEach(line.items + line.later, id: \.date) { item in
                     HStack(spacing: 18) {
-                        Text("+\(item.points)%")
+                        Text(verbatim: "+\(item.points)%")
                             .fontWeight(.medium)
                         Spacer(minLength: 0)
                         Text(window == .session ? TimeText.soon(item.date, now: now) : TimeText.later(item.date, now: now))
                             .foregroundStyle(.secondary)
                     }
                     .monospacedDigit()
+                    .accessibilityElement(children: .combine)
                 }
             }
             if let forecast {
@@ -600,7 +627,7 @@ private struct AccountsDisclosure: View {
         .padding(.horizontal, -6)
         .onHover { isHovering = $0 }
         .animation(.easeOut(duration: 0.12), value: isHovering)
-        .accessibilityLabel(isExpanded ? "Hide accounts" : "Show accounts")
+        .accessibilityLabel(isExpanded ? String(localized: "Hide accounts") : String(localized: "Show accounts"))
     }
 }
 
@@ -622,6 +649,8 @@ private struct AccountsSection: View {
     let proxyReadAt: Date?
     let usageAPIReadAt: Date?
     let proxyURL: URL
+
+    @Environment(\.colorSchemeContrast) private var contrast
 
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
@@ -645,7 +674,7 @@ private struct AccountsSection: View {
                 Text(freshness(now: context.date))
                     .font(.caption)
                     .monospacedDigit()
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(contrast.faint)
             }
             .padding(.top, 2)
             .cascadeIn(index: details.count + healthOnly.count + 1)
@@ -664,7 +693,7 @@ private struct AccountsSection: View {
             if !healthOnly.isEmpty {
                 Text("Health only")
                     .font(.caption.weight(.medium))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(contrast.faint)
                     .padding(.top, details.isEmpty ? 0 : 3)
                     .help("These providers report no usage windows, so they never count toward a pool.")
                     .cascadeIn(index: details.count + 1)
@@ -678,21 +707,22 @@ private struct AccountsSection: View {
     private var columnHeader: some View {
         HStack(spacing: AccountColumns.spacing) {
             Spacer()
-            Text(short.abbreviation).frame(width: AccountColumns.meter)
+            Text(verbatim: short.abbreviation).frame(width: AccountColumns.meter)
             Text("Week").frame(width: AccountColumns.meter)
             Text("Share")
                 .frame(width: AccountColumns.share, alignment: .trailing)
                 .help("Share of new threads the proxy sends to each account")
         }
         .font(.caption.weight(.medium))
-        .foregroundStyle(.tertiary)
+        .foregroundStyle(contrast.faint)
     }
 
     private func freshness(now: Date) -> String {
-        if isOffline { return "Offline · cached readings only" }
-        let proxy = proxyReadAt.map { "From proxy · \(TimeText.ago($0, now: now))" } ?? (hasManagementKey ? "No proxy reading" : "No management access")
+        if isOffline { return String(localized: "Offline · cached readings only") }
+        let proxy = proxyReadAt.map { String(localized: "From proxy · \(TimeText.ago($0, now: now))") }
+            ?? (hasManagementKey ? String(localized: "No proxy reading") : String(localized: "No management access"))
         guard let usageAPIReadAt else { return proxy }
-        return "\(proxy) · Usage API · \(TimeText.ago(usageAPIReadAt, now: now))"
+        return String(localized: "\(proxy) · Usage API · \(TimeText.ago(usageAPIReadAt, now: now))")
     }
 }
 
@@ -728,13 +758,14 @@ private struct IncidentLine: View {
     let page: URL
 
     var body: some View {
+        let host = page.host() ?? String(localized: "the status page")
         Link(destination: page) {
             Label(text, systemImage: "exclamationmark.triangle.fill")
                 .labelStyle(IncidentLabelStyle())
         }
         .font(.caption)
         .foregroundStyle(.secondary)
-        .help("Open \(page.host() ?? "the status page")")
+        .help("Open \(host)")
     }
 }
 
@@ -752,6 +783,8 @@ private struct AccountRow: View {
     let short: ShortWindow
     let showsProvider: Bool
     let index: Int
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         HStack(spacing: AccountColumns.spacing) {
@@ -775,7 +808,7 @@ private struct AccountRow: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .help(([detail.email, detail.extraUsage?.text] + (detail.isStuckInCooldown ? ["Still held in cooldown by CLIProxyAPI, though its quota is back"] : [])).compactMap { $0 }.joined(separator: "\n"))
+            .help(hoverLines.joined(separator: "\n"))
             if let note {
                 Text(note)
                     .font(.caption)
@@ -785,33 +818,51 @@ private struct AccountRow: View {
             } else {
                 MiniMeter(free: detail.sessionFree, window: .session, short: short, isUncapped: false, index: index)
                 MiniMeter(free: detail.weeklyFree, window: .weekly, short: short, isUncapped: detail.hasNoWeeklyCap, index: index)
-                Text(detail.share.map { "\(Int($0.rounded()))%" } ?? "—")
+                Text(verbatim: detail.share.map { "\(Int($0.rounded()))%" } ?? "—")
                     .monospacedDigit()
-                    .contentTransition(.numericText())
+                    .contentTransition(reduceMotion ? .identity : .numericText())
                     .foregroundStyle(detail.share == nil ? .tertiary : .secondary)
                     .frame(width: AccountColumns.share, alignment: .trailing)
             }
         }
         .font(.callout)
         .opacity(detail.status == .active || detail.status == .health(.ok) ? 1 : 0.6)
-        .animation(.smooth, value: detail)
+        .animation(reduceMotion ? nil : .smooth, value: detail)
         .cascadeIn(index: index)
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(rowLabel)
+        .accessibilityValue(hoverLines.joined(separator: ", "))
+    }
+
+    private var hoverLines: [String] {
+        [detail.email, detail.extraUsage?.text, detail.isStuckInCooldown ? String(localized: "Still held in cooldown by CLIProxyAPI, though its quota is back") : nil]
+            .compactMap { $0 }
     }
 
     /// Text in place of the meters: for logins whose windows can't be read, or that have none.
     private var note: String? {
         switch detail.status {
-        case .limitsUnavailable: "Limits not available"
+        case .limitsUnavailable: String(localized: "Limits not available")
         case let .health(state):
             switch state {
             case .ok: ProviderDisplay.title(detail.provider)
-            case let .coolingDown(until): until.map { "Retry \(TimeText.later($0, now: .now))" } ?? "Cooling down"
-            case .failing: "Failing"
-            case .disabled: "Disabled"
+            case let .coolingDown(until): until.map { String(localized: "Retry \(TimeText.later($0, now: .now))") } ?? String(localized: "Cooling down")
+            case .failing: String(localized: "Failing")
+            case .disabled: String(localized: "Disabled")
             }
         default: nil
         }
+    }
+
+    /// Name, plan, status, both windows and share, as one VoiceOver element; the hover lines are its value.
+    private var rowLabel: String {
+        let status = StatusDot.description(status: detail.status, readAt: detail.readAt, message: detail.healthMessage)
+        if let note { return [detail.label, detail.planBadge, status, note].compactMap { $0 }.joined(separator: ", ") }
+        return AccessibilityText.accountRow(
+            name: detail.label, plan: detail.planBadge, status: status, short: short,
+            sessionFree: detail.sessionFree.map { PoolLevel($0).percent }, weeklyFree: detail.weeklyFree.map { PoolLevel($0).percent },
+            hasNoWeeklyCap: detail.hasNoWeeklyCap, share: detail.share.map { Int($0.rounded()) }
+        )
     }
 }
 
@@ -821,6 +872,7 @@ private struct StatusDot: View {
     var message: String?
 
     var body: some View {
+        let description = Self.description(status: status, readAt: readAt, message: message)
         Group {
             switch status {
             case .active: Circle().fill(.green)
@@ -838,16 +890,16 @@ private struct StatusDot: View {
         .accessibilityLabel(description)
     }
 
-    private var description: String {
+    static func description(status: AccountDetail.Status, readAt: Date?, message: String?) -> String {
         switch status {
-        case .active: "Counted in the pool"
-        case .stale: readAt.map { "Last read \(TimeText.ago($0, now: .now)); counted as last seen" } ?? "Not read yet"
-        case .retired: "Retired by Ebb: its plan isn't active"
-        case .disabledByUser, .health(.disabled): "Disabled in the proxy"
-        case .limitsUnavailable: "The provider refused the proxy's token for its usage, so this login is left out of the pool"
-        case .health(.ok): "Working; this provider reports no usage windows"
-        case .health(.coolingDown): message.map { "Held back by the proxy: \($0)" } ?? "Held back by the proxy"
-        case .health(.failing): message.map { "Failing: \($0)" } ?? "Failing"
+        case .active: String(localized: "Counted in the pool")
+        case .stale: readAt.map { String(localized: "Last read \(TimeText.ago($0, now: .now)); counted as last seen") } ?? String(localized: "Not read yet")
+        case .retired: String(localized: "Retired by Ebb: its plan isn't active")
+        case .disabledByUser, .health(.disabled): String(localized: "Disabled in the proxy")
+        case .limitsUnavailable: String(localized: "The provider refused the proxy's token for its usage, so this login is left out of the pool")
+        case .health(.ok): String(localized: "Working; this provider reports no usage windows")
+        case .health(.coolingDown): message.map { String(localized: "Held back by the proxy: \($0)") } ?? String(localized: "Held back by the proxy")
+        case .health(.failing): message.map { String(localized: "Failing: \($0)") } ?? String(localized: "Failing")
         }
     }
 }
@@ -863,32 +915,33 @@ private struct MiniMeter: View {
 
     @State private var isRevealed = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorSchemeContrast) private var contrast
 
     var body: some View {
         Group {
             if let free {
                 let level = PoolLevel(free)
                 Capsule()
-                    .fill(.quaternary)
+                    .fill(contrast.track)
                     .overlay(alignment: .leading) {
                         GeometryReader { geometry in
                             Capsule()
-                                .fill(level.warningTint ?? .primary.opacity(0.75))
+                                .fill(level.warningTint ?? .primary.opacity(contrast == .increased ? 1 : 0.75))
                                 .frame(width: geometry.size.width * (isRevealed ? min(max(free, 0), 100) / 100 : 0))
                         }
                     }
                     .frame(height: 4)
-                    .help("\(window.title(short)): \(level.percent)% free")
-                    .animation(.smooth, value: free)
+                    .help(String(localized: "\(window.title(short)): \(level.percent)% free"))
+                    .animation(reduceMotion ? nil : .smooth, value: free)
             } else if isUncapped {
-                Text("∞")
+                Text(verbatim: "∞")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .help("No weekly limit")
             } else {
-                Text("—")
+                Text(verbatim: "—")
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(contrast.faint)
                     .help("No reading")
             }
         }
@@ -925,4 +978,11 @@ private extension View {
     func cascadeIn(index: Int) -> some View {
         modifier(CascadeIn(index: index))
     }
+}
+
+extension ColorSchemeContrast {
+    /// Tertiary text and quaternary tracks read at the standard contrast; someone who asked
+    /// for more gets them a step stronger.
+    var faint: HierarchicalShapeStyle { self == .increased ? .secondary : .tertiary }
+    var track: HierarchicalShapeStyle { self == .increased ? .tertiary : .quaternary }
 }

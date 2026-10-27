@@ -9,9 +9,9 @@ enum DisplayMode: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .always: "Always"
-        case .apps: "While Chosen Apps Are Running"
-        case .off: "Never"
+        case .always: String(localized: "Always")
+        case .apps: String(localized: "While Chosen Apps Are Running")
+        case .off: String(localized: "Never")
         }
     }
 }

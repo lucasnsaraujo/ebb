@@ -280,9 +280,9 @@ public struct UrgentLogin: Sendable, Equatable {
     }
 
     /// "Now ×1.7 for a Codex login whose week resets in 13h."
-    public func explanation(now: Date) -> String {
-        let factorText = factor.formatted(.number.precision(.fractionLength(1)).locale(Locale(identifier: "en_US_POSIX")))
-        let left = weeklyResetsAt.map { RefillText.until($0, now: now) } ?? "?"
-        return "Now ×\(factorText) for a \(provider) login whose week resets in \(left)."
+    public func explanation(now: Date, locale: Locale = .autoupdatingCurrent) -> String {
+        let factorText = factor.formatted(.number.precision(.fractionLength(1)).locale(locale))
+        let left = weeklyResetsAt.map { RefillText.until($0, now: now, locale: locale) } ?? "?"
+        return Localization.text("Now ×\(factorText) for a \(provider) login whose week resets in \(left).", locale: locale)
     }
 }

@@ -57,7 +57,7 @@ final class ProxyConnection {
         self.diagnostics = diagnostics
         discover()
         // Checked again on every launch: a value written behind Settings' back gets no exception.
-        switch UserDefaults.standard.string(forKey: Self.managementURLKey).map(ManagementURL.validate) {
+        switch UserDefaults.standard.string(forKey: Self.managementURLKey).map({ ManagementURL.validate($0) }) {
         case let .ok(url), let .unencrypted(url): managementURL = url
         case .refused:
             UserDefaults.standard.removeObject(forKey: Self.managementURLKey)

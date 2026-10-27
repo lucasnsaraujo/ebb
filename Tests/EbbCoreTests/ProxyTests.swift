@@ -199,7 +199,7 @@ private func listing() throws -> [ProxyAuthFile] {
 
     @Test func namesTheMostUrgentLoginsBoostAndTimeLeft() {
         let urgent = UrgentLogin(provider: "Codex", freePercent: 50, factor: 1.73, weeklyResetsAt: now.addingTimeInterval(13 * 3600))
-        #expect(urgent.explanation(now: now) == "Now ×1.7 for a Codex login whose week resets in 13h.")
+        #expect(urgent.explanation(now: now, locale: Locale(identifier: "en_US")) == "Now ×1.7 for a Codex login whose week resets in 13h.")
     }
 
     @Test func picksTheStrongestBoostAmongLoginsWithRoomLeft() {

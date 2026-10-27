@@ -1,0 +1,1953 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%@ Five wrong keys lock this Mac out for 30 minutes." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Cinco chaves erradas bloqueiam este Mac por 30 minutos."
+          }
+        }
+      }
+    },
+    "%@ is another program" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ é outro programa"
+          }
+        }
+      }
+    },
+    "%@ resets" : {
+      "comment" : "Hover card heading: \"5-hour resets\", \"Weekly resets\"",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renovações: %@"
+          }
+        }
+      }
+    },
+    "%@ · Usage API · %@" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · API de uso · %2$@"
+          }
+        }
+      }
+    },
+    "%@: %lld%% %@, %lld%% weekly" : {
+      "comment" : "Shortcuts: provider, short window free, short window name, weekly free",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$lld%% %3$@, %4$lld%% semanal"
+          }
+        }
+      }
+    },
+    "%@: %lld%% free" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$lld%% livre"
+          }
+        }
+      }
+    },
+    "%lld h ago" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "há %lld h"
+          }
+        }
+      }
+    },
+    "%lld min ago" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "há %lld min"
+          }
+        }
+      }
+    },
+    "%lld s ago" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "há %lld s"
+          }
+        }
+      }
+    },
+    "+%lld%% %@" : {
+      "comment" : "Under the 5-hour meter: \"+5% in next 4 h\"",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+%1$lld%% %2$@"
+          }
+        }
+      }
+    },
+    "+%lld%% · %@" : {
+      "comment" : "Under the weekly meter: \"+54% · Tue 22:00\"",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+%1$lld%% · %2$@"
+          }
+        }
+      }
+    },
+    "About" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sobre"
+          }
+        }
+      }
+    },
+    "Accounts" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contas"
+          }
+        }
+      }
+    },
+    "Add" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar"
+          }
+        }
+      }
+    },
+    "Add App" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar App"
+          }
+        }
+      }
+    },
+    "Address" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Endereço"
+          }
+        }
+      }
+    },
+    "Always" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sempre"
+          }
+        }
+      }
+    },
+    "Balance new sessions by remaining capacity" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Equilibrar novas sessões pela capacidade restante"
+          }
+        }
+      }
+    },
+    "CLIProxyAPI is running" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O CLIProxyAPI está em execução"
+          }
+        }
+      }
+    },
+    "CLIProxyAPI isn't running" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O CLIProxyAPI não está em execução"
+          }
+        }
+      }
+    },
+    "CLIProxyAPI refused this key." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O CLIProxyAPI recusou esta chave."
+          }
+        }
+      }
+    },
+    "CLIProxyAPI's management API is off. Set a secret-key under management in its config file." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A API de gestão do CLIProxyAPI está desativada. Defina uma secret-key em management no arquivo de configuração."
+          }
+        }
+      }
+    },
+    "Can't reach the proxy at %@" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível acessar o proxy em %@"
+          }
+        }
+      }
+    },
+    "Check for Updates…" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar Atualizações…"
+          }
+        }
+      }
+    },
+    "Check for updates automatically" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar atualizações automaticamente"
+          }
+        }
+      }
+    },
+    "Checking" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verificando"
+          }
+        }
+      }
+    },
+    "Checking…" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verificando…"
+          }
+        }
+      }
+    },
+    "Choose Config…" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolher Configuração…"
+          }
+        }
+      }
+    },
+    "Click to see what's new and install it." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clique para ver as novidades e instalar."
+          }
+        }
+      }
+    },
+    "Command Line Tool" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ferramenta de Linha de Comando"
+          }
+        }
+      }
+    },
+    "Config file" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arquivo de configuração"
+          }
+        }
+      }
+    },
+    "Connect" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conectar"
+          }
+        }
+      }
+    },
+    "Connected" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conectado"
+          }
+        }
+      }
+    },
+    "Connection" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conexão"
+          }
+        }
+      }
+    },
+    "Continue Without a Key" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuar Sem Chave"
+          }
+        }
+      }
+    },
+    "Cooling down" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Em espera"
+          }
+        }
+      }
+    },
+    "Copied" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiado"
+          }
+        }
+      }
+    },
+    "Copies the curl command for CLIProxyAPI's reset-quota call. Set MANAGEMENT_KEY to your management key before running it." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copia o comando curl da chamada reset-quota do CLIProxyAPI. Defina MANAGEMENT_KEY com sua chave de gestão antes de executá-lo."
+          }
+        }
+      }
+    },
+    "Copy" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar"
+          }
+        }
+      }
+    },
+    "Copy Diagnostics" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar Diagnóstico"
+          }
+        }
+      }
+    },
+    "Copy Fix" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar Correção"
+          }
+        }
+      }
+    },
+    "Couldn't install: %@" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível instalar: %@"
+          }
+        }
+      }
+    },
+    "Couldn't start: %@" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível iniciar: %@"
+          }
+        }
+      }
+    },
+    "Counted in the pool" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contada na cota"
+          }
+        }
+      }
+    },
+    "Disabled" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativada"
+          }
+        }
+      }
+    },
+    "Disabled in the proxy" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativada no proxy"
+          }
+        }
+      }
+    },
+    "Done" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Concluído"
+          }
+        }
+      }
+    },
+    "Ebb %@ is available" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ebb %@ disponível"
+          }
+        }
+      }
+    },
+    "Ebb has no %@ pool." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Ebb não tem cota do %@."
+          }
+        }
+      }
+    },
+    "Ebb has no numbers yet. They appear once its menu bar item has shown for a moment." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Ebb ainda não tem números. Eles aparecem assim que o item na barra de menus for exibido por um momento."
+          }
+        }
+      }
+    },
+    "Ebb is not affiliated with Anthropic, OpenAI, Cognition, Google, Moonshot AI or Meta. Provider names and logos are trademarks of their owners." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Ebb não é afiliado à Anthropic, OpenAI, Cognition, Google, Moonshot AI ou Meta. Nomes e logotipos dos provedores são marcas de seus donos."
+          }
+        }
+      }
+    },
+    "Ebb sets each login's weight so the proxy sends new sessions where capacity is left." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Ebb define o peso de cada login para que o proxy envie novas sessões para onde ainda há capacidade."
+          }
+        }
+      }
+    },
+    "Ebb then reads only the Claude logins on this Mac, with routing and auto-retire off. You can add a key later in Settings → Connection." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Ebb então lê só os logins da Claude neste Mac, com roteamento e aposentadoria automática desativados. Você pode adicionar uma chave depois em Ajustes → Conexão."
+          }
+        }
+      }
+    },
+    "Ebb's menu bar item is hidden right now. Choose when it shows in Ebb's Settings." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O item do Ebb na barra de menus está oculto agora. Escolha quando ele aparece nos Ajustes do Ebb."
+          }
+        }
+      }
+    },
+    "Enter the management key" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digite a chave de gestão"
+          }
+        }
+      }
+    },
+    "Failing" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falhando"
+          }
+        }
+      }
+    },
+    "Failing: %@" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falhando: %@"
+          }
+        }
+      }
+    },
+    "For CLIProxyAPI on a server or homelab. Replaces the address from the config file; the management key below is sent there, and every login, Claude's included, is read from the proxy's listing. Plain http is allowed only on a private network." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para o CLIProxyAPI em um servidor ou homelab. Substitui o endereço do arquivo de configuração; a chave de gestão abaixo é enviada para lá, e todo login, inclusive da Claude, é lido da listagem do proxy. HTTP simples só é permitido em rede privada."
+          }
+        }
+      }
+    },
+    "Forget Key" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esquecer Chave"
+          }
+        }
+      }
+    },
+    "From proxy · %@" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Do proxy · %@"
+          }
+        }
+      }
+    },
+    "General" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geral"
+          }
+        }
+      }
+    },
+    "Get ${provider} pool status" : {
+      "comment" : "Shortcuts parameter summary",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obter status da cota de ${provider}"
+          }
+        }
+      }
+    },
+    "Get Pool Status" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obter Status da Cota"
+          }
+        }
+      }
+    },
+    "Health only" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Só status"
+          }
+        }
+      }
+    },
+    "Held back by the proxy" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retida pelo proxy"
+          }
+        }
+      }
+    },
+    "Held back by the proxy: %@" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retida pelo proxy: %@"
+          }
+        }
+      }
+    },
+    "Hide Details" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar Detalhes"
+          }
+        }
+      }
+    },
+    "Hide accounts" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar contas"
+          }
+        }
+      }
+    },
+    "How much of a provider's 5-hour (or daily) and weekly pools is free, and when capacity next comes back. Uses the numbers Ebb already has, without asking any provider." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quanto das cotas de 5 horas (ou diária) e semanal de um provedor está livre, e quando a capacidade volta. Usa os números que o Ebb já tem, sem consultar nenhum provedor."
+          }
+        }
+      }
+    },
+    "If your shell can't find ebb, add ~/.local/bin to your PATH." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se o shell não encontrar o ebb, adicione ~/.local/bin ao PATH."
+          }
+        }
+      }
+    },
+    "Install CLIProxyAPI" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalar o CLIProxyAPI"
+          }
+        }
+      }
+    },
+    "Install Command Line Tool" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalar Ferramenta de Linha de Comando"
+          }
+        }
+      }
+    },
+    "Installed at %@" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalada em %@"
+          }
+        }
+      }
+    },
+    "Last read %@; counted as last seen" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Última leitura %@; contada como vista por último"
+          }
+        }
+      }
+    },
+    "Launch at login" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir ao iniciar sessão"
+          }
+        }
+      }
+    },
+    "Leave empty for the pool the menu bar shows." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deixe vazio para a cota que a barra de menus mostra."
+          }
+        }
+      }
+    },
+    "License" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Licença"
+          }
+        }
+      }
+    },
+    "Limit" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limite"
+          }
+        }
+      }
+    },
+    "Limits not available" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limites indisponíveis"
+          }
+        }
+      }
+    },
+    "Limits not available for these logins." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limites indisponíveis para estes logins."
+          }
+        }
+      }
+    },
+    "Logins folder" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pasta de logins"
+          }
+        }
+      }
+    },
+    "Looking for CLIProxyAPI…" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procurando o CLIProxyAPI…"
+          }
+        }
+      }
+    },
+    "Management Key" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chave de Gestão"
+          }
+        }
+      }
+    },
+    "Management URL" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL de gestão"
+          }
+        }
+      }
+    },
+    "Management key" : {
+      "comment" : "Field label in Settings and in the setup steps, where it has about 190 pt",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chave de gestão"
+          }
+        }
+      }
+    },
+    "Menu Bar" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Barra de Menus"
+          }
+        }
+      }
+    },
+    "More" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mais"
+          }
+        }
+      }
+    },
+    "Most Pooled Capacity" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maior Capacidade Combinada"
+          }
+        }
+      }
+    },
+    "Needs the management key." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Precisa da chave de gestão."
+          }
+        }
+      }
+    },
+    "Never" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nunca"
+          }
+        }
+      }
+    },
+    "Next Refill" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próxima Renovação"
+          }
+        }
+      }
+    },
+    "Next Refill Gain (%)" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ganho da Próxima Renovação (%)"
+          }
+        }
+      }
+    },
+    "Next Refill Window" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Janela da Próxima Renovação"
+          }
+        }
+      }
+    },
+    "No account could be read yet." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhuma conta pôde ser lida ainda."
+          }
+        }
+      }
+    },
+    "No folder on your PATH Ebb can write to" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhuma pasta no PATH em que o Ebb possa gravar"
+          }
+        }
+      }
+    },
+    "No management access" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem acesso de gestão"
+          }
+        }
+      }
+    },
+    "No proxy reading" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem leitura do proxy"
+          }
+        }
+      }
+    },
+    "No reading" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem leitura"
+          }
+        }
+      }
+    },
+    "No weekly limit" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem limite semanal"
+          }
+        }
+      }
+    },
+    "Not found; using defaults" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não encontrado; usando padrões"
+          }
+        }
+      }
+    },
+    "Not installed" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não instalada"
+          }
+        }
+      }
+    },
+    "Not read yet" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ainda não lida"
+          }
+        }
+      }
+    },
+    "Not read: the proxy is on another machine" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não lida: o proxy está em outra máquina"
+          }
+        }
+      }
+    },
+    "Not set" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não definida"
+          }
+        }
+      }
+    },
+    "Notifications" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notificações"
+          }
+        }
+      }
+    },
+    "Notifications for Ebb are off in System Settings → Notifications." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As notificações do Ebb estão desativadas em Ajustes do Sistema → Notificações."
+          }
+        }
+      }
+    },
+    "Offline · cached readings only" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off-line · só leituras em cache"
+          }
+        }
+      }
+    },
+    "Once a day, Ebb asks GitHub whether a new release is out. The request names Ebb's version and nothing about your accounts." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma vez por dia, o Ebb pergunta ao GitHub se há uma nova versão. A solicitação informa a versão do Ebb e nada sobre suas contas."
+          }
+        }
+      }
+    },
+    "Open %@" : {
+      "comment" : "Help on the incident line: the status page's host",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir %@"
+          }
+        }
+      }
+    },
+    "Open Ebb" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir o Ebb"
+          }
+        }
+      }
+    },
+    "Open Proxy Panel" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir Painel do Proxy"
+          }
+        }
+      }
+    },
+    "Opens Ebb's panel from the menu bar." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abre o painel do Ebb na barra de menus."
+          }
+        }
+      }
+    },
+    "Other ways to install" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outras formas de instalar"
+          }
+        }
+      }
+    },
+    "Out of Date" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desatualizado"
+          }
+        }
+      }
+    },
+    "Pace" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ritmo"
+          }
+        }
+      }
+    },
+    "Partial" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parcial"
+          }
+        }
+      }
+    },
+    "Plan size × free share × reset urgency. Weekly capacity a login hasn't used by its reset is lost, so in the last two days before that reset its weight rises steadily, up to double. The weight changes only when it moves by more than 10%." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamanho do plano × parcela livre × urgência da renovação. A capacidade semanal que um login não usou até a renovação se perde, então nos dois últimos dias antes dela o peso sobe gradualmente, até o dobro. O peso só muda quando varia mais de 10%."
+          }
+        }
+      }
+    },
+    "Plans" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Planos"
+          }
+        }
+      }
+    },
+    "Plans appear here once Ebb reads a pool." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os planos aparecem aqui quando o Ebb lê uma cota."
+          }
+        }
+      }
+    },
+    "Pool" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cota"
+          }
+        }
+      }
+    },
+    "Pool Status" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status da Cota"
+          }
+        }
+      }
+    },
+    "Pool alerts" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alertas de cota"
+          }
+        }
+      }
+    },
+    "Pool alerts: when a 5-hour pool is about to run out at the current pace, when weekly capacity comes back, and once per weekly reset when a meaningful share is about to reset unused. Provider incidents: when Claude's or OpenAI's status page reports a problem with what your pools run on." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alertas de cota: quando uma cota de 5 horas está prestes a acabar no ritmo atual, quando a capacidade semanal volta e, uma vez por renovação semanal, quando uma parte relevante está prestes a expirar sem uso. Incidentes do provedor: quando a página de status da Claude ou da OpenAI informa um problema no que suas cotas dependem."
+          }
+        }
+      }
+    },
+    "Prints the pools in Terminal and in Claude Code's status line, from numbers Ebb already has. Installs into /usr/local/bin if you can write to it, otherwise ~/.local/bin, so no admin password is needed." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra as cotas no Terminal e na linha de status do Claude Code, a partir dos números que o Ebb já tem. Instala em /usr/local/bin se você puder gravar lá; senão em ~/.local/bin, sem precisar de senha de administrador."
+          }
+        }
+      }
+    },
+    "Provider" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Provedor"
+          }
+        }
+      }
+    },
+    "Provider incidents" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Incidentes do provedor"
+          }
+        }
+      }
+    },
+    "Proxy Routing" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Roteamento do Proxy"
+          }
+        }
+      }
+    },
+    "Proxy not reachable" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proxy inacessível"
+          }
+        }
+      }
+    },
+    "Quit Ebb" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encerrar Ebb"
+          }
+        }
+      }
+    },
+    "Refresh" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizar"
+          }
+        }
+      }
+    },
+    "Reinstall Command Line Tool" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reinstalar Ferramenta de Linha de Comando"
+          }
+        }
+      }
+    },
+    "Rejected by the proxy" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recusada pelo proxy"
+          }
+        }
+      }
+    },
+    "Remote Proxy" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proxy Remoto"
+          }
+        }
+      }
+    },
+    "Remove App" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover App"
+          }
+        }
+      }
+    },
+    "Restore Defaults" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurar Padrões"
+          }
+        }
+      }
+    },
+    "Retired by Ebb: its plan isn't active" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aposentada pelo Ebb: o plano não está ativo"
+          }
+        }
+      }
+    },
+    "Retry %@" : {
+      "comment" : "When the proxy tries a held login again: \"Retry in 3 h\"",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nova tentativa %@"
+          }
+        }
+      }
+    },
+    "Routing" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Roteamento"
+          }
+        }
+      }
+    },
+    "Runs brew services start %@, which also starts it at login." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Executa brew services start %@, que também o inicia ao iniciar sessão."
+          }
+        }
+      }
+    },
+    "Save" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salvar"
+          }
+        }
+      }
+    },
+    "Settings…" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes…"
+          }
+        }
+      }
+    },
+    "Share" : {
+      "comment" : "Column header, 34 pt wide: the share of new threads the proxy sends to each account",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parc."
+          }
+        }
+      }
+    },
+    "Share of new threads the proxy sends to each account" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parcela das novas conversas que o proxy envia a cada conta"
+          }
+        }
+      }
+    },
+    "Short Window" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Janela Curta"
+          }
+        }
+      }
+    },
+    "Short Window Free (%)" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Janela Curta Livre (%)"
+          }
+        }
+      }
+    },
+    "Show Config File" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar Arquivo de Configuração"
+          }
+        }
+      }
+    },
+    "Show Details" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar Detalhes"
+          }
+        }
+      }
+    },
+    "Show Ebb" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar Ebb"
+          }
+        }
+      }
+    },
+    "Show accounts" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar contas"
+          }
+        }
+      }
+    },
+    "Show in Menu Bar" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar na Barra de Menus"
+          }
+        }
+      }
+    },
+    "Sign in to an account" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrar em uma conta"
+          }
+        }
+      }
+    },
+    "Some accounts can't be read right now, so they're left out of these numbers." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algumas contas não podem ser lidas agora, então ficam fora destes números."
+          }
+        }
+      }
+    },
+    "Source" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código-fonte"
+          }
+        }
+      }
+    },
+    "Start" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar"
+          }
+        }
+      }
+    },
+    "Start CLIProxyAPI" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar o CLIProxyAPI"
+          }
+        }
+      }
+    },
+    "Starting…" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciando…"
+          }
+        }
+      }
+    },
+    "Startup" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicialização"
+          }
+        }
+      }
+    },
+    "Status" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
+        }
+      }
+    },
+    "Step %lld" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passo %lld"
+          }
+        }
+      }
+    },
+    "Step %lld, later" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passo %lld, depois"
+          }
+        }
+      }
+    },
+    "Still held in cooldown by CLIProxyAPI, though its quota is back" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ainda retida em espera pelo CLIProxyAPI, embora a cota tenha voltado"
+          }
+        }
+      }
+    },
+    "Strategy" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estratégia"
+          }
+        }
+      }
+    },
+    "Style" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estilo"
+          }
+        }
+      }
+    },
+    "Test" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Testar"
+          }
+        }
+      }
+    },
+    "The provider refused the proxy's token for its usage, so this login is left out of the pool" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O provedor recusou o token do proxy para o uso, então este login fica fora da cota"
+          }
+        }
+      }
+    },
+    "The proxy keeps only a hash of this key, so Ebb asks once and stores it in a file only you can read, in Ebb's Application Support folder. A .management-key file in the logins folder is picked up on its own until you forget the key. Without the key, a proxy on this Mac still has its Claude logins read from the logins folder, with routing and auto-retire off; a proxy on another machine can't be read at all." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O proxy guarda só um hash desta chave, então o Ebb pede uma vez e a salva em um arquivo que só você pode ler, na pasta Application Support do Ebb. Um arquivo .management-key na pasta de logins é usado automaticamente até você esquecer a chave. Sem a chave, um proxy neste Mac ainda tem os logins da Claude lidos da pasta de logins, com roteamento e aposentadoria automática desativados; um proxy em outra máquina não pode ser lido."
+          }
+        }
+      }
+    },
+    "The proxy refused the management key" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O proxy recusou a chave de gestão"
+          }
+        }
+      }
+    },
+    "The secret-key you set under management in CLIProxyAPI's config file." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A secret-key que você definiu em management no arquivo de configuração do CLIProxyAPI."
+          }
+        }
+      }
+    },
+    "These providers report no usage windows, so they never count toward a pool." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estes provedores não informam janelas de uso, então nunca contam para uma cota."
+          }
+        }
+      }
+    },
+    "Unknown" : {
+      "comment" : "The proxy's routing strategy, before it's read",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desconhecida"
+          }
+        }
+      }
+    },
+    "Updates" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizações"
+          }
+        }
+      }
+    },
+    "Use" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar"
+          }
+        }
+      }
+    },
+    "Use Config File" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar Arquivo de Configuração"
+          }
+        }
+      }
+    },
+    "Use Detected" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar Detectado"
+          }
+        }
+      }
+    },
+    "Use URL" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar URL"
+          }
+        }
+      }
+    },
+    "Use Weighted Round Robin" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar Round Robin Ponderado"
+          }
+        }
+      }
+    },
+    "Version" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versão"
+          }
+        }
+      }
+    },
+    "Week" : {
+      "comment" : "Column header over the weekly meters",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem."
+          }
+        }
+      }
+    },
+    "Weekly" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semanal"
+          }
+        }
+      }
+    },
+    "Weekly Free (%)" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semanal Livre (%)"
+          }
+        }
+      }
+    },
+    "Weights only take effect with weighted round robin. The proxy uses %@ now." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os pesos só valem com round robin ponderado. O proxy usa %@ agora."
+          }
+        }
+      }
+    },
+    "While Chosen Apps Are Running" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Com os Apps Escolhidos Abertos"
+          }
+        }
+      }
+    },
+    "Why This Weight" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Por Que Este Peso"
+          }
+        }
+      }
+    },
+    "Working; this provider reports no usage windows" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funcionando; este provedor não informa janelas de uso"
+          }
+        }
+      }
+    },
+    "^[%lld account](inflect: true) signed in" : {
+      "comment" : "Setup step 2 once logins exist; English inflects itself",
+      "localizations" : {
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld conta conectada"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld contas conectadas"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "free" : {
+      "comment" : "After the big number: \"88% free\"",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "livre"
+          }
+        }
+      }
+    },
+    "in %lld h" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "em %lld h"
+          }
+        }
+      }
+    },
+    "in %lld min" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "em %lld min"
+          }
+        }
+      }
+    },
+    "in next %lld h" : {
+      "comment" : "Under the 5-hour meter, 124 pt wide: \"+5% in next 4 h\"",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "em até %lld h"
+          }
+        }
+      }
+    },
+    "in next %lld min" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "em até %lld min"
+          }
+        }
+      }
+    },
+    "the status page" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "a página de status"
+          }
+        }
+      }
+    },
+    "weekly" : {
+      "comment" : "Shortcuts: the window of the next refill",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "semanal"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

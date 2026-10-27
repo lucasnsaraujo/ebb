@@ -79,6 +79,8 @@ With a management key, Ebb also disables a login in CLIProxyAPI once its provide
 
 When CLIProxyAPI still holds an account in cooldown although a fresh reading shows its quota is back, the accounts panel says so, with a Copy Fix button for the proxy's documented `reset-quota` call. Ebb never changes that state itself.
 
+Ebb is in English and Brazilian Portuguese, following the language order in System Settings; times and numbers follow your region's formats. Every control is labeled for VoiceOver, and the panel honors Reduce Motion and Increase Contrast.
+
 ## Providers
 
 | Provider | Windows | Source |

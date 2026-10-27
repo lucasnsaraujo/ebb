@@ -42,7 +42,7 @@ struct PoolReading: TransientAppEntity {
         shortWindowFree = answer.shortWindowFree
         weeklyFree = answer.weeklyFree
         nextRefill = answer.nextRefill?.date
-        nextRefillWindow = answer.nextRefill?.window
+        nextRefillWindow = answer.nextRefill.map { $0.window == .weekly ? String(localized: "weekly") : answer.shortWindowTitle }
         nextRefillGain = answer.nextRefill?.gain
         isStale = answer.isStale
         sentence = answer.sentence()
