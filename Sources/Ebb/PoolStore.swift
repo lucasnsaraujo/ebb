@@ -291,6 +291,11 @@ final class PoolStore {
         callPlanStates = [:]
         callReadings = [:]
         callPlans = [:]
+        // A login of the same name on the other proxy starts with no evidence against its plan.
+        inactiveStreaks = [:]
+        callInactiveStreaks = [:]
+        endedSubscriptions = []
+        rejectedTokens = []
         reloadAccounts()
         loadCaches()
         recompute()
