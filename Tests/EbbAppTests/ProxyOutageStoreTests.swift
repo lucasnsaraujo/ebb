@@ -80,4 +80,15 @@ import Testing
         #expect(connection.answers == true)
         #expect(proxy.managementCallCount == calls)
     }
+
+    /// Polls come every 30 s; resending a refused key would reach the proxy's five-strike lockout in two minutes.
+    @Test func theStoreSendsARefusedKeyOnceNotOnEveryPoll() async throws {
+        let proxy = FakeProxy(listing: Data(), refusesKeys: true)
+        try proxy.start()
+        let store = try makeStore(proxy: proxy)
+
+        for _ in 0..<4 { await store.readProxyOnce() }
+        #expect(store.proxyFailure == .refused)
+        #expect(proxy.managementCallCount == 1)
+    }
 }
