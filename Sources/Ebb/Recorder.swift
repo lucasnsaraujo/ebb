@@ -283,7 +283,7 @@ private final class Desk {
         let store = model.store
         let stores = [store] + [(34.0, 42.0), (32.0, 41.0)].map { Self.later(store, connection: model.connection, sessionFree: $0.0, pool: $0.1) }
         func panel(_ store: PoolStore, expanded: Bool) -> CGImage {
-            Self.render(PoolPanel(store: store, visibility: model.visibility, connection: model.connection, showsAccounts: expanded), width: 300, scheme: scheme)
+            Self.render(PoolPanel(store: store, connection: model.connection, showsAccounts: expanded), width: 300, scheme: scheme)
         }
         collapsed = panel(store, expanded: false)
         expanded = stores.map { panel($0, expanded: true) }
@@ -371,7 +371,7 @@ private final class Desk {
         let small = Ink(collapsed, scale: Self.layerScale)
         let width = size(of: collapsed).width
         let rows = small.bands(in: CGRect(origin: .zero, size: size(of: collapsed)), gap: 3)
-        // Header, titles, numbers, meters, pace line, Accounts, divider, footer.
+        // Provider picker, titles, numbers, meters, pace line, Accounts, divider, footer.
         guard let divider = rows.lastIndex(where: { $0.height < 2 }), divider >= 4 else {
             fatalError("Recorder: the collapsed panel no longer has the rows it slices; update measure()")
         }

@@ -3,16 +3,16 @@ import EbbCore
 import SwiftUI
 
 /// `--snapshot <dir>`: renders the panel offscreen to PNGs, dark and light, collapsed, expanded
-/// and at Increase Contrast, plus its first-run setup steps, every menu bar style and
-/// Settings → General, then quits. The windows it draws in are never put on screen.
+/// and at Increase Contrast, plus its first-run setup steps, the panel before a reading, every
+/// menu bar style and every Settings tab, then quits. The windows it draws in are never put on screen.
 @MainActor
 enum Snapshot {
-    static func write(store: PoolStore, connection: ProxyConnection, visibility: Visibility, to directory: URL, prefix: String) {
+    static func write(store: PoolStore, connection: ProxyConnection, to directory: URL, prefix: String) {
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         for scheme in [ColorScheme.dark, .light] {
             let appearance = scheme == .dark ? "dark" : "light"
             for isExpanded in [false, true] {
-                let panel = PoolPanel(store: store, visibility: visibility, connection: connection, showsAccounts: isExpanded)
+                let panel = PoolPanel(store: store, connection: connection, showsAccounts: isExpanded)
                 let name = "\(prefix)-\(appearance)-\(isExpanded ? "expanded" : "collapsed").png"
                 if let data = png(of: panel, scheme: scheme) {
                     try? data.write(to: directory.appending(path: name))
@@ -24,7 +24,7 @@ enum Snapshot {
                 }
             }
             // Increase Contrast, collapsed: the tracks, the faint text and the hatch step up a level.
-            let panel = PoolPanel(store: store, visibility: visibility, connection: connection, showsAccounts: false)
+            let panel = PoolPanel(store: store, connection: connection, showsAccounts: false)
                 .environment(\._colorSchemeContrast, .increased)
             if let data = png(of: panel, scheme: scheme) {
                 try? data.write(to: directory.appending(path: "\(prefix)-\(appearance)-contrast.png"))
@@ -99,7 +99,7 @@ enum Snapshot {
         ]
         for scheme in [ColorScheme.dark, .light] {
             for (name, setup) in states {
-                let panel = PoolPanel(store: model.store, visibility: model.visibility, connection: model.connection, setup: setup)
+                let panel = PoolPanel(store: model.store, connection: model.connection, setup: setup)
                 if let data = png(of: panel, scheme: scheme) {
                     try? data.write(to: directory.appending(path: "setup-\(name)-\(scheme == .dark ? "dark" : "light").png"))
                 }
@@ -107,24 +107,32 @@ enum Snapshot {
         }
     }
 
-    /// Settings → General, Routing, Plans and Connection, dark and light, at the Settings window's width.
-    static func writeSettings(model: AppModel, to directory: URL) {
+    /// The panel before any account could be read, dark and light.
+    static func writeNoReading(model: AppModel, to directory: URL) {
+        let store = PoolStore(connection: model.connection, summary: nil, details: [], proxyReadAt: nil)
         for scheme in [ColorScheme.dark, .light] {
-            func write(_ pane: some View, as name: String) {
-                let view = pane
+            let panel = PoolPanel(store: store, connection: model.connection, showsAccounts: false)
+            if let data = png(of: panel, scheme: scheme) {
+                try? data.write(to: directory.appending(path: "no-reading-\(scheme == .dark ? "dark" : "light").png"))
+            }
+        }
+    }
+
+    /// Every Settings tab, dark and light, at the Settings window's width and capped as the window caps it.
+    static func writeSettings(model: AppModel, to directory: URL) {
+        let settings = SettingsView(connection: model.connection, visibility: model.visibility, store: model.store, menuBarSettings: model.menuBarSettings)
+        for scheme in [ColorScheme.dark, .light] {
+            for tab in SettingsTab.allCases {
+                let view = settings.pane(tab)
                     .frame(width: 480)
                     .fixedSize(horizontal: false, vertical: true)
                     .background(Color(nsColor: .windowBackgroundColor))
                     .environment(\.colorScheme, scheme)
                     .transaction { $0.disablesAnimations = true }
                 if let data = png(of: view, width: 480, scheme: scheme) {
-                    try? data.write(to: directory.appending(path: "settings-\(name)-\(scheme == .dark ? "dark" : "light").png"))
+                    try? data.write(to: directory.appending(path: "settings-\(tab.rawValue.lowercased())-\(scheme == .dark ? "dark" : "light").png"))
                 }
             }
-            write(GeneralSettings(visibility: model.visibility, store: model.store, menuBarSettings: model.menuBarSettings), as: "general")
-            write(RoutingSettingsPane(connection: model.connection, store: model.store), as: "routing")
-            write(PlanWeightSettings(store: model.store), as: "plans")
-            write(ConnectionSettings(connection: model.connection, store: model.store), as: "connection")
         }
     }
 

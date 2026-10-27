@@ -5,7 +5,6 @@ import SwiftUI
 /// each with what comes back, and the accounts behind them on request.
 struct PoolPanel: View {
     let store: PoolStore
-    let visibility: Visibility
     let connection: ProxyConnection
 
     @State private var showsAccounts: Bool
@@ -17,9 +16,8 @@ struct PoolPanel: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.openSettings) private var openSettings
 
-    init(store: PoolStore, visibility: Visibility, connection: ProxyConnection, showsAccounts: Bool = LaunchOptions.demo == .accounts, setup: ProxySetup? = nil) {
+    init(store: PoolStore, connection: ProxyConnection, showsAccounts: Bool = LaunchOptions.demo == .accounts, setup: ProxySetup? = nil) {
         self.store = store
-        self.visibility = visibility
         self.connection = connection
         _showsAccounts = State(initialValue: showsAccounts)
         fixedSetup = setup
@@ -47,8 +45,12 @@ struct PoolPanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            header
-                .padding(.bottom, 12)
+            // No name or mark up top: the item just clicked says which app this is, as Apple's own
+            // menu bar extras leave it. With one provider, or during setup, the content comes first.
+            if setup == nil, store.state.providers.count > 1 {
+                providerPicker
+                    .padding(.bottom, 12)
+            }
             // With Reduce Motion the swap between the two cross-fades without the height easing along.
             if let setup {
                 ProxySetupView(setup: setup, connection: connection, store: store)
@@ -68,6 +70,9 @@ struct PoolPanel: View {
         .frame(width: 300)
         // The menu bar window sizes itself to this; without it, expanding clips the content.
         .fixedSize(horizontal: false, vertical: true)
+        // The window has no title, so VoiceOver names the panel here.
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(Text(verbatim: "Ebb"))
         .animation(reduceMotion ? nil : .smooth(duration: 0.35), value: setup == nil)
         // Setup just ended, by a key or by skipping it: read at once rather than at the next poll.
         .onChange(of: setup == nil) { _, isDone in
@@ -138,36 +143,25 @@ struct PoolPanel: View {
         }
     }
 
-    /// With pools from more than one provider, a pop-up picks the one on show.
-    private var header: some View {
-        HStack(spacing: 6) {
-            HStack(spacing: 6) {
-                EbbMark()
-                    .frame(width: 14, height: 14)
-                Text(verbatim: "Ebb")
-                    .font(.headline)
-            }
-            .accessibilityElement(children: .combine)
-            if store.state.providers.count > 1 {
-                Spacer(minLength: 0)
-                Picker("Provider", selection: Binding(get: { provider ?? "" }, set: { panelChoice = $0 })) {
-                    ForEach(store.state.providers, id: \.self) { name in
-                        Text(ProviderDisplay.title(name)).tag(name)
-                    }
-                }
-                .pickerStyle(.menu)
-                .buttonStyle(.borderless)
-                .labelsHidden()
-                .fixedSize()
-                .padding(.vertical, -4)
-                .accessibilityLabel("Provider")
+    /// With pools from more than one provider, a pop-up heads the panel and picks the one on show.
+    private var providerPicker: some View {
+        Picker("Provider", selection: Binding(get: { provider ?? "" }, set: { panelChoice = $0 })) {
+            ForEach(store.state.providers, id: \.self) { name in
+                Text(ProviderDisplay.title(name)).tag(name)
             }
         }
+        .pickerStyle(.menu)
+        .buttonStyle(.borderless)
+        .labelsHidden()
+        .fixedSize()
+        // The borderless button insets its title; this lines it up with the window titles below.
+        .padding(.leading, -3)
+        .padding(.vertical, -4)
+        .accessibilityLabel("Provider")
     }
 
     private func showSettings() {
-        NSApp.activate()
-        openSettings()
+        SettingsOpener.open(openSettings)
     }
 
     private var hasOnlyRefusedTokens: Bool {
@@ -211,15 +205,6 @@ struct PoolPanel: View {
             Spacer()
 
             Menu {
-                Picker("Show in Menu Bar", selection: Binding(get: { visibility.mode }, set: { visibility.setMode($0) })) {
-                    ForEach(DisplayMode.allCases) { mode in
-                        Text(mode.title).tag(mode)
-                    }
-                }
-                .pickerStyle(.menu)
-                Button("Open Proxy Panel") {
-                    NSWorkspace.shared.open(connection.managementPage)
-                }
                 Button("Copy Diagnostics") {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(store.diagnosticsText(), forType: .string)
@@ -267,10 +252,7 @@ private struct ProxyDownNotice: View {
                 Spacer(minLength: 0)
                 switch advice {
                 case .keyRefused:
-                    Button("Settings…") {
-                        NSApp.activate()
-                        openSettings()
-                    }
+                    Button("Settings…") { SettingsOpener.open(openSettings) }
                 case .start:
                     Button(connection.startState == .starting ? String(localized: "Starting…") : String(localized: "Start"), action: start)
                         .disabled(connection.startState == .starting)

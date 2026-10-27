@@ -4,10 +4,32 @@ import ServiceManagement
 import SwiftUI
 import UniformTypeIdentifiers
 
-enum SettingsTab: String {
-    case general, connection, routing, plans, about
+enum SettingsTab: String, CaseIterable {
+    case general, menuBar, connection, routing, plans, about
 
     static let storageKey = "settingsTab"
+
+    var title: String {
+        switch self {
+        case .general: String(localized: "General")
+        case .menuBar: String(localized: "Menu Bar")
+        case .connection: String(localized: "Connection")
+        case .routing: String(localized: "Routing")
+        case .plans: String(localized: "Plans")
+        case .about: String(localized: "About")
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .general: "gearshape"
+        case .menuBar: "menubar.rectangle"
+        case .connection: "point.3.connected.trianglepath.dotted"
+        case .routing: "arrow.triangle.branch"
+        case .plans: "scalemass"
+        case .about: "info.circle"
+        }
+    }
 }
 
 struct SettingsView: View {
@@ -18,37 +40,46 @@ struct SettingsView: View {
 
     @AppStorage(SettingsTab.storageKey) private var tab = SettingsTab.general.rawValue
 
+    /// Taller than this, a pane scrolls. The window takes each tab's own height, the way Apple's
+    /// Settings do, so a long form sized to its content once grew past the bottom of the screen.
+    static var maxPaneHeight: CGFloat {
+        min(600, (NSScreen.main?.visibleFrame.height ?? 600) - 120)
+    }
+
     var body: some View {
         TabView(selection: $tab) {
-            GeneralSettings(visibility: visibility, store: store, menuBarSettings: menuBarSettings)
-                .tabItem { Label("General", systemImage: "gearshape") }
-                .tag(SettingsTab.general.rawValue)
-            ConnectionSettings(connection: connection, store: store)
-                .tabItem { Label("Connection", systemImage: "point.3.connected.trianglepath.dotted") }
-                .tag(SettingsTab.connection.rawValue)
-            RoutingSettingsPane(connection: connection, store: store)
-                .tabItem { Label("Routing", systemImage: "arrow.triangle.branch") }
-                .tag(SettingsTab.routing.rawValue)
-            PlanWeightSettings(store: store)
-                .tabItem { Label("Plans", systemImage: "scalemass") }
-                .tag(SettingsTab.plans.rawValue)
-            AboutSettings()
-                .tabItem { Label("About", systemImage: "info.circle") }
-                .tag(SettingsTab.about.rawValue)
+            ForEach(SettingsTab.allCases, id: \.self) { tab in
+                pane(tab)
+                    .tabItem { Label(tab.title, systemImage: tab.symbol) }
+                    .tag(tab.rawValue)
+            }
         }
         .frame(width: 480)
         .fixedSize(horizontal: false, vertical: true)
+    }
+
+    /// One tab's content, capped at `maxPaneHeight`.
+    func pane(_ tab: SettingsTab) -> some View {
+        content(tab).frame(maxHeight: Self.maxPaneHeight)
+    }
+
+    @ViewBuilder private func content(_ tab: SettingsTab) -> some View {
+        switch tab {
+        case .general: GeneralSettings(store: store)
+        case .menuBar: MenuBarSettingsPane(visibility: visibility, store: store, menuBarSettings: menuBarSettings)
+        case .connection: ConnectionSettings(connection: connection, store: store)
+        case .routing: RoutingSettingsPane(connection: connection, store: store)
+        case .plans: PlanWeightSettings(store: store)
+        case .about: AboutSettings()
+        }
     }
 }
 
 // MARK: - General
 
 struct GeneralSettings: View {
-    let visibility: Visibility
     let store: PoolStore
-    @Bindable var menuBarSettings: MenuBarSettings
 
-    @AppStorage(ProviderDisplay.menuBarProviderKey) private var menuBarChoice = ""
     @AppStorage(AlertSettings.isEnabledKey) private var sendsAlerts = true
     @AppStorage(AlertSettings.sendsIncidentAlertsKey) private var sendsIncidentAlerts = false
     @State private var areAlertsBlocked = false
@@ -56,36 +87,6 @@ struct GeneralSettings: View {
 
     var body: some View {
         Form {
-            Section("Menu Bar") {
-                Picker("Show Ebb", selection: Binding(get: { visibility.mode }, set: { visibility.setMode($0) })) {
-                    ForEach(DisplayMode.allCases) { mode in
-                        Text(mode.title).tag(mode)
-                    }
-                }
-                .pickerStyle(.radioGroup)
-                if visibility.mode == .apps {
-                    WatchedAppsList(visibility: visibility)
-                }
-                if store.state.providers.count > 1 {
-                    Picker("Pool", selection: $menuBarChoice) {
-                        Text("Most Pooled Capacity").tag("")
-                        ForEach(store.state.providers, id: \.self) { provider in
-                            Text(ProviderDisplay.title(provider)).tag(provider)
-                        }
-                    }
-                }
-                MenuBarStylePicker(
-                    selection: $menuBarSettings.style,
-                    limit: menuBarSettings.limit,
-                    pool: store.menuBarPool(for: store.menuBarProvider(choice: menuBarChoice), now: .now)
-                )
-                Picker("Limit", selection: $menuBarSettings.limit) {
-                    ForEach(MenuBarLimit.allCases) { limit in
-                        Text(limit.title).tag(limit)
-                    }
-                }
-                .disabled(menuBarSettings.style.showsBothWindows)
-            }
             Section {
                 Toggle("Pool alerts", isOn: $sendsAlerts)
                     .onChange(of: sendsAlerts) { _, isOn in
@@ -208,6 +209,54 @@ private struct CommandLineToolSection: View {
     }
 }
 
+// MARK: - Menu Bar
+
+struct MenuBarSettingsPane: View {
+    let visibility: Visibility
+    let store: PoolStore
+    @Bindable var menuBarSettings: MenuBarSettings
+
+    @AppStorage(ProviderDisplay.menuBarProviderKey) private var menuBarChoice = ""
+
+    var body: some View {
+        Form {
+            Section {
+                Picker("Show Ebb", selection: Binding(get: { visibility.mode }, set: { visibility.setMode($0) })) {
+                    ForEach(DisplayMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
+                .pickerStyle(.radioGroup)
+                if visibility.mode == .apps {
+                    WatchedAppsList(visibility: visibility)
+                }
+            }
+            Section {
+                if store.state.providers.count > 1 {
+                    Picker("Pool", selection: $menuBarChoice) {
+                        Text("Most Pooled Capacity").tag("")
+                        ForEach(store.state.providers, id: \.self) { provider in
+                            Text(ProviderDisplay.title(provider)).tag(provider)
+                        }
+                    }
+                }
+                MenuBarStylePicker(
+                    selection: $menuBarSettings.style,
+                    limit: menuBarSettings.limit,
+                    pool: store.menuBarPool(for: store.menuBarProvider(choice: menuBarChoice), now: .now)
+                )
+                Picker("Limit", selection: $menuBarSettings.limit) {
+                    ForEach(MenuBarLimit.allCases) { limit in
+                        Text(limit.title).tag(limit)
+                    }
+                }
+                .disabled(menuBarSettings.style.showsBothWindows)
+            }
+        }
+        .formStyle(.grouped)
+    }
+}
+
 private struct WatchedAppsList: View {
     let visibility: Visibility
 
@@ -308,6 +357,7 @@ struct ConnectionSettings: View {
                         .foregroundStyle(connection.isRemote ? .secondary : .primary)
                 }
                 HStack {
+                    Button("Open Proxy Panel") { NSWorkspace.shared.open(connection.managementPage) }
                     Spacer()
                     if connection.configOverride != nil {
                         Button("Use Detected") { useConfig(nil) }
@@ -594,7 +644,7 @@ struct PlanWeightSettings: View {
 
 // MARK: - About
 
-private struct AboutSettings: View {
+struct AboutSettings: View {
     private static let repository = URL(string: "https://github.com/lucasnsaraujo/ebb")!
 
     var body: some View {

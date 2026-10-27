@@ -1533,16 +1533,6 @@
         }
       }
     },
-    "Show in Menu Bar" : {
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostrar na Barra de Menus"
-          }
-        }
-      }
-    },
     "Sign in to an account" : {
       "localizations" : {
         "pt-BR" : {
