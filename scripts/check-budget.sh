@@ -129,6 +129,8 @@ record "physical footprint" "$run_footprint" "-" MB
 record "CPU, whole run" "$run_cpu" "-" %
 record "network requests" "$(field "$report" requestTotal)" 0 req
 record "timer and loop wakes" "$(field "$report" wakeTotal)" 0 wakes
+print -r -- "requests:" "$(plutil -extract requests json -o - "$report")"
+print -r -- "wakes:   " "$(plutil -extract wakes json -o - "$report")"
 
 if [[ -n ${GITHUB_STEP_SUMMARY:-} ]]; then
     { print "### Lightweight budget"; print "| | Measured | Ceiling | |"; print "| --- | --- | --- | --- |"; print -l -- $rows } >> "$GITHUB_STEP_SUMMARY"

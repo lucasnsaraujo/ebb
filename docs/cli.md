@@ -1,6 +1,6 @@
 # The `ebb` command
 
-`ebb` prints the pools Ebb shows in the menu bar. It reads the status file the app saves at `~/Library/Application Support/Ebb/status.json` and makes no network calls, so it costs nothing to run as often as you like. The file holds pool percentages and reset times only: no account names, emails or tokens.
+`ebb` prints the pools Ebb shows in the menu bar. It reads the status file the app saves at `~/Library/Application Support/Ebb/status.json` and makes no network calls, so it costs nothing to run as often as you like. Only `--uninstall-data` changes anything. The file holds pool percentages and reset times only: no account names, emails or tokens.
 
 Install it from Settings → General → Command Line Tool. Ebb links `Ebb.app/Contents/Helpers/ebb` into `/usr/local/bin` when you can write to it, or else into `~/.local/bin`, so no admin password is needed.
 
@@ -9,6 +9,7 @@ Install it from Settings → General → Command Line Tool. Ebb links `Ebb.app/C
 ```text
 ebb status [--json] [--provider NAME]
 ebb statusline [--provider NAME]
+ebb --uninstall-data [--yes]
 ```
 
 `NAME` is CLIProxyAPI's provider name: `claude`, `codex`, `devin`, `antigravity`, `kimi` or `meta`. Without it, `statusline` shows the pool the menu bar shows, and `status` shows every pool.
@@ -31,9 +32,15 @@ The words are always English; the clock follows your Mac's language and 12- or 2
 
 Both work the numbers out at the moment you run them, so a reset that landed after Ebb saved the file already counts as free.
 
+## Removing Ebb's data
+
+`ebb --uninstall-data` removes what Ebb wrote outside `Ebb.app`: the management key, usage ledger, status file, caches, settings, the menu bar mode, and the `ebb` link itself when it points into an Ebb app. [docs/paths.md](docs/paths.md) lists every path. It never touches CLIProxyAPI's config or logins folder, or another program called `ebb`.
+
+It prints what it found and asks you to type `yes`; `--yes` skips the question, and without a terminal it refuses unless you pass `--yes`. It won't run while Ebb is open, since quitting Ebb writes its usage ledger again. It then tries to remove Ebb's login item, and when macOS won't let the command do that, it names the place in System Settings where you can switch it off.
+
 ## Exit status
 
-`ebb status` exits with 1 and a message on standard error when Ebb hasn't saved any numbers yet, or when `--provider` names a pool Ebb doesn't have. In those cases `ebb statusline` exits with 0 and prints `Ebb: no data` or `Ebb: no kimi pool`, because Claude Code hides the status line of a command that fails. Both exit with 1 on an unknown command or option.
+`ebb status` exits with 1 and a message on standard error when Ebb hasn't saved any numbers yet, or when `--provider` names a pool Ebb doesn't have. In those cases `ebb statusline` exits with 0 and prints `Ebb: no data` or `Ebb: no kimi pool`, because Claude Code hides the status line of a command that fails. Both exit with 1 on an unknown command or option. `ebb --uninstall-data` exits with 1 when Ebb is running, when it has no terminal to ask on and no `--yes`, or when it couldn't remove something; answering no is not an error.
 
 ## JSON schema
 

@@ -17,7 +17,7 @@ struct EbbApp: App {
         MenuBarExtra(isInserted: Binding(get: { model.visibility.isVisible && !LaunchOptions.rendersOffscreen }, set: { _ in })) {
             PoolPanel(store: model.store, visibility: model.visibility, connection: model.connection)
         } label: {
-            MenuBarLabel(store: model.store, settings: model.menuBarSettings, provider: menuBarProvider)
+            MenuBarLabel(store: model.store, settings: model.menuBarSettings, provider: menuBarProvider, isShowing: model.visibility.isVisible)
         }
         .menuBarExtraStyle(.window)
 
@@ -108,7 +108,7 @@ enum LaunchOptions {
     static let budgetReport: URL? = value(after: "--budget-report").map { URL(fileURLWithPath: $0) }
     /// How long a budget run lasts: `--budget-seconds <n>`.
     static let budgetSeconds = value(after: "--budget-seconds").flatMap(Double.init) ?? 60
-    /// Keeps the menu bar item hidden whatever `~/.config/ebb/mode` says, and never writes that file: `--hidden`.
+    /// Keeps the menu bar item hidden, ignoring `~/.config/ebb/mode`: `--hidden`.
     static let forcesHidden = CommandLine.arguments.contains("--hidden")
     /// Forces the panel's appearance: `--appearance light|dark`.
     static let appearance: NSAppearance.Name? = value(after: "--appearance").map { $0 == "dark" ? .darkAqua : .aqua }

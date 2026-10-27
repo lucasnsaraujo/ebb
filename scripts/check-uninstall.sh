@@ -22,15 +22,15 @@ code=0
 
 seed() {
     rm -rf "$HOME" && mkdir -p "$HOME"
-    local path
-    for path in "${ebb_paths[@]}"; do
-        if [[ $path == *.plist || $path == *.binarycookies ]]; then
-            mkdir -p "$HOME/${path:h}" && print x > "$HOME/$path"
+    local entry
+    for entry in "${ebb_paths[@]}"; do
+        if [[ $entry == *.plist || $entry == *.binarycookies ]]; then
+            mkdir -p "$HOME/${entry:h}" && print x > "$HOME/$entry"
         else
-            mkdir -p "$HOME/$path" && print x > "$HOME/$path/file"
+            mkdir -p "$HOME/$entry" && print x > "$HOME/$entry/file"
         fi
     done
-    for path in "${decoys[@]}"; do mkdir -p "$HOME/${path:h}" && print x > "$HOME/$path"; done
+    for entry in "${decoys[@]}"; do mkdir -p "$HOME/${entry:h}" && print x > "$HOME/$entry"; done
     ln -s /Applications/Ebb.app/Contents/Helpers/ebb "$HOME/.local/bin/ebb"
 }
 
@@ -66,20 +66,20 @@ check() {  # check <what> <command...>
 exit_code_is() { (( code == $1 )) }
 
 ebb_files_all_there() {
-    local path
-    for path in "${ebb_paths[@]}"; do [[ -e $HOME/$path ]] || return 1; done
+    local entry
+    for entry in "${ebb_paths[@]}"; do [[ -e $HOME/$entry ]] || return 1; done
     [[ -L $HOME/.local/bin/ebb ]]
 }
 
 ebb_files_all_gone() {
-    local path
-    for path in "${ebb_paths[@]}"; do [[ ! -e $HOME/$path ]] || return 1; done
+    local entry
+    for entry in "${ebb_paths[@]}"; do [[ ! -e $HOME/$entry ]] || return 1; done
     [[ ! -L $HOME/.local/bin/ebb ]]
 }
 
 decoys_all_there() {
-    local path
-    for path in "${decoys[@]}"; do [[ -e $HOME/$path ]] || return 1; done
+    local entry
+    for entry in "${decoys[@]}"; do [[ -e $HOME/$entry ]] || return 1; done
 }
 
 print "${#ebb_paths} paths from docs/paths.md"
