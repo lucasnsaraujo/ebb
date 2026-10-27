@@ -41,7 +41,7 @@ private func account(_ id: String, weight: PlanWeight = PlanWeight(1), weeklyUse
 
     @Test func aPaceThatUsesItUpBeforeTheResetStaysQuiet() {
         var nudge = ExpiryNudge()
-        let runsOut = Pace.Forecast(outlook: .runsOut(within: 3600...5 * 3600), basis: 86400)
+        let runsOut = Pace.Forecast(outlook: .runsOut(in: 3600, within: 3600...5 * 3600), basis: 86400)
         #expect(alerts(&nudge, [account("a", weeklyUsed: 30, resetsIn: 10)], forecast: runsOut).isEmpty)
         let lasts = Pace.Forecast(outlook: .lasts, basis: 86400)
         #expect(alerts(&nudge, [account("a", weeklyUsed: 30, resetsIn: 10)], forecast: lasts).count == 1)
@@ -49,13 +49,13 @@ private func account(_ id: String, weight: PlanWeight = PlanWeight(1), weeklyUse
 
     @Test func aPaceThatRunsOutOnlyAfterTheResetStillNudges() {
         var nudge = ExpiryNudge()
-        let late = Pace.Forecast(outlook: .runsOut(within: 11 * 3600...12 * 3600), basis: 86400)
+        let late = Pace.Forecast(outlook: .runsOut(in: 11 * 3600, within: 11 * 3600...12 * 3600), basis: 86400)
         #expect(alerts(&nudge, [account("a", weeklyUsed: 30, resetsIn: 10)], forecast: late).count == 1)
     }
 
     @Test func theSoonestResetDecidesWhetherThePaceUsesItUp() {
         var nudge = ExpiryNudge()
-        let runsOut = Pace.Forecast(outlook: .runsOut(within: 14 * 3600...15 * 3600), basis: 86400)
+        let runsOut = Pace.Forecast(outlook: .runsOut(in: 14 * 3600, within: 14 * 3600...15 * 3600), basis: 86400)
         let accounts = [account("a", weeklyUsed: 20, resetsIn: 2), account("b", weeklyUsed: 20, resetsIn: 20)]
         #expect(alerts(&nudge, accounts, forecast: runsOut).count == 1)
     }

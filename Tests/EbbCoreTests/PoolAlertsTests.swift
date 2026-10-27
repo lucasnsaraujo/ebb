@@ -37,7 +37,7 @@ private func pool(weeklyFree: Double = 50, sessionFree: Double = 20, weight: Pla
 }
 
 private func runningOut(_ minutes: ClosedRange<Double>) -> PoolForecast {
-    PoolForecast(session: Pace.Forecast(outlook: .runsOut(within: (minutes.lowerBound * 60)...(minutes.upperBound * 60)), basis: 1800))
+    PoolForecast(session: Pace.Forecast(outlook: .runsOut(in: minutes.lowerBound * 60, within: (minutes.lowerBound * 60)...(minutes.upperBound * 60)), basis: 1800))
 }
 
 private let lasting = PoolForecast(session: Pace.Forecast(outlook: .lasts, basis: 1800))

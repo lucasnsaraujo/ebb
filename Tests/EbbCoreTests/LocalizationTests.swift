@@ -59,22 +59,22 @@ private func summary(read: Int, weeklyLimited: Int = 0, unread: Int = 0) -> Pool
     }
 
     @Test func runOutLinesReadInBothLanguages() {
-        let single = Pace.Forecast(outlook: .runsOut(within: (130 * 60)...(130 * 60)), basis: 45 * 60)
-        let soon = Pace.Forecast(outlook: .runsOut(within: (5 * 60)...(5 * 60)), basis: 45 * 60)
-        let range = Pace.Forecast(outlook: .runsOut(within: (60 * 60)...(110 * 60)), basis: 45 * 60)
+        let single = Pace.Forecast(outlook: .runsOut(in: 130 * 60), basis: 45 * 60)
+        let soon = Pace.Forecast(outlook: .runsOut(in: 5 * 60), basis: 45 * 60)
+        let range = Pace.Forecast(outlook: .runsOut(in: 80 * 60, within: (60 * 60)...(110 * 60)), basis: 45 * 60)
         #expect(PaceText.inline(single, window: .session, now: now, locale: english) == "About 2 h 10 min left")
         #expect(PaceText.sentence(single, window: .session, short: .fiveHours, now: now, locale: english) == "About 2 h 10 min left at this pace")
         #expect(PaceText.sentence(single, window: .session, short: .fiveHours, now: now, locale: brazil) == "Cerca de 2 h 10 min restantes neste ritmo")
         // The line under the meter has 124 pt; "Cerca de 2 h 10 min restantes" needs 171.
         #expect(PaceText.inline(single, window: .session, now: now, locale: brazil) == "Restam ~2 h 10 min")
         #expect(PaceText.inline(soon, window: .session, now: now, locale: brazil) == "Restam < 10 min")
-        #expect(PaceText.inline(range, window: .session, now: now, locale: brazil) == "Restam 1–2 h")
-        #expect(PaceText.sentence(range, window: .session, short: .fiveHours, now: now, locale: brazil) == "1–2 h restantes neste ritmo")
+        #expect(PaceText.inline(range, window: .session, now: now, locale: brazil) == "Restam ~1 h 30 min")
+        #expect(PaceText.sentence(range, window: .session, short: .fiveHours, now: now, locale: brazil) == "Cerca de 1 h 30 min restantes neste ritmo")
         #expect(PaceText.basis(single, window: .session, locale: brazil) == "Com base em 45 min de atividade")
     }
 
     @Test func weeklyPaceUsesTheLocalesDayAndTime() {
-        let forecast = Pace.Forecast(outlook: .runsOut(within: (3.6 * 86400)...(3.6 * 86400)), basis: 5 * 86400)
+        let forecast = Pace.Forecast(outlook: .runsOut(in: 3.6 * 86400), basis: 5 * 86400)
         #expect(PaceText.inline(forecast, window: .weekly, now: now, timeZone: utc, locale: english) == "Runs out ~Fri 10:00\u{202F}AM")
         #expect(PaceText.inline(forecast, window: .weekly, now: now, timeZone: utc, locale: brazil) == "Acaba ~sex. 10:00")
         #expect(PaceText.sentence(forecast, window: .weekly, short: .fiveHours, now: now, timeZone: utc, locale: brazil) == "Acaba por volta de sex. 10:00 neste ritmo")
@@ -216,7 +216,7 @@ private func summary(read: Int, weeklyLimited: Int = 0, unread: Int = 0) -> Pool
 @Suite struct ClockFormatTests {
     /// 21:34 UTC, the same evening as `now`.
     private let evening = now + 2 * 3600
-    private let weeklyRunOut = Pace.Forecast(outlook: .runsOut(within: 7200...7200), basis: 5 * 86400)
+    private let weeklyRunOut = Pace.Forecast(outlook: .runsOut(in: 7200), basis: 5 * 86400)
 
     @Test func aTwelveHourLocaleWritesAMOrPM() {
         #expect(ExpiryNudge.moment(evening, now: now, timeZone: utc, locale: english) == "today 9:34\u{202F}PM")
@@ -232,7 +232,7 @@ private func summary(read: Int, weeklyLimited: Int = 0, unread: Int = 0) -> Pool
         #expect(ClockText.weekdayAndTime(smallHours, locale: brazil, timeZone: utc) == "ter. 01:15")
         #expect(StatusReport.moment(smallHours, now: smallHours - 3600, timeZone: utc, locale: brazil) == "at 01:15")
         #expect(ExpiryNudge.moment(smallHours, now: smallHours - 3600, timeZone: utc, locale: brazil) == "hoje 01:15")
-        let runOut = Pace.Forecast(outlook: .runsOut(within: 3600...3600), basis: 5 * 86400)
+        let runOut = Pace.Forecast(outlook: .runsOut(in: 3600), basis: 5 * 86400)
         #expect(PaceText.inline(runOut, window: .weekly, now: smallHours - 3600, timeZone: utc, locale: brazil) == "Acaba ~ter. 01:00")
     }
 

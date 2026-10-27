@@ -34,7 +34,7 @@ public struct ExpiryNudge: Codable, Sendable, Equatable {
         }
         guard let firstReset = resets.min(), let lastReset = resets.max(), unused.rounded() >= Self.minimumUnused else { return [] }
         // The pace counts resets as capacity coming back, so only a run-out before the first one uses it all.
-        if case let .runsOut(within) = forecast?.outlook, now + within.upperBound <= firstReset { return [] }
+        if case let .runsOut(_, within) = forecast?.outlook, now + within.upperBound <= firstReset { return [] }
         // Accounts entering or leaving the window move the group's last reset; it's still this cycle.
         if let previous = nudged[pool] {
             nudged[pool] = max(previous, lastReset)
