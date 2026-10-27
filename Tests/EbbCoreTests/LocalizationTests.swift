@@ -92,13 +92,6 @@ private func summary(read: Int, weeklyLimited: Int = 0, unread: Int = 0) -> Pool
         #expect(RefillText.until(now + 2 * 24 * 3600, now: now, locale: brazil) == "2d")
     }
 
-    @Test func theLockedExplanationReadsInBothLanguages() {
-        var locked = summary(read: 4)
-        locked.session.lockedPercent = 57
-        #expect(PoolNotes.lines(locked, window: .session, now: now, locale: english) == ["Locked: accounts that used up their week"])
-        #expect(PoolNotes.lines(locked, window: .session, now: now, locale: brazil) == ["Bloqueado: contas sem semanal"])
-    }
-
     @Test func readingAgesReadInBothLanguages() {
         #expect(PoolNotes.lines(summary(read: 3), window: .weekly, now: now, locale: english).isEmpty)
         var fresh = summary(read: 3)

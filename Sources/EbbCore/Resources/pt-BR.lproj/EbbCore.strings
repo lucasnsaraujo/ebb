@@ -156,8 +156,6 @@
 	<string>Dura até a renovação neste ritmo</string>
 	<key>Leave the user name and password out of the address; the management key is the credential.</key>
 	<string>Deixe o nome de usuário e a senha fora do endereço; a chave de gestão é a credencial.</string>
-	<key>Locked: accounts that used up their week</key>
-	<string>Bloqueado: contas sem semanal</string>
 	<key>Next refill: +%lld%% of the %@ at %@.</key>
 	<string>Próxima renovação: +%1$lld%% da %2$@ às %3$@.</string>
 	<key>Next refill: +%lld%% of the %@ on %@.</key>
