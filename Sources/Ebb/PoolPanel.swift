@@ -161,8 +161,7 @@ struct PoolPanel: View {
     }
 
     private func showSettings() {
-        NSApp.activate()
-        openSettings()
+        SettingsOpener.open(openSettings)
     }
 
     private var hasOnlyRefusedTokens: Bool {
@@ -253,10 +252,7 @@ private struct ProxyDownNotice: View {
                 Spacer(minLength: 0)
                 switch advice {
                 case .keyRefused:
-                    Button("Settings…") {
-                        NSApp.activate()
-                        openSettings()
-                    }
+                    Button("Settings…") { SettingsOpener.open(openSettings) }
                 case .start:
                     Button(connection.startState == .starting ? String(localized: "Starting…") : String(localized: "Start"), action: start)
                         .disabled(connection.startState == .starting)
