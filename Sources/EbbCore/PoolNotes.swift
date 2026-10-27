@@ -22,6 +22,10 @@ public enum PoolNotes {
 
     public static func lines(_ summary: PoolSummary, window: PoolWindow, now: Date, locale: Locale = .autoupdatingCurrent) -> [String] {
         var lines: [String] = []
+        // The caption under the meters gives the share and the time; the card says what locked means.
+        if window == .session, summary.session.lockedPercent >= lockedShownFrom {
+            lines.append(Localization.text("Locked: accounts that used up their week", locale: locale))
+        }
         if window == .session, summary.weeklyLimitedAccounts > 0 {
             lines.append(summary.readAccounts == 1
                 ? Localization.text("Its only account is at its weekly limit", locale: locale)

@@ -898,6 +898,17 @@
         }
       }
     },
+    "Locked: accounts that used up their week" : {
+      "comment" : "A 5-hour hover card row under the \"57% locked until …\" caption",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloqueado: contas sem semanal"
+          }
+        }
+      }
+    },
     "Next refill: +%lld%% of the %@ at %@." : {
       "localizations" : {
         "pt-BR" : {

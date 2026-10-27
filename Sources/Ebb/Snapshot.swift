@@ -23,7 +23,7 @@ enum Snapshot {
                     try? data.write(to: directory.appending(path: "\(prefix)-\(appearance)-hover-\(window).png"))
                 }
             }
-            // Increase Contrast, collapsed: the tracks, the faint text and the hatch step up a level.
+            // Increase Contrast, collapsed: the tracks and the faint text step up a level.
             let panel = PoolPanel(store: store, connection: connection, showsAccounts: false)
                 .environment(\._colorSchemeContrast, .increased)
             if let data = png(of: panel, scheme: scheme) {

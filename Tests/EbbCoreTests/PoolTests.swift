@@ -320,7 +320,7 @@ private func todaysAccounts() throws -> [AccountUsage] {
         #expect(summary.session.unlocksAt == at(24 * 60))
     }
 
-    /// The meter draws this share twice: hatched as locked, and in the lighter segment as coming back.
+    /// This share is both locked, for the caption, and coming back, for the meter's lighter line.
     @Test func aSpentWeekResettingWithinTheWindowIsBothLockedAndComingBack() throws {
         let spent = AccountUsage(weight: PlanWeight(5), limits: [session(0), weekly(100, resetsIn: 180)])
         let team = AccountUsage(weight: PlanWeight(15), limits: [session(40, resetsIn: 60)])
@@ -358,9 +358,9 @@ private func todaysAccounts() throws -> [AccountUsage] {
 }
 
 @Suite struct PoolNotesTests {
-    private func summary(read: Int, unread: Int = 0, weeklyLimited: Int = 0, oldest: Date? = nil) -> PoolSummary {
+    private func summary(read: Int, unread: Int = 0, weeklyLimited: Int = 0, oldest: Date? = nil, locked: Double = 0) -> PoolSummary {
         PoolSummary(
-            session: WindowSummary(freePercent: 50, resets: []), weekly: WindowSummary(freePercent: 50, resets: []),
+            session: WindowSummary(freePercent: 50, resets: [], lockedPercent: locked), weekly: WindowSummary(freePercent: 50, resets: []),
             isPartial: unread > 0, readAccounts: read, unreadAccounts: unread, weeklyLimitedAccounts: weeklyLimited, oldestReadingAt: oldest
         )
     }
@@ -369,6 +369,14 @@ private func todaysAccounts() throws -> [AccountUsage] {
         #expect(PoolNotes.lines(summary(read: 4, weeklyLimited: 1), window: .session, now: now) == ["1 of 4 accounts at their weekly limit"])
         #expect(PoolNotes.lines(summary(read: 1, weeklyLimited: 1), window: .session, now: now) == ["Its only account is at its weekly limit"])
         #expect(PoolNotes.lines(summary(read: 4, weeklyLimited: 1), window: .weekly, now: now).isEmpty)
+    }
+
+    /// The caption under the meters says how much is locked and until when; the card says what locked means.
+    @Test func theFiveHourCardExplainsALockedShare() {
+        #expect(PoolNotes.lines(summary(read: 4, locked: 57), window: .session, now: now) == ["Locked: accounts that used up their week"])
+        #expect(PoolNotes.lines(summary(read: 4, weeklyLimited: 1, locked: 57), window: .session, now: now) == ["Locked: accounts that used up their week", "1 of 4 accounts at their weekly limit"])
+        #expect(PoolNotes.lines(summary(read: 4, locked: 4.9), window: .session, now: now).isEmpty)
+        #expect(PoolNotes.lines(summary(read: 4, locked: 57), window: .weekly, now: now).isEmpty)
     }
 
     @Test func aLockedShareReadsWithItsUnlockInTheLocalesClock() {
