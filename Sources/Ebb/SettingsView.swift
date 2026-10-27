@@ -357,6 +357,7 @@ struct ConnectionSettings: View {
                         .foregroundStyle(connection.isRemote ? .secondary : .primary)
                 }
                 HStack {
+                    Button("Open Proxy Panel") { NSWorkspace.shared.open(connection.managementPage) }
                     Spacer()
                     if connection.configOverride != nil {
                         Button("Use Detected") { useConfig(nil) }

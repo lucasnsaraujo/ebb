@@ -5,7 +5,6 @@ import SwiftUI
 /// each with what comes back, and the accounts behind them on request.
 struct PoolPanel: View {
     let store: PoolStore
-    let visibility: Visibility
     let connection: ProxyConnection
 
     @State private var showsAccounts: Bool
@@ -17,9 +16,8 @@ struct PoolPanel: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.openSettings) private var openSettings
 
-    init(store: PoolStore, visibility: Visibility, connection: ProxyConnection, showsAccounts: Bool = LaunchOptions.demo == .accounts, setup: ProxySetup? = nil) {
+    init(store: PoolStore, connection: ProxyConnection, showsAccounts: Bool = LaunchOptions.demo == .accounts, setup: ProxySetup? = nil) {
         self.store = store
-        self.visibility = visibility
         self.connection = connection
         _showsAccounts = State(initialValue: showsAccounts)
         fixedSetup = setup
@@ -211,15 +209,6 @@ struct PoolPanel: View {
             Spacer()
 
             Menu {
-                Picker("Show in Menu Bar", selection: Binding(get: { visibility.mode }, set: { visibility.setMode($0) })) {
-                    ForEach(DisplayMode.allCases) { mode in
-                        Text(mode.title).tag(mode)
-                    }
-                }
-                .pickerStyle(.menu)
-                Button("Open Proxy Panel") {
-                    NSWorkspace.shared.open(connection.managementPage)
-                }
                 Button("Copy Diagnostics") {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(store.diagnosticsText(), forType: .string)

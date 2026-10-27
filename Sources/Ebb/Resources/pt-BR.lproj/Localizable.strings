@@ -306,8 +306,6 @@
 	<string>Mostrar Ebb</string>
 	<key>Show accounts</key>
 	<string>Mostrar contas</string>
-	<key>Show in Menu Bar</key>
-	<string>Mostrar na Barra de Menus</string>
 	<key>Sign in to an account</key>
 	<string>Entrar em uma conta</string>
 	<key>Some accounts can't be read right now, so they're left out of these numbers.</key>

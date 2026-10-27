@@ -7,12 +7,12 @@ import SwiftUI
 /// Settings tab, then quits. The windows it draws in are never put on screen.
 @MainActor
 enum Snapshot {
-    static func write(store: PoolStore, connection: ProxyConnection, visibility: Visibility, to directory: URL, prefix: String) {
+    static func write(store: PoolStore, connection: ProxyConnection, to directory: URL, prefix: String) {
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         for scheme in [ColorScheme.dark, .light] {
             let appearance = scheme == .dark ? "dark" : "light"
             for isExpanded in [false, true] {
-                let panel = PoolPanel(store: store, visibility: visibility, connection: connection, showsAccounts: isExpanded)
+                let panel = PoolPanel(store: store, connection: connection, showsAccounts: isExpanded)
                 let name = "\(prefix)-\(appearance)-\(isExpanded ? "expanded" : "collapsed").png"
                 if let data = png(of: panel, scheme: scheme) {
                     try? data.write(to: directory.appending(path: name))
@@ -24,7 +24,7 @@ enum Snapshot {
                 }
             }
             // Increase Contrast, collapsed: the tracks, the faint text and the hatch step up a level.
-            let panel = PoolPanel(store: store, visibility: visibility, connection: connection, showsAccounts: false)
+            let panel = PoolPanel(store: store, connection: connection, showsAccounts: false)
                 .environment(\._colorSchemeContrast, .increased)
             if let data = png(of: panel, scheme: scheme) {
                 try? data.write(to: directory.appending(path: "\(prefix)-\(appearance)-contrast.png"))
@@ -99,7 +99,7 @@ enum Snapshot {
         ]
         for scheme in [ColorScheme.dark, .light] {
             for (name, setup) in states {
-                let panel = PoolPanel(store: model.store, visibility: model.visibility, connection: model.connection, setup: setup)
+                let panel = PoolPanel(store: model.store, connection: model.connection, setup: setup)
                 if let data = png(of: panel, scheme: scheme) {
                     try? data.write(to: directory.appending(path: "setup-\(name)-\(scheme == .dark ? "dark" : "light").png"))
                 }

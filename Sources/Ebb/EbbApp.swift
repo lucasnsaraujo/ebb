@@ -15,7 +15,7 @@ struct EbbApp: App {
 
     var body: some Scene {
         MenuBarExtra(isInserted: Binding(get: { model.visibility.isVisible && !LaunchOptions.rendersOffscreen }, set: { _ in })) {
-            PoolPanel(store: model.store, visibility: model.visibility, connection: model.connection)
+            PoolPanel(store: model.store, connection: model.connection)
         } label: {
             MenuBarLabel(store: model.store, settings: model.menuBarSettings, provider: menuBarProvider, isShowing: model.visibility.isVisible)
         }
@@ -136,7 +136,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if LaunchOptions.isLive {
                 Task {
                     await model.store.readProxyOnce()
-                    Snapshot.write(store: model.store, connection: model.connection, visibility: model.visibility, to: directory, prefix: "live")
+                    Snapshot.write(store: model.store, connection: model.connection, to: directory, prefix: "live")
                     try? model.store.diagnosticsText().write(to: directory.appending(path: "live-diagnostics.txt"), atomically: true, encoding: .utf8)
                     exit(0)
                 }
@@ -146,10 +146,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 // The snapshot runs under its own bundle identifier, so these choices stay out of the app's settings.
                 for provider in model.store.state.providers {
                     UserDefaults.standard.set(provider, forKey: ProviderDisplay.panelProviderKey)
-                    Snapshot.write(store: model.store, connection: model.connection, visibility: model.visibility, to: directory, prefix: "demo-\(provider)")
+                    Snapshot.write(store: model.store, connection: model.connection, to: directory, prefix: "demo-\(provider)")
                 }
             } else {
-                Snapshot.write(store: model.store, connection: model.connection, visibility: model.visibility, to: directory, prefix: "claude")
+                Snapshot.write(store: model.store, connection: model.connection, to: directory, prefix: "claude")
             }
             Snapshot.writeMenuBar(to: directory)
             Snapshot.writeSettings(model: model, to: directory)
