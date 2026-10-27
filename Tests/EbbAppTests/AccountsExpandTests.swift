@@ -46,4 +46,34 @@ import Testing
         #expect(samples.windowHeights == [expanded, collapsed], "the window takes each height once, with nothing in between")
         #expect(samples.contentHeights == [collapsed, expanded, collapsed], "the content takes each height once, with nothing in between")
     }
+
+    /// What made the window jump: the toggle animated the height, so the hosting view resized the
+    /// window frame by frame. That shows offscreen as a transaction carrying an animation at the
+    /// panel's root right before its height changes; the rows' own cascade only comes after it.
+    @Test func theHeightChangesWithoutAnAnimation() async throws {
+        @MainActor final class Events {
+            let start = Date()
+            var transactions: [(at: TimeInterval, isAnimated: Bool)] = []
+            var heights: [(at: TimeInterval, height: CGFloat)] = []
+        }
+        let events = Events()
+        let connection = ProxyConnection()
+        connection.showDemoConnection()
+        let panel = PoolPanel(store: DemoData.store(connection: connection), connection: connection, playsDisclosureDemo: true)
+            .transaction { events.transactions.append((Date().timeIntervalSince(events.start), $0.animation != nil)) }
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { events.heights.append((Date().timeIntervalSince(events.start), $0)) }
+        let window = NSWindow(contentRect: NSRect(x: -10_000, y: -10_000, width: 300, height: 600), styleMask: .borderless, backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        window.contentView = NSHostingView(rootView: panel)
+        defer { window.close() }
+        // The demo expands 1.2 s after the panel appears and collapses 2.2 s later.
+        try await Task.sleep(for: .seconds(4))
+
+        let changes = events.heights.dropFirst()
+        #expect(changes.count == 2)
+        for change in changes {
+            let animated = events.transactions.filter { $0.isAnimated && $0.at <= change.at && change.at - $0.at < 0.1 }
+            #expect(animated.isEmpty, "the height went to \(change.height) inside an animated transaction")
+        }
+    }
 }
