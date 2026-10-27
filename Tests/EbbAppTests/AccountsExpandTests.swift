@@ -7,9 +7,10 @@ import Testing
 /// Hosts the panel the way the menu bar's window does, in a borderless window kept far off every
 /// screen, and watches the window while the accounts expand and collapse: the hosting view resizes
 /// the window to the content on its own, so the content's height must change in one step each way.
-/// No screen means no display link, so an animated height can't be told from a snapped one here;
-/// this guards the shape of the change, not its timing. Reads Ebb's folders through the store, so
-/// it runs only in the throwaway home `ProxyOutageStoreTests` describes.
+/// No screen means no display link, so an animated height can't be told from a snapped one by the
+/// heights alone: the first test guards the shape of the change, the second the animation that made
+/// the window jump. Reads Ebb's folders through the store, so it runs only in the throwaway home
+/// `ProxyOutageStoreTests` describes.
 @MainActor
 @Suite(.serialized, .enabled(if: ProcessInfo.processInfo.environment["EBB_APP_TESTS"] == "1")) struct AccountsExpandTests {
     @MainActor private final class Samples {
