@@ -26,7 +26,7 @@
   <tr><th></th><th>Light</th><th>Dark</th></tr>
   <tr>
     <td>Panel</td>
-    <td><img src="docs/images/panel-light.png" width="300" alt="Ebb panel in light mode: 43% of the 5-hour limit and 45% of the weekly limit left, running out in about 1 h 50 min."></td>
+    <td><img src="docs/images/panel-light.png" width="300" alt="Ebb panel in light mode: 43% of the 5-hour limit and 52% of the weekly limit left, about 1 h 50 min at this pace, and 14% of the 5-hour pool locked until Tue 12:25 PM."></td>
     <td><img src="docs/images/panel-dark.png" width="300" alt="The same panel in dark mode."></td>
   </tr>
   <tr>
@@ -65,7 +65,7 @@
 ## What it shows
 
 - **5-hour and weekly limits, in one number each.** Per provider, never added across providers: a Claude 5-hour share and a Codex one are different allowances. An account that has spent its week counts as no 5-hour capacity, since it can't serve any. Its share shows as a hatched end of the 5-hour bar, with a line such as "57% locked until Tue 22:00".
-- **When it runs out, Battery style.** "About 2 h left" for the 5-hour window, rounded to the half hour (the quarter hour under an hour) while your pace is uneven, "Runs out ~Thu 14:00" for the weekly one, only when the pool is draining faster than it refills. Hovering shows the pace, including "Lasts until reset". The 5-hour pace is your recent rate while you work, idle time left out; the weekly pace is your usual rhythm over the last week. The weekly card also gives a daily share that lasts until the next meaningful reset: "About 14% a day lasts until Tue 22:00".
+- **When it runs out, Battery style.** "~2 h" under the 5-hour meter, rounded to the half hour (the quarter hour under an hour) while your pace is uneven, "Runs out ~Thu 14:00" for the weekly one, only when the pool is draining faster than it refills. Hovering shows the pace, including "Lasts until reset". The 5-hour pace is your recent rate while you work, idle time left out; the weekly pace is your usual rhythm over the last week. The weekly card also gives a daily share that lasts until the next meaningful reset: "About 14% a day lasts until Tue 22:00".
 - **What comes back, and when.** A refill line under each meter, such as "+14% · in 3 h" for the weekly window, and an optional notification when weekly capacity returns ("Claude weekly back +55%").
 - **A nudge before capacity goes to waste.** A notification once per weekly reset, when a fifth or more of a pool is about to reset unused within a day: "Claude: 40% of this week's pool resets unused tomorrow 22:00".
 - **Every account in the pool.** The accounts list shows each login's 5-hour and weekly bars, plan badge and share of the pool, plus health-only logins (API keys, providers without quota data) with their status and cooldown.
@@ -128,6 +128,16 @@ Ebb never writes CLIProxyAPI's config file or login files, so installing and sig
 Claude works without a key: Ebb reads the Claude logins in the logins folder directly. Everything else needs one. Calls "through the proxy" go through CLIProxyAPI's `api-call` endpoint, where Ebb names the account and the proxy fills in its token, so Ebb never reads those tokens.
 
 For CLIProxyAPI on another machine, set its management URL in Settings → Connection. Ebb then reads every login, Claude's included, from the proxy's listing and `api-call`, and never touches a logins folder. Use https; plain http is accepted only on a private network, and the key then crosses it unencrypted. Over plain http Ebb first checks that the address answers like CLIProxyAPI 7.3.4 or later, so a different network's router that holds the same private address never gets the key.
+
+**Keep Claude Code's 1-hour prompt cache.** Through CLIProxyAPI, Claude Code can't tell it's on a subscription, so it asks for the 5-minute prompt cache instead of the subscription's 1 hour, and a session that sits idle for more than five minutes processes its whole context again. Set the TTL yourself in `~/.claude/settings.json` (Claude Code 2.1.242 or later):
+
+```json
+{
+  "env": { "CLAUDE_CODE_PROMPT_CACHE_TTL": "1h" }
+}
+```
+
+`claude -p "hello" --output-format json` then reports cache writes under `ephemeral_1h_input_tokens` rather than `ephemeral_5m_input_tokens`. See Claude Code's [environment variables](https://code.claude.com/docs/en/env-vars) and [prompt caching](https://code.claude.com/docs/en/prompt-caching#cache-lifetime) docs.
 
 ## Command line
 
