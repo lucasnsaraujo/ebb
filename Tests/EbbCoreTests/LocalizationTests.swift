@@ -343,3 +343,101 @@ private func summary(read: Int, weeklyLimited: Int = 0, unread: Int = 0) -> Pool
         return nil
     }
 }
+
+/// Which of the shipped languages a user's list gets, by BCP 47 tag. One Portuguese ships, so
+/// every Portuguese reads it; a language not shipped reads the development one, English.
+@Suite struct LanguageChoiceTests {
+    private let shipped = ["en", "pt-BR"]
+
+    @Test func brazilianPortugueseReadsPortuguese() {
+        #expect(Localization.language(for: ["pt-BR"], among: shipped) == "pt-BR")
+    }
+
+    @Test func plainPortugueseReadsPortuguese() {
+        #expect(Localization.language(for: ["pt"], among: shipped) == "pt-BR")
+    }
+
+    @Test func europeanPortugueseReadsTheOnePortugueseShipped() {
+        #expect(Localization.language(for: ["pt-PT"], among: shipped) == "pt-BR")
+    }
+
+    @Test func frenchReadsEnglish() {
+        #expect(Localization.language(for: ["fr"], among: shipped) == nil)
+    }
+
+    @Test func theFirstPreferenceWithAMatchWins() {
+        #expect(Localization.language(for: ["fr", "pt-PT", "en"], among: shipped) == "pt-BR")
+        #expect(Localization.language(for: ["en-GB", "pt-BR"], among: shipped) == "en")
+    }
+
+    @Test func underscoresAndCaseDoNotMatter() {
+        #expect(Localization.language(for: ["PT_br"], among: shipped) == "pt-BR")
+        #expect(Localization.language(for: ["en_US"], among: shipped) == "en")
+    }
+
+    /// The app's own strings go through Bundle.main, whose folder choice must agree.
+    @Test func theMainBundleWouldPickTheSameFolder() {
+        for (preferences, expected) in [(["pt-BR"], "pt-BR"), (["pt"], "pt-BR"), (["pt-PT"], "pt-BR"), (["fr"], "en")] {
+            #expect(Bundle.preferredLocalizations(from: shipped, forPreferences: preferences).first == expected, "\(preferences)")
+        }
+    }
+}
+
+/// The .lproj folders beside each catalog are what `xcstringstool compile` makes of it, so a
+/// SwiftPM that doesn't compile catalogs itself still ships every language.
+@Suite struct CompiledCatalogTests {
+    private static let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+    private static let catalogs = [
+        "Sources/EbbCore/Resources/EbbCore.xcstrings",
+        "Sources/Ebb/Resources/Localizable.xcstrings",
+        "Sources/Ebb/Resources/AppShortcuts.xcstrings",
+    ]
+    private static let tool: String? = {
+        let xcrun = Process()
+        xcrun.executableURL = URL(fileURLWithPath: "/usr/bin/xcrun")
+        xcrun.arguments = ["--find", "xcstringstool"]
+        let output = Pipe()
+        xcrun.standardOutput = output
+        xcrun.standardError = FileHandle.nullDevice
+        guard (try? xcrun.run()) != nil else { return nil }
+        xcrun.waitUntilExit()
+        let path = String(decoding: output.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+        return xcrun.terminationStatus == 0 && !path.isEmpty ? path : nil
+    }()
+
+    @Test(.enabled(if: tool != nil, "xcstringstool not found: install Xcode to check that the committed .lproj folders match the catalogs"), arguments: catalogs)
+    func theCommittedFoldersAreWhatTheCatalogCompilesTo(catalog: String) throws {
+        let source = Self.root.appending(path: catalog)
+        let fresh = FileManager.default.temporaryDirectory.appending(path: "ebb-xcstrings-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: fresh) }
+        let compile = Process()
+        compile.executableURL = URL(fileURLWithPath: try #require(Self.tool))
+        compile.arguments = ["compile", source.path, "--output-directory", fresh.path]
+        try compile.run()
+        compile.waitUntilExit()
+        #expect(compile.terminationStatus == 0)
+
+        let table = source.deletingPathExtension().lastPathComponent
+        let produced = try Self.plists(of: table, under: fresh)
+        let committed = try Self.plists(of: table, under: source.deletingLastPathComponent())
+        #expect(!produced.isEmpty)
+        #expect(Set(produced.keys) == Set(committed.keys), "\(catalog)")
+        for (name, plist) in produced {
+            #expect(committed[name] == plist, "\(catalog): \(name)")
+        }
+    }
+
+    /// `lang.lproj/Table.ext` to its contents, read as a plist so formatting differences between
+    /// Xcode versions don't count.
+    private static func plists(of table: String, under folder: URL) throws -> [String: NSDictionary] {
+        var plists: [String: NSDictionary] = [:]
+        let manager = FileManager.default
+        for lproj in try manager.contentsOfDirectory(atPath: folder.path) where lproj.hasSuffix(".lproj") {
+            for file in try manager.contentsOfDirectory(atPath: folder.appending(path: lproj).path) where file.hasPrefix(table + ".") {
+                let data = try Data(contentsOf: folder.appending(path: "\(lproj)/\(file)"))
+                plists["\(lproj)/\(file)"] = try PropertyListSerialization.propertyList(from: data, format: nil) as? NSDictionary
+            }
+        }
+        return plists
+    }
+}

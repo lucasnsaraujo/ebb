@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>%@ Five wrong keys lock this Mac out for 30 minutes.</key>
+	<string>%@ Cinco chaves erradas bloqueiam este Mac por 30 minutos.</string>
+	<key>%@ is another program</key>
+	<string>%@ é outro programa</string>
+	<key>%@ resets</key>
+	<string>Renovações: %@</string>
+	<key>%@ · Usage API · %@</key>
+	<string>%1$@ · API de uso · %2$@</string>
+	<key>%@: %lld%% %@, %lld%% weekly</key>
+	<string>%1$@: %2$lld%% %3$@, %4$lld%% semanal</string>
+	<key>%@: %lld%% free</key>
+	<string>%1$@: %2$lld%% livre</string>
+	<key>%lld h ago</key>
+	<string>há %lld h</string>
+	<key>%lld min ago</key>
+	<string>há %lld min</string>
+	<key>%lld s ago</key>
+	<string>há %lld s</string>
+	<key>+%lld%% %@</key>
+	<string>+%1$lld%% %2$@</string>
+	<key>+%lld%% · %@</key>
+	<string>+%1$lld%% · %2$@</string>
+	<key>About</key>
+	<string>Sobre</string>
+	<key>Accounts</key>
+	<string>Contas</string>
+	<key>Add</key>
+	<string>Adicionar</string>
+	<key>Add App</key>
+	<string>Adicionar App</string>
+	<key>Address</key>
+	<string>Endereço</string>
+	<key>Always</key>
+	<string>Sempre</string>
+	<key>Balance new sessions by remaining capacity</key>
+	<string>Equilibrar novas sessões pela capacidade restante</string>
+	<key>CLIProxyAPI is running</key>
+	<string>O CLIProxyAPI está em execução</string>
+	<key>CLIProxyAPI isn't running</key>
+	<string>O CLIProxyAPI não está em execução</string>
+	<key>CLIProxyAPI refused this key.</key>
+	<string>O CLIProxyAPI recusou esta chave.</string>
+	<key>CLIProxyAPI's management API is off. Set a secret-key under management in its config file.</key>
+	<string>A API de gestão do CLIProxyAPI está desativada. Defina uma secret-key em management no arquivo de configuração.</string>
+	<key>Can't reach the proxy at %@</key>
+	<string>Não foi possível acessar o proxy em %@</string>
+	<key>Check for Updates…</key>
+	<string>Buscar Atualizações…</string>
+	<key>Check for updates automatically</key>
+	<string>Buscar atualizações automaticamente</string>
+	<key>Checking</key>
+	<string>Verificando</string>
+	<key>Checking…</key>
+	<string>Verificando…</string>
+	<key>Choose Config…</key>
+	<string>Escolher Configuração…</string>
+	<key>Click to see what's new and install it.</key>
+	<string>Clique para ver as novidades e instalar.</string>
+	<key>Command Line Tool</key>
+	<string>Ferramenta de Linha de Comando</string>
+	<key>Config file</key>
+	<string>Arquivo de configuração</string>
+	<key>Connect</key>
+	<string>Conectar</string>
+	<key>Connected</key>
+	<string>Conectado</string>
+	<key>Connection</key>
+	<string>Conexão</string>
+	<key>Continue Without a Key</key>
+	<string>Continuar Sem Chave</string>
+	<key>Cooling down</key>
+	<string>Em espera</string>
+	<key>Copied</key>
+	<string>Copiado</string>
+	<key>Copies the curl command for CLIProxyAPI's reset-quota call. Set MANAGEMENT_KEY to your management key before running it.</key>
+	<string>Copia o comando curl da chamada reset-quota do CLIProxyAPI. Defina MANAGEMENT_KEY com sua chave de gestão antes de executá-lo.</string>
+	<key>Copy</key>
+	<string>Copiar</string>
+	<key>Copy Diagnostics</key>
+	<string>Copiar Diagnóstico</string>
+	<key>Copy Fix</key>
+	<string>Copiar Correção</string>
+	<key>Couldn't install: %@</key>
+	<string>Não foi possível instalar: %@</string>
+	<key>Couldn't start: %@</key>
+	<string>Não foi possível iniciar: %@</string>
+	<key>Counted in the pool</key>
+	<string>Contada na cota</string>
+	<key>Disabled</key>
+	<string>Desativada</string>
+	<key>Disabled in the proxy</key>
+	<string>Desativada no proxy</string>
+	<key>Done</key>
+	<string>Concluído</string>
+	<key>Ebb %@ is available</key>
+	<string>Ebb %@ disponível</string>
+	<key>Ebb has no %@ pool.</key>
+	<string>O Ebb não tem cota do %@.</string>
+	<key>Ebb has no numbers yet. They appear once its menu bar item has shown for a moment.</key>
+	<string>O Ebb ainda não tem números. Eles aparecem assim que o item na barra de menus for exibido por um momento.</string>
+	<key>Ebb is not affiliated with Anthropic, OpenAI, Cognition, Google, Moonshot AI or Meta. Provider names and logos are trademarks of their owners.</key>
+	<string>O Ebb não é afiliado à Anthropic, OpenAI, Cognition, Google, Moonshot AI ou Meta. Nomes e logotipos dos provedores são marcas de seus donos.</string>
+	<key>Ebb sets each login's weight so the proxy sends new sessions where capacity is left.</key>
+	<string>O Ebb define o peso de cada login para que o proxy envie novas sessões para onde ainda há capacidade.</string>
+	<key>Ebb then reads only the Claude logins on this Mac, with routing and auto-retire off. You can add a key later in Settings → Connection.</key>
+	<string>O Ebb então lê só os logins da Claude neste Mac, com roteamento e aposentadoria automática desativados. Você pode adicionar uma chave depois em Ajustes → Conexão.</string>
+	<key>Ebb's menu bar item is hidden right now. Choose when it shows in Ebb's Settings.</key>
+	<string>O item do Ebb na barra de menus está oculto agora. Escolha quando ele aparece nos Ajustes do Ebb.</string>
+	<key>Enter the management key</key>
+	<string>Digite a chave de gestão</string>
+	<key>Failing</key>
+	<string>Falhando</string>
+	<key>Failing: %@</key>
+	<string>Falhando: %@</string>
+	<key>For CLIProxyAPI on a server or homelab. Replaces the address from the config file; the management key below is sent there, and every login, Claude's included, is read from the proxy's listing. Plain http is allowed only on a private network.</key>
+	<string>Para o CLIProxyAPI em um servidor ou homelab. Substitui o endereço do arquivo de configuração; a chave de gestão abaixo é enviada para lá, e todo login, inclusive da Claude, é lido da listagem do proxy. HTTP simples só é permitido em rede privada.</string>
+	<key>Forget Key</key>
+	<string>Esquecer Chave</string>
+	<key>From proxy · %@</key>
+	<string>Do proxy · %@</string>
+	<key>General</key>
+	<string>Geral</string>
+	<key>Get ${provider} pool status</key>
+	<string>Obter status da cota de ${provider}</string>
+	<key>Get Pool Status</key>
+	<string>Obter Status da Cota</string>
+	<key>Health only</key>
+	<string>Só status</string>
+	<key>Held back by the proxy</key>
+	<string>Retida pelo proxy</string>
+	<key>Held back by the proxy: %@</key>
+	<string>Retida pelo proxy: %@</string>
+	<key>Hide Details</key>
+	<string>Ocultar Detalhes</string>
+	<key>Hide accounts</key>
+	<string>Ocultar contas</string>
+	<key>How much of a provider's 5-hour (or daily) and weekly pools is free, and when capacity next comes back. Uses the numbers Ebb already has, without asking any provider.</key>
+	<string>Quanto das cotas de 5 horas (ou diária) e semanal de um provedor está livre, e quando a capacidade volta. Usa os números que o Ebb já tem, sem consultar nenhum provedor.</string>
+	<key>If your shell can't find ebb, add ~/.local/bin to your PATH.</key>
+	<string>Se o shell não encontrar o ebb, adicione ~/.local/bin ao PATH.</string>
+	<key>Install CLIProxyAPI</key>
+	<string>Instalar o CLIProxyAPI</string>
+	<key>Install Command Line Tool</key>
+	<string>Instalar Ferramenta de Linha de Comando</string>
+	<key>Installed at %@</key>
+	<string>Instalada em %@</string>
+	<key>Last read %@; counted as last seen</key>
+	<string>Última leitura %@; contada como vista por último</string>
+	<key>Launch at login</key>
+	<string>Abrir ao iniciar sessão</string>
+	<key>Leave empty for the pool the menu bar shows.</key>
+	<string>Deixe vazio para a cota que a barra de menus mostra.</string>
+	<key>License</key>
+	<string>Licença</string>
+	<key>Limit</key>
+	<string>Limite</string>
+	<key>Limits not available</key>
+	<string>Limites indisponíveis</string>
+	<key>Limits not available for these logins.</key>
+	<string>Limites indisponíveis para estes logins.</string>
+	<key>Logins folder</key>
+	<string>Pasta de logins</string>
+	<key>Looking for CLIProxyAPI…</key>
+	<string>Procurando o CLIProxyAPI…</string>
+	<key>Management Key</key>
+	<string>Chave de Gestão</string>
+	<key>Management URL</key>
+	<string>URL de gestão</string>
+	<key>Management key</key>
+	<string>Chave de gestão</string>
+	<key>Menu Bar</key>
+	<string>Barra de Menus</string>
+	<key>More</key>
+	<string>Mais</string>
+	<key>Most Pooled Capacity</key>
+	<string>Maior Capacidade Combinada</string>
+	<key>Needs the management key.</key>
+	<string>Precisa da chave de gestão.</string>
+	<key>Never</key>
+	<string>Nunca</string>
+	<key>Next Refill</key>
+	<string>Próxima Renovação</string>
+	<key>Next Refill Gain (%)</key>
+	<string>Ganho da Próxima Renovação (%)</string>
+	<key>Next Refill Window</key>
+	<string>Janela da Próxima Renovação</string>
+	<key>No account could be read yet.</key>
+	<string>Nenhuma conta pôde ser lida ainda.</string>
+	<key>No folder on your PATH Ebb can write to</key>
+	<string>Nenhuma pasta no PATH em que o Ebb possa gravar</string>
+	<key>No management access</key>
+	<string>Sem acesso de gestão</string>
+	<key>No proxy reading</key>
+	<string>Sem leitura do proxy</string>
+	<key>No reading</key>
+	<string>Sem leitura</string>
+	<key>No weekly limit</key>
+	<string>Sem limite semanal</string>
+	<key>Not found; using defaults</key>
+	<string>Não encontrado; usando padrões</string>
+	<key>Not installed</key>
+	<string>Não instalada</string>
+	<key>Not read yet</key>
+	<string>Ainda não lida</string>
+	<key>Not read: the proxy is on another machine</key>
+	<string>Não lida: o proxy está em outra máquina</string>
+	<key>Not set</key>
+	<string>Não definida</string>
+	<key>Notifications</key>
+	<string>Notificações</string>
+	<key>Notifications for Ebb are off in System Settings → Notifications.</key>
+	<string>As notificações do Ebb estão desativadas em Ajustes do Sistema → Notificações.</string>
+	<key>Offline · cached readings only</key>
+	<string>Off-line · só leituras em cache</string>
+	<key>Once a day, Ebb asks GitHub whether a new release is out. The request names Ebb's version and nothing about your accounts.</key>
+	<string>Uma vez por dia, o Ebb pergunta ao GitHub se há uma nova versão. A solicitação informa a versão do Ebb e nada sobre suas contas.</string>
+	<key>Open %@</key>
+	<string>Abrir %@</string>
+	<key>Open Ebb</key>
+	<string>Abrir o Ebb</string>
+	<key>Open Proxy Panel</key>
+	<string>Abrir Painel do Proxy</string>
+	<key>Opens Ebb's panel from the menu bar.</key>
+	<string>Abre o painel do Ebb na barra de menus.</string>
+	<key>Other ways to install</key>
+	<string>Outras formas de instalar</string>
+	<key>Out of Date</key>
+	<string>Desatualizado</string>
+	<key>Pace</key>
+	<string>Ritmo</string>
+	<key>Partial</key>
+	<string>Parcial</string>
+	<key>Plan size × free share × reset urgency. Weekly capacity a login hasn't used by its reset is lost, so in the last two days before that reset its weight rises steadily, up to double. The weight changes only when it moves by more than 10%.</key>
+	<string>Tamanho do plano × parcela livre × urgência da renovação. A capacidade semanal que um login não usou até a renovação se perde, então nos dois últimos dias antes dela o peso sobe gradualmente, até o dobro. O peso só muda quando varia mais de 10%.</string>
+	<key>Plans</key>
+	<string>Planos</string>
+	<key>Plans appear here once Ebb reads a pool.</key>
+	<string>Os planos aparecem aqui quando o Ebb lê uma cota.</string>
+	<key>Pool</key>
+	<string>Cota</string>
+	<key>Pool Status</key>
+	<string>Status da Cota</string>
+	<key>Pool alerts</key>
+	<string>Alertas de cota</string>
+	<key>Pool alerts: when a 5-hour pool is about to run out at the current pace, when weekly capacity comes back, and once per weekly reset when a meaningful share is about to reset unused. Provider incidents: when Claude's or OpenAI's status page reports a problem with what your pools run on.</key>
+	<string>Alertas de cota: quando uma cota de 5 horas está prestes a acabar no ritmo atual, quando a capacidade semanal volta e, uma vez por renovação semanal, quando uma parte relevante está prestes a expirar sem uso. Incidentes do provedor: quando a página de status da Claude ou da OpenAI informa um problema no que suas cotas dependem.</string>
+	<key>Prints the pools in Terminal and in Claude Code's status line, from numbers Ebb already has. Installs into /usr/local/bin if you can write to it, otherwise ~/.local/bin, so no admin password is needed.</key>
+	<string>Mostra as cotas no Terminal e na linha de status do Claude Code, a partir dos números que o Ebb já tem. Instala em /usr/local/bin se você puder gravar lá; senão em ~/.local/bin, sem precisar de senha de administrador.</string>
+	<key>Provider</key>
+	<string>Provedor</string>
+	<key>Provider incidents</key>
+	<string>Incidentes do provedor</string>
+	<key>Proxy Routing</key>
+	<string>Roteamento do Proxy</string>
+	<key>Proxy not reachable</key>
+	<string>Proxy inacessível</string>
+	<key>Quit Ebb</key>
+	<string>Encerrar Ebb</string>
+	<key>Refresh</key>
+	<string>Atualizar</string>
+	<key>Reinstall Command Line Tool</key>
+	<string>Reinstalar Ferramenta de Linha de Comando</string>
+	<key>Rejected by the proxy</key>
+	<string>Recusada pelo proxy</string>
+	<key>Remote Proxy</key>
+	<string>Proxy Remoto</string>
+	<key>Remove App</key>
+	<string>Remover App</string>
+	<key>Restore Defaults</key>
+	<string>Restaurar Padrões</string>
+	<key>Retired by Ebb: its plan isn't active</key>
+	<string>Aposentada pelo Ebb: o plano não está ativo</string>
+	<key>Retry %@</key>
+	<string>Nova tentativa %@</string>
+	<key>Routing</key>
+	<string>Roteamento</string>
+	<key>Runs brew services start %@, which also starts it at login.</key>
+	<string>Executa brew services start %@, que também o inicia ao iniciar sessão.</string>
+	<key>Save</key>
+	<string>Salvar</string>
+	<key>Settings…</key>
+	<string>Ajustes…</string>
+	<key>Share</key>
+	<string>Parc.</string>
+	<key>Share of new threads the proxy sends to each account</key>
+	<string>Parcela das novas conversas que o proxy envia a cada conta</string>
+	<key>Short Window</key>
+	<string>Janela Curta</string>
+	<key>Short Window Free (%)</key>
+	<string>Janela Curta Livre (%)</string>
+	<key>Show Config File</key>
+	<string>Mostrar Arquivo de Configuração</string>
+	<key>Show Details</key>
+	<string>Mostrar Detalhes</string>
+	<key>Show Ebb</key>
+	<string>Mostrar Ebb</string>
+	<key>Show accounts</key>
+	<string>Mostrar contas</string>
+	<key>Show in Menu Bar</key>
+	<string>Mostrar na Barra de Menus</string>
+	<key>Sign in to an account</key>
+	<string>Entrar em uma conta</string>
+	<key>Some accounts can't be read right now, so they're left out of these numbers.</key>
+	<string>Algumas contas não podem ser lidas agora, então ficam fora destes números.</string>
+	<key>Source</key>
+	<string>Código-fonte</string>
+	<key>Start</key>
+	<string>Iniciar</string>
+	<key>Start CLIProxyAPI</key>
+	<string>Iniciar o CLIProxyAPI</string>
+	<key>Starting…</key>
+	<string>Iniciando…</string>
+	<key>Startup</key>
+	<string>Inicialização</string>
+	<key>Status</key>
+	<string>Status</string>
+	<key>Step %lld</key>
+	<string>Passo %lld</string>
+	<key>Step %lld, later</key>
+	<string>Passo %lld, depois</string>
+	<key>Still held in cooldown by CLIProxyAPI, though its quota is back</key>
+	<string>Ainda retida em espera pelo CLIProxyAPI, embora a cota tenha voltado</string>
+	<key>Strategy</key>
+	<string>Estratégia</string>
+	<key>Style</key>
+	<string>Estilo</string>
+	<key>Test</key>
+	<string>Testar</string>
+	<key>The provider refused the proxy's token for its usage, so this login is left out of the pool</key>
+	<string>O provedor recusou o token do proxy para o uso, então este login fica fora da cota</string>
+	<key>The proxy keeps only a hash of this key, so Ebb asks once and stores it in a file only you can read, in Ebb's Application Support folder. A .management-key file in the logins folder is picked up on its own until you forget the key. Without the key, a proxy on this Mac still has its Claude logins read from the logins folder, with routing and auto-retire off; a proxy on another machine can't be read at all.</key>
+	<string>O proxy guarda só um hash desta chave, então o Ebb pede uma vez e a salva em um arquivo que só você pode ler, na pasta Application Support do Ebb. Um arquivo .management-key na pasta de logins é usado automaticamente até você esquecer a chave. Sem a chave, um proxy neste Mac ainda tem os logins da Claude lidos da pasta de logins, com roteamento e aposentadoria automática desativados; um proxy em outra máquina não pode ser lido.</string>
+	<key>The proxy refused the management key</key>
+	<string>O proxy recusou a chave de gestão</string>
+	<key>The secret-key you set under management in CLIProxyAPI's config file.</key>
+	<string>A secret-key que você definiu em management no arquivo de configuração do CLIProxyAPI.</string>
+	<key>These providers report no usage windows, so they never count toward a pool.</key>
+	<string>Estes provedores não informam janelas de uso, então nunca contam para uma cota.</string>
+	<key>Unknown</key>
+	<string>Desconhecida</string>
+	<key>Updates</key>
+	<string>Atualizações</string>
+	<key>Use</key>
+	<string>Usar</string>
+	<key>Use Config File</key>
+	<string>Usar Arquivo de Configuração</string>
+	<key>Use Detected</key>
+	<string>Usar Detectado</string>
+	<key>Use URL</key>
+	<string>Usar URL</string>
+	<key>Use Weighted Round Robin</key>
+	<string>Usar Round Robin Ponderado</string>
+	<key>Version</key>
+	<string>Versão</string>
+	<key>Week</key>
+	<string>Sem.</string>
+	<key>Weekly</key>
+	<string>Semanal</string>
+	<key>Weekly Free (%)</key>
+	<string>Semanal Livre (%)</string>
+	<key>Weights only take effect with weighted round robin. The proxy uses %@ now.</key>
+	<string>Os pesos só valem com round robin ponderado. O proxy usa %@ agora.</string>
+	<key>While Chosen Apps Are Running</key>
+	<string>Com os Apps Escolhidos Abertos</string>
+	<key>Why This Weight</key>
+	<string>Por Que Este Peso</string>
+	<key>Working; this provider reports no usage windows</key>
+	<string>Funcionando; este provedor não informa janelas de uso</string>
+	<key>free</key>
+	<string>livre</string>
+	<key>in %lld h</key>
+	<string>em %lld h</string>
+	<key>in %lld min</key>
+	<string>em %lld min</string>
+	<key>in next %lld h</key>
+	<string>em até %lld h</string>
+	<key>in next %lld min</key>
+	<string>em até %lld min</string>
+	<key>the status page</key>
+	<string>a página de status</string>
+	<key>weekly</key>
+	<string>semanal</string>
+</dict>
+</plist>

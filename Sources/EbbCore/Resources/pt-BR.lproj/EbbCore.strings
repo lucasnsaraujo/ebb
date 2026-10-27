@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>%@ 5-hour pool about to run out</key>
+	<string>Cota de 5 horas do %@ prestes a acabar</string>
+	<key>%@ daily pool about to run out</key>
+	<string>Cota diária do %@ prestes a acabar</string>
+	<key>%@ left</key>
+	<string>Restam %@</string>
+	<key>%@ left at this pace</key>
+	<string>%@ restantes neste ritmo</string>
+	<key>%@ weekly back +%lld%%</key>
+	<string>%1$@: +%2$lld%% na cota semanal</string>
+	<key>%@, %lld percent free</key>
+	<string>%1$@, %2$lld por cento livre</string>
+	<key>%@: %@</key>
+	<string>%1$@: %2$@</string>
+	<key>%@: %lld%% of the %@ and %lld%% of the %@ are free.</key>
+	<string>%1$@: %2$lld%% da %3$@ e %4$lld%% da %5$@ estão livres.</string>
+	<key>%@: %lld%% of this week's pool resets unused %@</key>
+	<string>%1$@: %2$lld%% da cota desta semana expira sem uso %3$@</string>
+	<key>%lld h</key>
+	<string>%lld h</string>
+	<key>%lld h %lld min</key>
+	<string>%1$lld h %2$lld min</string>
+	<key>%lld h ago</key>
+	<string>há %lld h</string>
+	<key>%lld min</key>
+	<string>%lld min</string>
+	<key>%lld min ago</key>
+	<string>há %lld min</string>
+	<key>%lld min–%lld h</key>
+	<string>%1$lld min–%2$lld h</string>
+	<key>%lld of %lld accounts ready</key>
+	<string>%1$lld de %2$lld contas prontas</string>
+	<key>%lld of %lld at weekly limit</key>
+	<string>%1$lld de %2$lld no limite semanal</string>
+	<key>%lld percent free</key>
+	<string>%lld por cento livre</string>
+	<key>%lld percent free, %lld percent coming back</key>
+	<string>%1$lld por cento livre, %2$lld por cento voltando</string>
+	<key>%lld s ago</key>
+	<string>há %lld s</string>
+	<key>%lld%% of the weekly pool is free.</key>
+	<string>%lld%% da cota semanal está livre.</string>
+	<key>%lldd</key>
+	<string>%lldd</string>
+	<key>%lldd %lldh</key>
+	<string>%1$lldd %2$lldh</string>
+	<key>%lldh</key>
+	<string>%lldh</string>
+	<key>%lldh %lldm</key>
+	<string>%1$lldh %2$lldmin</string>
+	<key>%lldm</key>
+	<string>%lldmin</string>
+	<key>%lld–%lld h</key>
+	<string>%1$lld–%2$lld h</string>
+	<key>%lld–%lld min</key>
+	<string>%1$lld–%2$lld min</string>
+	<key>2,048 requests a week (CodexBar's Kimi notes).</key>
+	<string>2.048 solicitações por semana (notas do CodexBar sobre o Kimi).</string>
+	<key>5-Hour</key>
+	<string>5 Horas</string>
+	<key>5-hour</key>
+	<string>5 horas</string>
+	<key>5-hour pool</key>
+	<string>cota de 5 horas</string>
+	<key>7,168 requests a week (CodexBar's Kimi notes).</key>
+	<string>7.168 solicitações por semana (notas do CodexBar sobre o Kimi).</string>
+	<key>About %@ left</key>
+	<string>Restam ~%@</string>
+	<key>About %@ left at this pace</key>
+	<string>Cerca de %@ restantes neste ritmo</string>
+	<key>Any plan</key>
+	<string>Qualquer plano</string>
+	<key>As of %@</key>
+	<string>Atualizado %@</string>
+	<key>Bars</key>
+	<string>Barras</string>
+	<key>Base plan.</key>
+	<string>Plano base.</string>
+	<key>Base plan: 1,024 requests a week (CodexBar's Kimi notes).</key>
+	<string>Plano base: 1.024 solicitações por semana (notas do CodexBar sobre o Kimi).</string>
+	<key>Based on %@ of activity</key>
+	<string>Com base em %@ de atividade</string>
+	<key>Based on the last %lld days</key>
+	<string>Com base nos últimos %lld dias</string>
+	<key>Based on the last day</key>
+	<string>Com base no último dia</string>
+	<key>Both</key>
+	<string>Ambos</string>
+	<key>Credits: %@</key>
+	<string>Créditos: %@</string>
+	<key>Credits: unlimited</key>
+	<string>Créditos: ilimitados</string>
+	<key>Daily</key>
+	<string>Diário</string>
+	<key>Default</key>
+	<string>Padrão</string>
+	<key>Ebb, no reading</key>
+	<string>Ebb, sem leitura</string>
+	<key>Enter the proxy's address, such as https://proxy.example.com:8317.</key>
+	<string>Digite o endereço do proxy, como https://proxy.example.com:8317.</string>
+	<key>Estimate from CLIProxyPoolWidget's defaults; OpenAI publishes no multiplier.</key>
+	<string>Estimativa a partir dos padrões do CLIProxyPoolWidget; a OpenAI não publica multiplicador.</string>
+	<key>Extra usage on</key>
+	<string>Uso extra ativado</string>
+	<key>Extra usage on, near its limit</key>
+	<string>Uso extra ativado, perto do limite</string>
+	<key>Guess: OpenAI gives Free no number.</key>
+	<string>Palpite: a OpenAI não dá número ao Free.</string>
+	<key>Guess: OpenAI gives Go no number.</key>
+	<string>Palpite: a OpenAI não dá número ao Go.</string>
+	<key>Guess: Pro 200's weight scaled by price.</key>
+	<string>Palpite: peso do Pro 200 ajustado pelo preço.</string>
+	<key>Guess: counted like the base plan.</key>
+	<string>Palpite: contado como o plano base.</string>
+	<key>Guess: free tier, no published quota.</key>
+	<string>Palpite: nível gratuito, sem cota publicada.</string>
+	<key>Guess: the provider reports no plan sizes, so every login counts the same.</key>
+	<string>Palpite: o provedor não informa o tamanho dos planos, então cada login conta igual.</string>
+	<key>Guess: twice Allegretto.</key>
+	<string>Palpite: o dobro do Allegretto.</string>
+	<key>Icon only</key>
+	<string>Só ícone</string>
+	<key>Its only account is at its weekly limit</key>
+	<string>A única conta está no limite semanal</string>
+	<key>Last read %@ ago.</key>
+	<string>Última leitura há %@.</string>
+	<key>Lasts through the next %lld hours at this pace</key>
+	<string>Dura pelas próximas %lld horas neste ritmo</string>
+	<key>Lasts until reset at this pace</key>
+	<string>Dura até a renovação neste ritmo</string>
+	<key>Leave the user name and password out of the address; the management key is the credential.</key>
+	<string>Deixe o nome de usuário e a senha fora do endereço; a chave de gestão é a credencial.</string>
+	<key>Next refill: +%lld%% of the %@ at %@.</key>
+	<string>Próxima renovação: +%1$lld%% da %2$@ às %3$@.</string>
+	<key>Next refill: +%lld%% of the %@ on %@.</key>
+	<string>Próxima renovação: +%1$lld%% da %2$@ em %3$@.</string>
+	<key>No recent reading.</key>
+	<string>Sem leitura recente.</string>
+	<key>Now ×%@ for a %@ login whose week resets in %@.</key>
+	<string>Agora ×%1$@ para um login %2$@ cuja semana renova em %3$@.</string>
+	<key>Number only</key>
+	<string>Só número</string>
+	<key>OpenAI's Codex pricing page gives this plan Plus's per-seat limits.</key>
+	<string>A página de preços do Codex da OpenAI dá a este plano os limites por usuário do Plus.</string>
+	<key>Other plans</key>
+	<string>Outros planos</string>
+	<key>Refill time</key>
+	<string>Renovação</string>
+	<key>Reported on %@. Sessions may fail or slow down until it clears.</key>
+	<string>Informado em %@. As sessões podem falhar ou ficar lentas até ser resolvido.</string>
+	<key>Ring</key>
+	<string>Anel</string>
+	<key>Runs out around %@ at this pace</key>
+	<string>Acaba por volta de %@ neste ritmo</string>
+	<key>Runs out ~%@</key>
+	<string>Acaba ~%@</string>
+	<key>Stacked</key>
+	<string>Empilhado</string>
+	<key>The address needs a host name.</key>
+	<string>O endereço precisa de um nome de host.</string>
+	<key>The tier name carries the multiplier.</key>
+	<string>O nome do nível traz o multiplicador.</string>
+	<key>Tighter of the Two</key>
+	<string>O Mais Restrito</string>
+	<key>Under 10 min</key>
+	<string>Menos de 10 min</string>
+	<key>Under 10 min left</key>
+	<string>Restam &lt; 10 min</string>
+	<key>Under 10 min left at this pace</key>
+	<string>Menos de 10 min restantes neste ritmo</string>
+	<key>Use https: over plain http the management key would cross the internet in the clear.</key>
+	<string>Use https: por http simples, a chave de gestão cruzaria a internet sem criptografia.</string>
+	<key>Weekly</key>
+	<string>Semanal</string>
+	<key>Work started before then can still use it.</key>
+	<string>Trabalho iniciado antes disso ainda pode usá-la.</string>
+	<key>daily</key>
+	<string>diário</string>
+	<key>daily pool</key>
+	<string>cota diária</string>
+	<key>degraded performance</key>
+	<string>desempenho degradado</string>
+	<key>its status page</key>
+	<string>sua página de status</string>
+	<key>major outage</key>
+	<string>interrupção total</string>
+	<key>more in %@</key>
+	<string>mais em %@</string>
+	<key>no reading</key>
+	<string>sem leitura</string>
+	<key>no share</key>
+	<string>sem parcela</string>
+	<key>no weekly limit</key>
+	<string>sem limite semanal</string>
+	<key>not updated recently</key>
+	<string>sem atualização recente</string>
+	<key>operational</key>
+	<string>operacional</string>
+	<key>partial outage</key>
+	<string>interrupção parcial</string>
+	<key>share %lld percent</key>
+	<string>parcela de %lld por cento</string>
+	<key>today %@</key>
+	<string>hoje %@</string>
+	<key>tomorrow %@</key>
+	<string>amanhã %@</string>
+	<key>under maintenance</key>
+	<string>em manutenção</string>
+	<key>weekly</key>
+	<string>semanal</string>
+	<key>weekly pool</key>
+	<string>cota semanal</string>
+</dict>
+</plist>

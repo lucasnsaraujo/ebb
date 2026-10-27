@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Check my ${applicationName} pool</key>
+	<string>Check my ${applicationName} pool</string>
+	<key>Get ${provider} pool status in ${applicationName}</key>
+	<string>Get ${provider} pool status in ${applicationName}</string>
+	<key>Get pool status in ${applicationName}</key>
+	<string>Get pool status in ${applicationName}</string>
+	<key>How much is free in ${applicationName}</key>
+	<string>How much is free in ${applicationName}</string>
+	<key>Open ${applicationName}</key>
+	<string>Open ${applicationName}</string>
+	<key>Show ${applicationName}</key>
+	<string>Show ${applicationName}</string>
+</dict>
+</plist>

@@ -9,11 +9,14 @@ let package = Package(
         .package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.10.1"),
     ],
     targets: [
-        // Each target's String Catalog compiles into its resource bundle; build.sh puts both in the app.
-        .target(name: "EbbCore", resources: [.process("Resources")]),
+        // Each String Catalog is the source of the .lproj folders beside it, made by `xcstringstool compile`
+        // and kept in step by CompiledCatalogTests. The folders are the resources: SwiftPM's older build
+        // system copies a catalog raw, so an app built with it would have no Portuguese at all.
+        .target(name: "EbbCore", exclude: ["Resources/EbbCore.xcstrings"], resources: [.process("Resources")]),
         .executableTarget(
             name: "Ebb",
             dependencies: ["EbbCore", .product(name: "Sparkle", package: "Sparkle")],
+            exclude: ["Resources/Localizable.xcstrings", "Resources/AppShortcuts.xcstrings"],
             resources: [.process("Resources")],
             // build.sh copies Sparkle.framework into Contents/Frameworks.
             linkerSettings: [.unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])]

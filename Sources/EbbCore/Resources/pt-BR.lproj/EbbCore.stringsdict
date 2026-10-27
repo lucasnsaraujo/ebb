@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>%lld accounts can't be read right now</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@value@</string>
+		<key>value</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>%lld conta não pode ser lida agora</string>
+			<key>other</key>
+			<string>%lld contas não podem ser lidas agora</string>
+		</dict>
+	</dict>
+	<key>%lld of %lld accounts at their weekly limit</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%1$#@limited@ no limite semanal</string>
+		<key>limited</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>%1$lld de %2$lld contas está</string>
+			<key>other</key>
+			<string>%1$lld de %2$lld contas estão</string>
+		</dict>
+	</dict>
+	<key>CLIProxyAPI is still holding %lld accounts in cooldown.</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@value@</string>
+		<key>value</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>O CLIProxyAPI ainda mantém %lld conta em espera.</string>
+			<key>other</key>
+			<string>O CLIProxyAPI ainda mantém %lld contas em espera.</string>
+		</dict>
+	</dict>
+</dict>
+</plist>
