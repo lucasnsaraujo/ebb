@@ -280,19 +280,23 @@ private struct RefreshButton: View {
         isSpinning = true
     }
 
+    /// Only for a refresh this button is showing: one that ended while the panel was closed has
+    /// nothing to finish. A sleep that ran out just as `reset()` cancelled the task resumes
+    /// normally, so each step checks the cancellation itself.
     private func end(failed: Bool) {
+        guard isSpinning else { return }
         ending?.cancel()
         ending = Task {
             let remaining = Self.shortestSpin - .seconds(Date.now.timeIntervalSince(spunAt))
-            guard (try? await Task.sleep(for: max(remaining, .zero))) != nil else { return }
+            guard (try? await Task.sleep(for: max(remaining, .zero))) != nil, !Task.isCancelled else { return }
             isSpinning = false
-            guard (try? await Task.sleep(for: Self.settle)) != nil else { return }
+            guard (try? await Task.sleep(for: Self.settle)) != nil, !Task.isCancelled else { return }
             if failed {
                 if reduceMotion { await blink() } else { shakes += 1 }
                 return
             }
             withAnimation(.default) { showsCheckmark = true }
-            guard (try? await Task.sleep(for: Self.checkmarkHold)) != nil else { return }
+            guard (try? await Task.sleep(for: Self.checkmarkHold)) != nil, !Task.isCancelled else { return }
             withAnimation(.default) { showsCheckmark = false }
         }
     }
@@ -301,9 +305,9 @@ private struct RefreshButton: View {
     private func blink() async {
         for _ in 0..<2 {
             withAnimation(.easeInOut(duration: 0.12)) { isBlinking = true }
-            guard (try? await Task.sleep(for: .milliseconds(140))) != nil else { return }
+            guard (try? await Task.sleep(for: .milliseconds(140))) != nil, !Task.isCancelled else { return }
             withAnimation(.easeInOut(duration: 0.12)) { isBlinking = false }
-            guard (try? await Task.sleep(for: .milliseconds(140))) != nil else { return }
+            guard (try? await Task.sleep(for: .milliseconds(140))) != nil, !Task.isCancelled else { return }
         }
     }
 
@@ -598,13 +602,19 @@ private struct GainLabel: View {
         return within.lowerBound < Self.urgentRunOut
     }
 
+    /// What the line's digits count, so a refresh rolls them the right way: the run-out's time, else the gain.
+    private var number: Double {
+        if case let .runsOut(time, _) = forecast?.outlook { return time }
+        return Double(line?.points ?? 0)
+    }
+
     var body: some View {
         if let text = runOut ?? line.map(text(for:)) ?? (notes.isEmpty ? nil : inlineNote) {
             Text(text)
                 .font(.callout)
                 .monospacedDigit()
                 // A refresh rolls the digits the way the big number's roll.
-                .contentTransition(reduceMotion ? .identity : .numericText())
+                .contentTransition(reduceMotion ? .identity : .numericText(value: number))
                 .animation(reduceMotion ? nil : .smooth, value: text)
                 .foregroundStyle(isUrgent ? AnyShapeStyle(.orange) : AnyShapeStyle(.secondary))
                 .underline(isHovering, pattern: .dot, color: .secondary)
