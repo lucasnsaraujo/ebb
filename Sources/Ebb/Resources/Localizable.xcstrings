@@ -115,6 +115,27 @@
         }
       }
     },
+    "5-Hour" : {
+      "comment" : "Settings → Plans: the column of each plan's 5-hour weight",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "5 Horas"
+          }
+        }
+      }
+    },
+    "5-hour defaults come from Anthropic's plan pages; weekly ones from measured usage." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os padrões de 5 horas vêm das páginas de planos da Anthropic; os semanais, do uso medido."
+          }
+        }
+      }
+    },
     "About" : {
       "localizations" : {
         "pt-BR" : {
@@ -441,6 +462,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Contada na cota"
+          }
+        }
+      }
+    },
+    "Daily" : {
+      "comment" : "Settings → Plans: the column of each Devin plan's daily weight",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diário"
           }
         }
       }

@@ -24,6 +24,10 @@
 	<string>+%1$lld%% %2$@</string>
 	<key>+%lld%% · %@</key>
 	<string>+%1$lld%% · %2$@</string>
+	<key>5-Hour</key>
+	<string>5 Horas</string>
+	<key>5-hour defaults come from Anthropic's plan pages; weekly ones from measured usage.</key>
+	<string>Os padrões de 5 horas vêm das páginas de planos da Anthropic; os semanais, do uso medido.</string>
 	<key>About</key>
 	<string>Sobre</string>
 	<key>Accounts</key>
@@ -90,6 +94,8 @@
 	<string>Não foi possível iniciar: %@</string>
 	<key>Counted in the pool</key>
 	<string>Contada na cota</string>
+	<key>Daily</key>
+	<string>Diário</string>
 	<key>Disabled</key>
 	<string>Desativada</string>
 	<key>Disabled in the proxy</key>

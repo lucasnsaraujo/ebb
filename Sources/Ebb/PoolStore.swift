@@ -425,7 +425,7 @@ final class PoolStore {
             return
         }
         let now = Date.now
-        var logins: [(name: String, provider: String, planWeight: Double, limits: [UsageLimit], weight: Int?)] = []
+        var logins: [(name: String, provider: String, planWeight: PlanWeight, limits: [UsageLimit], weight: Int?)] = []
         for account in accounts.values where !isDisabled(account) {
             guard case let .paid(planWeight) = plans[account.email]?.value,
                   let listed = proxyFiles[account.name],
@@ -447,7 +447,7 @@ final class PoolStore {
             let resetsAt = ResetUrgency.weeklyReset(in: login.limits)
             let urgency = ResetUrgency.factor(weeklyResetsAt: resetsAt, now: now)
             urgent.append(UrgentLogin(provider: ProviderDisplay.title(login.provider), freePercent: free, factor: urgency, weeklyResetsAt: resetsAt))
-            let target = ProxyWeight.target(planWeight: login.planWeight, freePercent: free, urgency: urgency)
+            let target = ProxyWeight.target(planWeight: login.planWeight.session, freePercent: free, urgency: urgency)
             guard ProxyWeight.needsUpdate(current: login.weight, target: target) else { continue }
             if await proxy.setWeight(target, for: login.name, endpoint) {
                 proxyFiles[login.name]?.weight = target
@@ -940,12 +940,12 @@ final class PoolStore {
         var pools: [String: [PoolAccount]] = [:]
         let claude = ClaudeProvider().proxyName
         for account in accounts.values where !isDisabled(account) {
-            guard let plan = claudePlan(account.email), plan.weight > 0, let choice = readingSource(for: account, at: now) else { continue }
+            guard let plan = claudePlan(account.email), plan.weight.isPositive, let choice = readingSource(for: account, at: now) else { continue }
             pools[claude, default: []].append(PoolAccount(id: account.email, weight: plan.weight, limits: choice.reading.limits, readAt: choice.reading.date))
         }
         for file in listedFiles where !file.isDisabled && file.hasUsageWindows {
             let weight = plan(for: file).weight
-            guard weight > 0, let choice = ReadingChoice.choose(signals: file.quota, usage: callReadings[file.name], now: now) else { continue }
+            guard weight.isPositive, let choice = ReadingChoice.choose(signals: file.quota, usage: callReadings[file.name], now: now) else { continue }
             pools[file.provider, default: []].append(PoolAccount(id: file.name, weight: weight, limits: choice.reading.limits, readAt: choice.reading.date))
         }
         return pools
@@ -958,13 +958,7 @@ final class PoolStore {
             ledger.keepAccounts(Set(group.map(\.id)), in: provider)
             let shortWindow = Providers.named(provider)?.shortWindow.horizon ?? Pool.sessionHorizon
             for account in group {
-                for (kind, limitKind, window) in [(DemandLedger.Kind.session, UsageLimit.Kind.session, shortWindow), (.weekly, .weeklyAll, 7 * 24 * 60 * 60)] {
-                    ledger.record(
-                        account.limits.first { $0.kind == limitKind },
-                        readAt: account.readAt, pool: provider, kind: kind,
-                        account: account.id, weight: account.weight, window: window
-                    )
-                }
+                ledger.record(account, pool: provider, shortWindow: shortWindow)
             }
         }
     }
@@ -985,7 +979,7 @@ final class PoolStore {
             )
             alerts += expiryNudge.alerts(
                 pool: provider, title: ProviderDisplay.title(provider), accounts: pools[provider] ?? [],
-                totalWeight: summary.totalWeight, forecast: state.forecasts[provider]?.weekly, now: now
+                totalWeight: summary.totalWeight.weekly, forecast: state.forecasts[provider]?.weekly, now: now
             )
         }
         if expiryNudge != nudgeBefore || membership != membershipBefore { saveAlertTracker() }
@@ -1084,7 +1078,7 @@ final class PoolStore {
             }
             let limits = reading?.reading.limits ?? []
             let free = { (kind: UsageLimit.Kind) in limits.first { $0.kind == kind }.map { 100 - $0.used(at: now) } }
-            let isCounted = reading?.isFresh == true && plan.weight > 0
+            let isCounted = reading?.isFresh == true && plan.weight.isPositive
             return AccountDetail(
                 email: file.displayName,
                 plan: plan,

@@ -99,8 +99,8 @@ private func listing() throws -> [ProxyAuthFile] {
             UsageLimit(kind: .session, usedPercent: 60, resetsAt: now.addingTimeInterval(-3600)),
             UsageLimit(kind: .weeklyAll, usedPercent: 95, resetsAt: now.addingTimeInterval(3600)),
         ]
-        let max20 = PoolMember(plan: .paid(weight: 20), signals: dated(limits, hoursAgo: 3), usage: nil)
-        let team = PoolMember(plan: .paid(weight: 5), signals: dated([UsageLimit(kind: .session, usedPercent: 0, resetsAt: nil)], hoursAgo: 0), usage: nil)
+        let max20 = PoolMember(plan: .paid(weight: PlanWeight(20)), signals: dated(limits, hoursAgo: 3), usage: nil)
+        let team = PoolMember(plan: .paid(weight: PlanWeight(5)), signals: dated([UsageLimit(kind: .session, usedPercent: 0, resetsAt: nil)], hoursAgo: 0), usage: nil)
         let summary = try #require(Pool.summarize(PoolMember.poolInput([max20, team], now: now), at: now))
         #expect(abs(summary.weekly.freePercent - (20 * 5 + 5 * 100) / 25.0) < 0.01)
         #expect(abs(summary.session.freePercent - 100) < 0.01)
@@ -108,8 +108,8 @@ private func listing() throws -> [ProxyAuthFile] {
     }
 
     @Test func onlyNeverReadOrUnweighedLoginsMakeThePoolPartial() throws {
-        let read = PoolMember(plan: .paid(weight: 5), signals: nil, usage: dated([UsageLimit(kind: .session, usedPercent: 50, resetsAt: nil)], hoursAgo: 30))
-        let neverRead = PoolMember(plan: .paid(weight: 5), signals: nil, usage: nil)
+        let read = PoolMember(plan: .paid(weight: PlanWeight(5)), signals: nil, usage: dated([UsageLimit(kind: .session, usedPercent: 50, resetsAt: nil)], hoursAgo: 30))
+        let neverRead = PoolMember(plan: .paid(weight: PlanWeight(5)), signals: nil, usage: nil)
         let ended = PoolMember(plan: .inactive, signals: nil, usage: nil)
         #expect(Pool.summarize(PoolMember.poolInput([read, ended], now: now), at: now)?.isPartial == false)
         #expect(Pool.summarize(PoolMember.poolInput([read, neverRead], now: now), at: now)?.isPartial == true)

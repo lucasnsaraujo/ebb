@@ -3,20 +3,20 @@ import Testing
 @testable import EbbCore
 
 @Suite struct ClaudePlanTests {
-    @Test func maxTiersWeighByTheirMultiplier() {
-        #expect(ClaudeProvider.plan(rateLimitTier: "default_claude_max_20x", subscriptionStatus: "active") == .paid(weight: 20))
-        #expect(ClaudeProvider.plan(rateLimitTier: "default_claude_max_5x", subscriptionStatus: "active") == .paid(weight: 5))
+    @Test func maxTiersWeighTheirMultiplierASessionAndTheMeasuredRatioAWeek() {
+        #expect(ClaudeProvider.plan(rateLimitTier: "default_claude_max_20x", subscriptionStatus: "active") == .paid(weight: PlanWeight(session: 20, weekly: 7)))
+        #expect(ClaudeProvider.plan(rateLimitTier: "default_claude_max_5x", subscriptionStatus: "active") == .paid(weight: PlanWeight(session: 5, weekly: 3.5)))
     }
 
     @Test func paidTierWithoutMultiplierWeighsLikePro() {
-        #expect(ClaudeProvider.plan(rateLimitTier: "default_claude_pro", subscriptionStatus: "active") == .paid(weight: 1))
+        #expect(ClaudeProvider.plan(rateLimitTier: "default_claude_pro", subscriptionStatus: "active") == .paid(weight: PlanWeight(1)))
     }
 
     @Test func anEndedSubscriptionIsInactive() {
         for status in ["canceled", "cancelled", "expired", "incomplete_expired", "inactive", "Canceled"] {
             #expect(ClaudeProvider.plan(rateLimitTier: "default_claude_max_20x", subscriptionStatus: status) == .inactive, "\(status)")
         }
-        #expect(ClaudeProvider.plan(rateLimitTier: "default_claude_max_20x", subscriptionStatus: "canceled").weight == 0)
+        #expect(ClaudeProvider.plan(rateLimitTier: "default_claude_max_20x", subscriptionStatus: "canceled").weight == .zero)
     }
 
     /// Auto-retire disables the login in the proxy, so only a status that says the plan ended may lead there.
@@ -29,13 +29,13 @@ import Testing
     @Test func activePlanWithUnreadableOrFreeTierIsUnknownAndWeighsNothing() {
         #expect(ClaudeProvider.plan(rateLimitTier: nil, subscriptionStatus: "active") == .unknown)
         #expect(ClaudeProvider.plan(rateLimitTier: "free", subscriptionStatus: "active") == .unknown)
-        #expect(ClaudeProvider.plan(rateLimitTier: nil, subscriptionStatus: "active").weight == 0)
+        #expect(ClaudeProvider.plan(rateLimitTier: nil, subscriptionStatus: "active").weight == .zero)
     }
 
     @Test func profileResponseReadsTheOrganizationPlan() throws {
         let body = #"{"account":{"email":"x"},"organization":{"rate_limit_tier":"default_claude_max_5x","subscription_status":"active"}}"#
         let profile = try #require(ClaudeProvider().parsePlan(Data(body.utf8)))
-        #expect(profile.plan == .paid(weight: 5))
+        #expect(profile.plan == .paid(weight: PlanWeight(session: 5, weekly: 3.5)))
         #expect(profile.tier == "default_claude_max_5x")
     }
 
@@ -45,18 +45,25 @@ import Testing
     }
 
     @Test func cachedPlansRoundTrip() throws {
-        for plan in [Plan.paid(weight: 20), .inactive, .unknown] {
+        for plan in [Plan.paid(weight: PlanWeight(session: 20, weekly: 7)), .inactive, .unknown] {
             let data = try JSONEncoder().encode(PlanProfile(plan: plan, tier: "tier"))
             #expect(try JSONDecoder().decode(PlanProfile.self, from: data).plan == plan)
         }
+    }
+
+    @Test func aPlanCachedBeforePlansHadAWeeklySizeStillLoads() throws {
+        let cached = #"{"status":"paid","weight":20,"tier":"default_claude_max_20x"}"#
+        let profile = try JSONDecoder().decode(PlanProfile.self, from: Data(cached.utf8))
+        #expect(profile.plan == .paid(weight: PlanWeight(20)))
+        #expect(profile.tier == "default_claude_max_20x")
     }
 
     @Test func profileCheckCadenceDependsOnState() {
         let now = Date(timeIntervalSince1970: 1_000_000)
         let hoursAgo = { (hours: Double) in now.addingTimeInterval(-hours * 3600) }
         #expect(ProfilePlan.isDue(lastCheck: nil, plan: nil, isRetired: false, now: now))
-        #expect(!ProfilePlan.isDue(lastCheck: hoursAgo(5), plan: .paid(weight: 5), isRetired: false, now: now))
-        #expect(ProfilePlan.isDue(lastCheck: hoursAgo(6), plan: .paid(weight: 5), isRetired: false, now: now))
+        #expect(!ProfilePlan.isDue(lastCheck: hoursAgo(5), plan: .paid(weight: PlanWeight(5)), isRetired: false, now: now))
+        #expect(ProfilePlan.isDue(lastCheck: hoursAgo(6), plan: .paid(weight: PlanWeight(5)), isRetired: false, now: now))
         #expect(ProfilePlan.isDue(lastCheck: hoursAgo(0.25), plan: .inactive, isRetired: false, now: now))
         #expect(!ProfilePlan.isDue(lastCheck: hoursAgo(23), plan: .inactive, isRetired: true, now: now))
         #expect(ProfilePlan.isDue(lastCheck: hoursAgo(24), plan: .inactive, isRetired: true, now: now))
@@ -73,15 +80,15 @@ import Testing
     }
 
     @Test func renewedPlanReinstatesAnAccountWeRetired() {
-        #expect(Retirement.action(isDisabled: true, isRetiredByUs: true, plan: .paid(weight: 20), inactiveStreak: 0) == .reinstate)
+        #expect(Retirement.action(isDisabled: true, isRetiredByUs: true, plan: .paid(weight: PlanWeight(20)), inactiveStreak: 0) == .reinstate)
     }
 
     @Test func accountTheUserDisabledIsNeverReinstated() {
-        #expect(Retirement.action(isDisabled: true, isRetiredByUs: false, plan: .paid(weight: 5), inactiveStreak: 0) == .keep)
+        #expect(Retirement.action(isDisabled: true, isRetiredByUs: false, plan: .paid(weight: PlanWeight(5)), inactiveStreak: 0) == .keep)
     }
 
     @Test func activeOrUnknownPlansNeverRetire() {
-        #expect(Retirement.action(isDisabled: false, isRetiredByUs: false, plan: .paid(weight: 5), inactiveStreak: 9) == .keep)
+        #expect(Retirement.action(isDisabled: false, isRetiredByUs: false, plan: .paid(weight: PlanWeight(5)), inactiveStreak: 9) == .keep)
         #expect(Retirement.action(isDisabled: false, isRetiredByUs: false, plan: .unknown, inactiveStreak: 9) == .keep)
     }
 }

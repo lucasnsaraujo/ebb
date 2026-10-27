@@ -6,13 +6,13 @@ private let fiveHours: TimeInterval = 5 * 60 * 60
 
 private func summary(
     sessionFree: Double = 100, sessionResets: [Restoration] = [], weeklyFree: Double = 100, weeklyResets: [Restoration] = [],
-    weight: Double, isPartial: Bool = false, readableShare: Double = 1, weeklyUncapped: Double = 0
+    weight: Double, weeklyWeight: Double? = nil, isPartial: Bool = false, readableShare: Double = 1, weeklyUncapped: Double = 0
 ) -> PoolSummary {
     PoolSummary(
         session: WindowSummary(freePercent: sessionFree, resets: sessionResets),
         weekly: WindowSummary(freePercent: weeklyFree, resets: weeklyResets, uncappedPercent: weeklyUncapped),
         isPartial: isPartial,
-        totalWeight: weight,
+        totalWeight: PlanWeight(session: weight, weekly: weeklyWeight ?? weight),
         readableShare: readableShare
     )
 }
@@ -41,6 +41,15 @@ private func runOut(_ forecast: Pace.Forecast?) -> TimeInterval? {
         let seconds = try #require(runOut(forecast))
         #expect(abs(seconds - 2 * 3600) < 3 * 60)
         #expect(PaceText.sentence(forecast, window: .session, short: .fiveHours, now: run.now) == "About 2 h left at this pace")
+    }
+
+    /// Session demand is kept in 5-hour weights, so the pool's weekly weight never enters it.
+    @Test func sessionDemandIsDividedByThePoolsFiveHourWeight() throws {
+        var run = LedgerRun(weights: ["a": 20])
+        run.burn(["a": 20], minutes: 45)
+
+        let forecast = try #require(session(run, summary(sessionFree: 40, weight: 20, weeklyWeight: 7)))
+        #expect(abs(try #require(runOut(forecast)) - 2 * 3600) < 3 * 60)
     }
 
     @Test func idleShowsNothingRatherThanLasting() {
@@ -235,6 +244,16 @@ private func runOut(_ forecast: Pace.Forecast?) -> TimeInterval? {
 
         run.idle(minutes: 150)
         #expect(weekly(run, summary(weeklyFree: 10, weight: 20)) != nil)
+    }
+
+    /// Weekly demand is kept in weekly weights, where a Max 20x weighs 7, not its 5-hour 20.
+    @Test func weeklyDemandIsDividedByThePoolsWeeklyWeight() throws {
+        var run = LedgerRun(weights: ["a": 7], kind: .weekly)
+        workDays(2, run: &run)
+
+        let max20 = try #require(runOut(weekly(run, summary(weeklyFree: 20, weight: 20, weeklyWeight: 7))))
+        let sameInBothWindows = try #require(runOut(weekly(run, summary(weeklyFree: 20, weight: 7))))
+        #expect(max20 == sameInBothWindows)
     }
 
     @Test func weeklyNeedsThreeSeparateSessions() {

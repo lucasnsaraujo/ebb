@@ -56,7 +56,7 @@ struct AccountDetail: Identifiable, Equatable {
     var planBadge: String? {
         if let planTitle { return planTitle }
         guard provider == ClaudeProvider().proxyName, case let .paid(weight) = plan else { return nil }
-        return weight > 1 ? "\(Int(weight))x" : "Pro"
+        return weight.session > 1 ? "\(Int(weight.session))x" : "Pro"
     }
 
     var isHealthOnly: Bool {

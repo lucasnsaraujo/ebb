@@ -16,6 +16,7 @@ public struct ExpiryNudge: Codable, Sendable, Equatable {
 
     public init() {}
 
+    /// `totalWeight` is the pool's weekly weight: what resets unused is a share of the weekly pool.
     public mutating func alerts(
         pool: String, title: String, accounts: [PoolAccount], totalWeight: Double,
         forecast: Pace.Forecast?, now: Date, timeZone: TimeZone = .current, locale: Locale = .autoupdatingCurrent
@@ -28,7 +29,7 @@ public struct ExpiryNudge: Codable, Sendable, Equatable {
             guard let limit = account.limits.first(where: { $0.kind == .weeklyAll }), let resetsAt = limit.resetsAt,
                   resetsAt > now, resetsAt.timeIntervalSince(now) <= Self.window
             else { continue }
-            unused += account.weight * (100 - limit.used(at: now)) / totalWeight
+            unused += account.weight.weekly * (100 - limit.used(at: now)) / totalWeight
             resets.append(resetsAt)
         }
         guard let firstReset = resets.min(), let lastReset = resets.max(), unused.rounded() >= Self.minimumUnused else { return [] }

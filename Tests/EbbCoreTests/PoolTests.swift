@@ -63,19 +63,19 @@ private func expectClose(_ value: Double?, _ expected: Double, sourceLocation: S
 
 @Suite struct WindowFreeTests {
     @Test func sessionFreeIsWeightedByPlanSizeAndIgnoresTheWeeklyCap() {
-        let max20 = AccountUsage(weight: 20, limits: [session(50), weekly(95)])
-        let team = AccountUsage(weight: 5, limits: [session(0)])
+        let max20 = AccountUsage(weight: PlanWeight(20), limits: [session(50), weekly(95)])
+        let team = AccountUsage(weight: PlanWeight(5), limits: [session(0)])
         expectClose(Pool.summarize([max20, team], at: now)?.session.freePercent, 60)
     }
 
     @Test func weeklyFreeCountsAccountsWithoutAWeeklyCapAsFullyFree() {
-        let max20 = AccountUsage(weight: 20, limits: [session(0), weekly(80)])
-        let team = AccountUsage(weight: 5, limits: [session(90)])
+        let max20 = AccountUsage(weight: PlanWeight(20), limits: [session(0), weekly(80)])
+        let team = AccountUsage(weight: PlanWeight(5), limits: [session(90)])
         expectClose(Pool.summarize([max20, team], at: now)?.weekly.freePercent, (20 * 20 + 5 * 100) / 25.0)
     }
 
     @Test func windowsPastTheirResetCountAsUnused() {
-        let stale = AccountUsage(weight: 5, limits: [session(80, resetsIn: -1)])
+        let stale = AccountUsage(weight: PlanWeight(5), limits: [session(80, resetsIn: -1)])
         expectClose(Pool.summarize([stale], at: now)?.session.freePercent, 100)
     }
 
@@ -90,23 +90,23 @@ private func expectClose(_ value: Double?, _ expected: Double, sourceLocation: S
 
 private func todaysAccounts() throws -> [AccountUsage] {
     [
-        AccountUsage(weight: 20, limits: try fixture("max-weekly-critical")),
-        AccountUsage(weight: 5, limits: try fixture("team-session-18")),
-        AccountUsage(weight: 5, limits: try fixture("team-session-5")),
-        AccountUsage(weight: 5, limits: try fixture("team-session-5-b")),
+        AccountUsage(weight: PlanWeight(20), limits: try fixture("max-weekly-critical")),
+        AccountUsage(weight: PlanWeight(5), limits: try fixture("team-session-18")),
+        AccountUsage(weight: PlanWeight(5), limits: try fixture("team-session-5")),
+        AccountUsage(weight: PlanWeight(5), limits: try fixture("team-session-5-b")),
     ]
 }
 
 @Suite struct UnreadableAccountTests {
     @Test func unreadableAccountsLeaveTheTotalsAndMarkThemPartial() throws {
-        let team = AccountUsage(weight: 5, limits: [session(50)])
+        let team = AccountUsage(weight: PlanWeight(5), limits: [session(50)])
         let summary = try #require(Pool.summarize([team, nil], at: now))
         expectClose(summary.session.freePercent, 50)
         #expect(summary.isPartial)
     }
 
     @Test func fullyReadPoolIsNotPartial() {
-        let team = AccountUsage(weight: 5, limits: [session(50)])
+        let team = AccountUsage(weight: PlanWeight(5), limits: [session(50)])
         #expect(Pool.summarize([team, team], at: now)?.isPartial == false)
     }
 
@@ -118,8 +118,8 @@ private func todaysAccounts() throws -> [AccountUsage] {
 @Suite struct WindowResetTests {
     @Test func sessionResetGivesBackWhatTheAccountUsedEvenUnderAnExhaustedWeek() throws {
         // Per-window math: the 5-hour bucket refills regardless of the weekly one.
-        let max20 = AccountUsage(weight: 20, limits: [session(9, resetsIn: 30), weekly(95)])
-        let team = AccountUsage(weight: 15, limits: [session(0)])
+        let max20 = AccountUsage(weight: PlanWeight(20), limits: [session(9, resetsIn: 30), weekly(95)])
+        let team = AccountUsage(weight: PlanWeight(15), limits: [session(0)])
         let resets = try #require(Pool.summarize([max20, team], at: now)).session.resets
         #expect(resets.map(\.date) == [at(30)])
         expectClose(resets.first?.gain, 20 * 9 / 35.0)
@@ -136,8 +136,8 @@ private func todaysAccounts() throws -> [AccountUsage] {
     }
 
     @Test func sessionResetsBeyondFiveHoursAreLeftOut() throws {
-        let soon = AccountUsage(weight: 5, limits: [session(40, resetsIn: 60)])
-        let odd = AccountUsage(weight: 5, limits: [session(40, resetsIn: 6 * 60)])
+        let soon = AccountUsage(weight: PlanWeight(5), limits: [session(40, resetsIn: 60)])
+        let odd = AccountUsage(weight: PlanWeight(5), limits: [session(40, resetsIn: 6 * 60)])
         let resets = try #require(Pool.summarize([soon, odd], at: now)).session.resets
         #expect(resets.map(\.date) == [at(60)])
     }
@@ -150,23 +150,23 @@ private func todaysAccounts() throws -> [AccountUsage] {
     }
 
     @Test func resetsWithinFiveMinutesMergeIntoOneEventAtTheLaterTime() throws {
-        let first = AccountUsage(weight: 5, limits: [session(40, resetsIn: 10)])
-        let second = AccountUsage(weight: 5, limits: [session(20, resetsIn: 14)])
+        let first = AccountUsage(weight: PlanWeight(5), limits: [session(40, resetsIn: 10)])
+        let second = AccountUsage(weight: PlanWeight(5), limits: [session(20, resetsIn: 14)])
         let resets = try #require(Pool.summarize([first, second], at: now)).session.resets
         #expect(resets.map(\.date) == [at(14)])
         expectClose(resets.first?.gain, 30)
     }
 
     @Test func resetsMoreThanFiveMinutesApartStaySeparate() throws {
-        let first = AccountUsage(weight: 5, limits: [session(40, resetsIn: 10)])
-        let second = AccountUsage(weight: 5, limits: [session(20, resetsIn: 16)])
+        let first = AccountUsage(weight: PlanWeight(5), limits: [session(40, resetsIn: 10)])
+        let second = AccountUsage(weight: PlanWeight(5), limits: [session(20, resetsIn: 16)])
         let resets = try #require(Pool.summarize([first, second], at: now)).session.resets
         #expect(resets.map(\.date) == [at(10), at(16)])
     }
 
     @Test func passedOrUnusedResetsAreNotUpcoming() throws {
-        let passed = AccountUsage(weight: 5, limits: [session(50, resetsIn: -5)])
-        let unused = AccountUsage(weight: 5, limits: [session(0, resetsIn: 30)])
+        let passed = AccountUsage(weight: PlanWeight(5), limits: [session(50, resetsIn: -5)])
+        let unused = AccountUsage(weight: PlanWeight(5), limits: [session(0, resetsIn: 30)])
         #expect(Pool.summarize([passed, unused], at: now)?.session.resets == [])
     }
 }
@@ -260,8 +260,8 @@ private func todaysAccounts() throws -> [AccountUsage] {
 
 @Suite struct HonestPoolTests {
     @Test func anAccountAtItsWeeklyLimitCountsNothingInTheFiveHourPool() throws {
-        let spent = AccountUsage(weight: 20, limits: [session(10), weekly(99.5)])
-        let team = AccountUsage(weight: 5, limits: [session(40)])
+        let spent = AccountUsage(weight: PlanWeight(20), limits: [session(10), weekly(99.5)])
+        let team = AccountUsage(weight: PlanWeight(5), limits: [session(40)])
         let summary = try #require(Pool.summarize([spent, team], at: now))
 
         expectClose(summary.session.freePercent, 5 * 60 / 25.0)
@@ -270,8 +270,8 @@ private func todaysAccounts() throws -> [AccountUsage] {
     }
 
     @Test func aPartlyUsedWeekStillCountsInFull() throws {
-        let busy = AccountUsage(weight: 20, limits: [session(10), weekly(98)])
-        let team = AccountUsage(weight: 5, limits: [session(40)])
+        let busy = AccountUsage(weight: PlanWeight(20), limits: [session(10), weekly(98)])
+        let team = AccountUsage(weight: PlanWeight(5), limits: [session(40)])
         let summary = try #require(Pool.summarize([busy, team], at: now))
 
         expectClose(summary.session.freePercent, (20 * 90 + 5 * 60) / 25.0)
@@ -279,16 +279,16 @@ private func todaysAccounts() throws -> [AccountUsage] {
     }
 
     @Test func aSpentWeekKeepsItsFiveHourResetOutOfTheLine() throws {
-        let spent = AccountUsage(weight: 20, limits: [session(30, resetsIn: 30), UsageLimit(kind: .weeklyAll, usedPercent: 100, resetsAt: at(3 * 24 * 60))])
-        let team = AccountUsage(weight: 5, limits: [session(40, resetsIn: 60)])
+        let spent = AccountUsage(weight: PlanWeight(20), limits: [session(30, resetsIn: 30), UsageLimit(kind: .weeklyAll, usedPercent: 100, resetsAt: at(3 * 24 * 60))])
+        let team = AccountUsage(weight: PlanWeight(5), limits: [session(40, resetsIn: 60)])
         let resets = try #require(Pool.summarize([spent, team], at: now)).session.resets
 
         #expect(resets.map(\.date) == [at(60)])
     }
 
     @Test func theWeeklyResetBringsTheFiveHourCapacityBack() throws {
-        let spent = AccountUsage(weight: 20, limits: [session(30, resetsIn: 30), UsageLimit(kind: .weeklyAll, usedPercent: 100, resetsAt: at(120))])
-        let team = AccountUsage(weight: 5, limits: [session(0)])
+        let spent = AccountUsage(weight: PlanWeight(20), limits: [session(30, resetsIn: 30), UsageLimit(kind: .weeklyAll, usedPercent: 100, resetsAt: at(120))])
+        let team = AccountUsage(weight: PlanWeight(5), limits: [session(0)])
         let resets = try #require(Pool.summarize([spent, team], at: now)).session.resets
 
         #expect(resets.map(\.date) == [at(120)])
@@ -296,8 +296,8 @@ private func todaysAccounts() throws -> [AccountUsage] {
     }
 
     @Test func unreadAccountsAreCountedForTheHoverCard() throws {
-        let read = AccountUsage(weight: 5, limits: [session(10)], readAt: at(-3))
-        let older = AccountUsage(weight: 5, limits: [session(10)], readAt: at(-7))
+        let read = AccountUsage(weight: PlanWeight(5), limits: [session(10)], readAt: at(-3))
+        let older = AccountUsage(weight: PlanWeight(5), limits: [session(10)], readAt: at(-7))
         let summary = try #require(Pool.summarize([read, older, nil], at: now))
 
         #expect(summary.unreadAccounts == 1)
@@ -328,8 +328,8 @@ private func todaysAccounts() throws -> [AccountUsage] {
 
 @Suite struct SpentWeekResetTests {
     @Test func aFiveHourResetAfterTheWeeklyOneStillComesBack() throws {
-        let spent = AccountUsage(weight: 20, limits: [session(30, resetsIn: 120), weekly(100, resetsIn: 60)])
-        let team = AccountUsage(weight: 5, limits: [session(0)])
+        let spent = AccountUsage(weight: PlanWeight(20), limits: [session(30, resetsIn: 120), weekly(100, resetsIn: 60)])
+        let team = AccountUsage(weight: PlanWeight(5), limits: [session(0)])
         let resets = try #require(Pool.summarize([spent, team], at: now)).session.resets
 
         #expect(resets.map(\.date) == [at(60), at(120)])
@@ -338,8 +338,8 @@ private func todaysAccounts() throws -> [AccountUsage] {
     }
 
     @Test func aWeeklyResetThatBringsNothingBackIsNotListed() throws {
-        let spent = AccountUsage(weight: 20, limits: [session(100, resetsIn: 180), weekly(100, resetsIn: 60)])
-        let team = AccountUsage(weight: 5, limits: [session(0)])
+        let spent = AccountUsage(weight: PlanWeight(20), limits: [session(100, resetsIn: 180), weekly(100, resetsIn: 60)])
+        let team = AccountUsage(weight: PlanWeight(5), limits: [session(0)])
         let resets = try #require(Pool.summarize([spent, team], at: now)).session.resets
 
         #expect(resets.map(\.date) == [at(180)])
@@ -347,10 +347,55 @@ private func todaysAccounts() throws -> [AccountUsage] {
     }
 }
 
+/// A Max 20x weighs four Max 5x's in the 5-hour pool but only two in the weekly one.
+@Suite struct PerWindowWeightTests {
+    private let max20 = PlanWeight(session: 20, weekly: 7)
+    private let max5 = PlanWeight(session: 5, weekly: 3.5)
+
+    @Test func eachMeterWeighsAccountsByItsOwnWindowsPlanWeight() throws {
+        let summary = try #require(Pool.summarize([
+            AccountUsage(weight: max20, limits: [session(50), weekly(80)]),
+            AccountUsage(weight: max5, limits: [session(0), weekly(20)]),
+        ], at: now))
+        expectClose(summary.session.freePercent, (20 * 50 + 5 * 100) / 25.0)
+        expectClose(summary.weekly.freePercent, (7 * 20 + 3.5 * 80) / 10.5)
+        #expect(summary.totalWeight == PlanWeight(session: 25, weekly: 10.5))
+    }
+
+    @Test func weeklyResetsAndTheUncappedShareAreInWeeklyWeights() throws {
+        let summary = try #require(Pool.summarize([
+            AccountUsage(weight: max20, limits: [session(0), weekly(60, resetsIn: 600)]),
+            AccountUsage(weight: max5, limits: [session(0)]),
+        ], at: now))
+        expectClose(summary.weekly.resets.first?.gain, 7 * 60 / 10.5)
+        expectClose(summary.weekly.uncappedPercent, 3.5 * 100 / 10.5)
+    }
+
+    @Test func aSpentWeekCountsNothingInTheFiveHourPoolInFiveHourWeights() throws {
+        let summary = try #require(Pool.summarize([
+            AccountUsage(weight: max20, limits: [session(30, resetsIn: 30), UsageLimit(kind: .weeklyAll, usedPercent: 100, resetsAt: at(120))]),
+            AccountUsage(weight: max5, limits: [session(40, resetsIn: 60)]),
+        ], at: now))
+        expectClose(summary.session.freePercent, 5 * 60 / 25.0)
+        #expect(summary.session.resets.map(\.date) == [at(60), at(120)])
+        expectClose(summary.session.resets.first?.gain, 5 * 40 / 25.0)
+        expectClose(summary.session.resets.last?.gain, 20 * 100 / 25.0)
+    }
+
+    @Test func theWeeklyBudgetPacesTheWeeklyMetersShare() throws {
+        let summary = try #require(Pool.summarize([
+            AccountUsage(weight: max20, limits: [session(0), weekly(80)]),
+            AccountUsage(weight: max5, limits: [session(0), weekly(20)]),
+        ], at: now))
+        let budget = try #require(summary.weeklyBudget)
+        expectClose(budget.freePercent, (7 * 20 + 3.5 * 80) / 10.5)
+    }
+}
+
 @Suite struct PoolNotesInlineTests {
     @Test func aPoolEmptiedByWeeklyLimitsSaysWhyUnderTheMeter() throws {
-        let spent = AccountUsage(weight: 20, limits: [session(0), weekly(100)])
-        let summary = try #require(Pool.summarize([spent, AccountUsage(weight: 5, limits: [session(100, resetsIn: 600)])], at: now))
+        let spent = AccountUsage(weight: PlanWeight(20), limits: [session(0), weekly(100)])
+        let summary = try #require(Pool.summarize([spent, AccountUsage(weight: PlanWeight(5), limits: [session(100, resetsIn: 600)])], at: now))
         #expect(PoolNotes.inline(summary) == "1 of 2 at weekly limit")
     }
 }

@@ -11,7 +11,7 @@ private func summary(read: Int, weeklyLimited: Int = 0, unread: Int = 0) -> Pool
     PoolSummary(
         session: WindowSummary(freePercent: 50, resets: []),
         weekly: WindowSummary(freePercent: 50, resets: []),
-        isPartial: unread > 0, totalWeight: Double(read), readAccounts: read, unreadAccounts: unread, weeklyLimitedAccounts: weeklyLimited
+        isPartial: unread > 0, totalWeight: PlanWeight(Double(read)), readAccounts: read, unreadAccounts: unread, weeklyLimitedAccounts: weeklyLimited
     )
 }
 
@@ -114,8 +114,8 @@ private func summary(read: Int, weeklyLimited: Int = 0, unread: Int = 0) -> Pool
     @Test func expiryNudgeSpeaksPortuguese() {
         var nudge = ExpiryNudge()
         let accounts = [
-            PoolAccount(id: "a", weight: 1, limits: [UsageLimit(kind: .weeklyAll, usedPercent: 20, resetsAt: now + 20 * 3600)], readAt: now),
-            PoolAccount(id: "b", weight: 1, limits: [UsageLimit(kind: .weeklyAll, usedPercent: 100, resetsAt: now + 20 * 3600)], readAt: now),
+            PoolAccount(id: "a", weight: PlanWeight(1), limits: [UsageLimit(kind: .weeklyAll, usedPercent: 20, resetsAt: now + 20 * 3600)], readAt: now),
+            PoolAccount(id: "b", weight: PlanWeight(1), limits: [UsageLimit(kind: .weeklyAll, usedPercent: 100, resetsAt: now + 20 * 3600)], readAt: now),
         ]
         let alerts = nudge.alerts(pool: "claude", title: "Claude", accounts: accounts, totalWeight: 2, forecast: nil, now: now, timeZone: utc, locale: brazil)
         #expect(alerts.map(\.title) == ["Claude: 40% da cota desta semana expira sem uso amanhã 15:34"])

@@ -60,7 +60,7 @@
   </tr>
 </table>
 
-[CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) (CLI Proxy API) pools several Claude Code, Codex and other coding-agent subscriptions behind one local endpoint. It spreads requests across those accounts but doesn't tell you how much is left. Ebb shows that in the menu bar: the free share of the pool's 5-hour limit and of its weekly limit, each weighted by plan size, so a Max 20x account counts four times a Max 5x one.
+[CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) (CLI Proxy API) pools several Claude Code, Codex and other coding-agent subscriptions behind one local endpoint. It spreads requests across those accounts but doesn't tell you how much is left. Ebb shows that in the menu bar: the free share of the pool's 5-hour limit and of its weekly limit, each weighted by the plan's size in that window, so a Max 20x account counts four times a Max 5x one in the 5-hour pool and about twice in the weekly one.
 
 ## What it shows
 
@@ -162,7 +162,7 @@ The management key is stored in a file only your user can read, and is never log
 
 **The numbers look stale.** CLIProxyAPI reports quota as accounts serve requests. An idle account is read from its provider's usage endpoint at a slower pace, so it can lag by a few minutes. The panel says how old each reading is.
 
-**Do the plan weights match what Anthropic and OpenAI actually give?** No one publishes exact sizes. The defaults follow the plan names (Max 20x weighs four times Max 5x); change them in Settings → Plans if your accounts behave differently.
+**Do the plan weights match what Anthropic and OpenAI actually give?** For Claude's 5-hour window, yes: [Anthropic gives](https://support.claude.com/en/articles/11049741-what-is-the-max-plan) Max 5x and Max 20x 5 and 20 times Pro's usage per session. The week doesn't scale the same way. [Readings from the usage endpoint](https://botfarm.run/blog/claude-max-100-vs-200/) put Max 20x's week at about twice Max 5x's, not four times, so in the weekly pool Claude plans weigh 1, 3.5 and 7. OpenAI and the other providers publish no weekly ratio, so their plans weigh the same in both windows. Settings → Plans lets you change either window's weight if your accounts behave differently.
 
 **How is Ebb different from Quotio or CodexBar?** [Quotio](https://github.com/nguyenphutrong/quotio) manages CLIProxyAPI itself: it runs the proxy and its accounts. [CodexBar](https://github.com/steipete/CodexBar) reads many providers directly, without a proxy. Ebb doesn't run the proxy; it shows how much of the whole pool is free and how long it lasts, and tunes the pool's routing weights.
 

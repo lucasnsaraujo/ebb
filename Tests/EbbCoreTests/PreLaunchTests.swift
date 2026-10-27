@@ -27,7 +27,7 @@ private struct SeededGenerator: RandomNumberGenerator {
             let accounts = (0..<Int.random(in: 1...6, using: &generator)).map { _ -> AccountUsage? in
                 guard Int.random(in: 0..<6, using: &generator) != 0 else { return nil }
                 let limits = [randomLimit(.session, using: &generator), randomLimit(.weeklyAll, using: &generator)].compactMap { $0 }
-                return AccountUsage(weight: [0.5, 1, 5, 20].randomElement(using: &generator)!, limits: limits, readAt: t0)
+                return AccountUsage(weight: PlanWeight([0.5, 1, 5, 20].randomElement(using: &generator)!), limits: limits, readAt: t0)
             }
             guard let summary = Pool.summarize(accounts, at: t0) else { continue }
             for window in [summary.session, summary.weekly] {
@@ -45,7 +45,7 @@ private struct SeededGenerator: RandomNumberGenerator {
             "Anthropic-Ratelimit-Unified-5h-Utilization": "1.17",
             "Anthropic-Ratelimit-Unified-7d-Utilization": "-0.2",
         ]))
-        let summary = try #require(Pool.summarize([AccountUsage(weight: 5, limits: limits, readAt: t0)], at: t0))
+        let summary = try #require(Pool.summarize([AccountUsage(weight: PlanWeight(5), limits: limits, readAt: t0)], at: t0))
         #expect(summary.session.freePercent == 0)
         #expect(summary.weekly.freePercent == 100)
     }
@@ -63,7 +63,7 @@ private struct SeededGenerator: RandomNumberGenerator {
     @Test func anAccountHeldForDaysStillCountsItsFreeQuota() throws {
         let file = try listing(retryAfterDays: 18)
         #expect(file.health.state == .coolingDown(until: t0 + 18 * 86_400))
-        let member = PoolMember(plan: .paid(weight: 5), signals: file.quota, usage: nil)
+        let member = PoolMember(plan: .paid(weight: PlanWeight(5)), signals: file.quota, usage: nil)
         let summary = try #require(Pool.summarize(PoolMember.poolInput([member], now: t0), at: t0))
         #expect(summary.session.freePercent == 90)
         #expect(summary.weekly.freePercent == 80)

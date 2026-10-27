@@ -101,36 +101,24 @@ enum Snapshot {
         }
     }
 
-    /// Settings → General, Routing and Connection, dark and light, at the Settings window's width.
+    /// Settings → General, Routing, Plans and Connection, dark and light, at the Settings window's width.
     static func writeSettings(model: AppModel, to directory: URL) {
         for scheme in [ColorScheme.dark, .light] {
-            let view = GeneralSettings(visibility: model.visibility, store: model.store, menuBarSettings: model.menuBarSettings)
-                .frame(width: 480)
-                .fixedSize(horizontal: false, vertical: true)
-                .background(Color(nsColor: .windowBackgroundColor))
-                .environment(\.colorScheme, scheme)
-                .transaction { $0.disablesAnimations = true }
-            if let data = png(of: view, width: 480, scheme: scheme) {
-                try? data.write(to: directory.appending(path: "settings-general-\(scheme == .dark ? "dark" : "light").png"))
+            func write(_ pane: some View, as name: String) {
+                let view = pane
+                    .frame(width: 480)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .background(Color(nsColor: .windowBackgroundColor))
+                    .environment(\.colorScheme, scheme)
+                    .transaction { $0.disablesAnimations = true }
+                if let data = png(of: view, width: 480, scheme: scheme) {
+                    try? data.write(to: directory.appending(path: "settings-\(name)-\(scheme == .dark ? "dark" : "light").png"))
+                }
             }
-            let routing = RoutingSettingsPane(connection: model.connection, store: model.store)
-                .frame(width: 480)
-                .fixedSize(horizontal: false, vertical: true)
-                .background(Color(nsColor: .windowBackgroundColor))
-                .environment(\.colorScheme, scheme)
-                .transaction { $0.disablesAnimations = true }
-            if let data = png(of: routing, width: 480, scheme: scheme) {
-                try? data.write(to: directory.appending(path: "settings-routing-\(scheme == .dark ? "dark" : "light").png"))
-            }
-            let connection = ConnectionSettings(connection: model.connection, store: model.store)
-                .frame(width: 480)
-                .fixedSize(horizontal: false, vertical: true)
-                .background(Color(nsColor: .windowBackgroundColor))
-                .environment(\.colorScheme, scheme)
-                .transaction { $0.disablesAnimations = true }
-            if let data = png(of: connection, width: 480, scheme: scheme) {
-                try? data.write(to: directory.appending(path: "settings-connection-\(scheme == .dark ? "dark" : "light").png"))
-            }
+            write(GeneralSettings(visibility: model.visibility, store: model.store, menuBarSettings: model.menuBarSettings), as: "general")
+            write(RoutingSettingsPane(connection: model.connection, store: model.store), as: "routing")
+            write(PlanWeightSettings(store: model.store), as: "plans")
+            write(ConnectionSettings(connection: model.connection, store: model.store), as: "connection")
         }
     }
 
@@ -219,11 +207,14 @@ enum Snapshot {
             [UsageLimit(kind: .session, usedPercent: session, resetsAt: now + sessionResetIn * 60)]
                 + (weekly.map { [UsageLimit(kind: .weeklyAll, usedPercent: $0, resetsAt: now + weeklyResetIn * 60)] } ?? [])
         }
-        let accounts: [(email: String, weight: Double, limits: [UsageLimit], share: Double)] = [
-            ("work@example.com", 20, limits(session: 64, sessionResetIn: 132, weekly: 71, weeklyResetIn: 2 * 24 * 60 + 300), 18),
-            ("research@example.com", 5, limits(session: 12, sessionResetIn: 41, weekly: nil, weeklyResetIn: 0), 34),
-            ("side@example.com", 5, limits(session: 30, sessionResetIn: 250, weekly: nil, weeklyResetIn: 0), 27),
-            ("lab@example.com", 5, limits(session: 48, sessionResetIn: 95, weekly: nil, weeklyResetIn: 0), 21),
+        func weight(_ plan: String) -> PlanWeight {
+            PlanWeights.defaultWeight(provider: ClaudeProvider().proxyName, plan: plan) ?? PlanWeight(1)
+        }
+        let accounts: [(email: String, weight: PlanWeight, limits: [UsageLimit], share: Double)] = [
+            ("work@example.com", weight("max_20x"), limits(session: 64, sessionResetIn: 132, weekly: 71, weeklyResetIn: 2 * 24 * 60 + 300), 18),
+            ("research@example.com", weight("max_5x"), limits(session: 12, sessionResetIn: 41, weekly: nil, weeklyResetIn: 0), 34),
+            ("side@example.com", weight("max_5x"), limits(session: 30, sessionResetIn: 250, weekly: nil, weeklyResetIn: 0), 27),
+            ("lab@example.com", weight("max_5x"), limits(session: 48, sessionResetIn: 95, weekly: nil, weeklyResetIn: 0), 21),
         ]
         let summary = Pool.summarize(accounts.map { AccountUsage(weight: $0.weight, limits: $0.limits) }, at: now)
         let details = accounts.map { account in

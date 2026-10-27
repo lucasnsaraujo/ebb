@@ -451,6 +451,26 @@
         }
       }
     },
+    "20 times Pro a session, about twice Max 5x a week." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "20 vezes o Pro por sessão, cerca do dobro do Max 5x por semana."
+          }
+        }
+      }
+    },
+    "5 times Pro a session, about 3.5 times a week." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "5 vezes o Pro por sessão, cerca de 3,5 vezes por semana."
+          }
+        }
+      }
+    },
     "5-Hour" : {
       "comment" : "Settings → Limit",
       "localizations" : {
@@ -1075,16 +1095,6 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "The tier name carries the multiplier." : {
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "O nome do nível traz o multiplicador."
           }
         }
       }
