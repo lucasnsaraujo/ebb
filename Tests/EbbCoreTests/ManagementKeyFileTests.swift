@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import EbbCore
 
-@Suite final class ManagementKeyFileTests {
+@Suite(.hangLimit) final class ManagementKeyFileTests {
     private let secret = "mgmt-example-0123456789"
     private let root = FileManager.default.temporaryDirectory.appending(path: "ebb-key-\(UUID().uuidString)")
 

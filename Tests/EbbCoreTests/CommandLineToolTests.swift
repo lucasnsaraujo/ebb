@@ -29,7 +29,7 @@ private final class Sandbox {
     }
 }
 
-@Suite struct CommandLineToolTests {
+@Suite(.hangLimit) struct CommandLineToolTests {
     @Test func linksIntoTheFirstWritableFolder() throws {
         let box = try Sandbox()
         try box.makeDirectory(box.system)

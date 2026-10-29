@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import EbbCore
 
-@Suite struct ExtraUsageTests {
+@Suite(.hangLimit) struct ExtraUsageTests {
     @Test func claudeWithOverageAllowedShowsExtraUsageOn() {
         let signals = ["Anthropic-Ratelimit-Unified-Overage-Status": "allowed"]
         #expect(ClaudeProvider().extraUsage(fromSignals: signals) == .claudeOverage(isNearLimit: false))

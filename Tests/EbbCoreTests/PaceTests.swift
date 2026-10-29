@@ -31,7 +31,7 @@ private func runOut(_ forecast: Pace.Forecast?) -> TimeInterval? {
     return within.lowerBound
 }
 
-@Suite struct SessionPaceTests {
+@Suite(.hangLimit) struct SessionPaceTests {
     @Test func aSteadyBurnRunsOutOnTime() throws {
         var run = LedgerRun(weights: ["a": 20])
         run.burn(["a": 20], minutes: 45)
@@ -218,7 +218,7 @@ private func runOut(_ forecast: Pace.Forecast?) -> TimeInterval? {
     }
 }
 
-@Suite struct WeeklyPaceTests {
+@Suite(.hangLimit) struct WeeklyPaceTests {
     /// Three working sessions a day at 2 points an hour, polled around the clock.
     private func workDays(_ days: Int, run: inout LedgerRun, asleepAtNight: Bool = false) {
         for _ in 0..<days {
@@ -332,7 +332,7 @@ private func runOut(_ forecast: Pace.Forecast?) -> TimeInterval? {
     }
 }
 
-@Suite struct PaceTextTests {
+@Suite(.hangLimit) struct PaceTextTests {
     @Test func durationsRoundLikeBattery() {
         #expect(PaceText.duration(9 * 60) == "Under 10 min")
         #expect(PaceText.duration(37 * 60) == "35 min")

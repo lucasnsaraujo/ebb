@@ -28,7 +28,7 @@ private let status = PoolStatus(
     ]
 )
 
-@Suite struct PoolAnswerTests {
+@Suite(.hangLimit) struct PoolAnswerTests {
     private let utc = TimeZone(identifier: "UTC")!
     private let english = Locale(identifier: "en_US")
 

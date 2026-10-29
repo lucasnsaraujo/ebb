@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import EbbCore
 
-@Suite struct ProxySetupTests {
+@Suite(.hangLimit) struct ProxySetupTests {
     private let homebrew = ProxyInstall.homebrew(prefix: "/opt/homebrew")
 
     private func setup(

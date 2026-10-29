@@ -65,7 +65,7 @@ struct LedgerRun {
     }
 }
 
-@Suite struct DemandLedgerTests {
+@Suite(.hangLimit) struct DemandLedgerTests {
     /// Session demand in 5-hour weights, weekly demand in weekly weights: a Max 20x using 10
     /// points of its 5-hour window and 2 of its week adds 20 × 10 and 7 × 2.
     @Test func eachWindowsDemandIsWeighedInItsOwnPlanWeight() {
@@ -289,7 +289,7 @@ struct LedgerRun {
     }
 }
 
-@Suite struct DemandLedgerReboundTests {
+@Suite(.hangLimit) struct DemandLedgerReboundTests {
     /// syrtis#367: a reset time that drifts by seconds is the same window, not a new one.
     @Test func aResetTimeThatDriftsBySecondsStaysOneWindow() {
         var run = LedgerRun(weights: ["a": 5], kind: .weekly)
@@ -319,7 +319,7 @@ struct LedgerRun {
     }
 }
 
-@Suite struct DemandLedgerBogusSampleTests {
+@Suite(.hangLimit) struct DemandLedgerBogusSampleTests {
     /// CodexBar#2222: one bogus near-zero sample, then the real level again.
     @Test func aBogusLowSampleIsNotARefill() {
         var run = LedgerRun(weights: ["a": 5], kind: .weekly)

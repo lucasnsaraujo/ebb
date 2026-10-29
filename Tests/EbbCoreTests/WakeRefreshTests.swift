@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import EbbCore
 
-@Suite struct WakeRefreshTests {
+@Suite(.hangLimit) struct WakeRefreshTests {
     private let now = Date(timeIntervalSince1970: 2_000_000)
 
     private func minutesAgo(_ minutes: Double) -> Date {

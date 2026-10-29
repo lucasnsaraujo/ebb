@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import EbbCore
 
-@Suite struct ProxyOutageTests {
+@Suite(.hangLimit) struct ProxyOutageTests {
     private let homebrew = ProxyInstall.homebrew(prefix: "/opt/homebrew")
     private let config = "/opt/homebrew/etc/cliproxyapi.conf"
 

@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import EbbCore
 
-@Suite struct ProxyInstallTests {
+@Suite(.hangLimit) struct ProxyInstallTests {
     private func install(existing: Set<String>) -> ProxyInstall {
         ProxyInstall.detect { existing.contains($0) }
     }
@@ -33,7 +33,7 @@ import Testing
     }
 }
 
-@Suite struct ProxyBinaryTests {
+@Suite(.hangLimit) struct ProxyBinaryTests {
     private let home = URL(fileURLWithPath: "/Users/me")
 
     private func binary(path: String?, existing: Set<String>) -> String? {

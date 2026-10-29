@@ -7,7 +7,7 @@ private func summary(_ components: [(String, String)]) -> Data {
     return Data(#"{"page": {"url": "https://status.claude.com"}, "status": {"indicator": "minor", "description": "Partially Degraded Service"}, "components": [\#(items)]}"#.utf8)
 }
 
-@Suite struct ServiceHealthTests {
+@Suite(.hangLimit) struct ServiceHealthTests {
     private let claude = StatusPage.forProvider("claude")!
     private let codex = StatusPage.forProvider("codex")!
 
@@ -40,7 +40,7 @@ private func summary(_ components: [(String, String)]) -> Data {
     }
 }
 
-@Suite struct StatusPageReadsTests {
+@Suite(.hangLimit) struct StatusPageReadsTests {
     private let now = UsageLimit.parseTimestamp("2026-10-26T19:34:00+00:00")!
 
     @Test func eachProviderIsReadAtMostEveryFiveMinutes() {
@@ -73,7 +73,7 @@ private func summary(_ components: [(String, String)]) -> Data {
     }
 }
 
-@Suite struct IncidentTrackerTests {
+@Suite(.hangLimit) struct IncidentTrackerTests {
     private let now = UsageLimit.parseTimestamp("2026-10-26T19:34:00+00:00")!
     @Test func aNewProblemAlertsOnce() {
         var tracker = IncidentTracker()

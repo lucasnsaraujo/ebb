@@ -71,7 +71,7 @@ private struct AlertRun {
 
 }
 
-@Suite struct RunOutAlertTests {
+@Suite(.hangLimit) struct RunOutAlertTests {
     @Test func aRunOutAlertFiresOncePerCycleAndRearmsAfterThePoolLasts() {
         var run = AlertRun()
 
@@ -122,7 +122,7 @@ private struct AlertRun {
     }
 }
 
-@Suite struct WeeklyBackAlertTests {
+@Suite(.hangLimit) struct WeeklyBackAlertTests {
     private let boundary = alertNow + 3600
 
     /// Account a at 80% used resets in an hour; b is fresh.
@@ -310,7 +310,7 @@ private struct AlertRun {
 }
 
 @MainActor
-@Suite struct AlertDeliveryTests {
+@Suite(.hangLimit) struct AlertDeliveryTests {
     private let alert = PoolAlert(id: "a", title: "t", body: "b")
 
     @Test func permissionIsAskedOnlyWhenTheFirstAlertIsDue() async {

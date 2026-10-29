@@ -10,7 +10,7 @@ private func account(_ id: String, weight: PlanWeight = PlanWeight(1), weeklyUse
     PoolAccount(id: id, weight: weight, limits: [UsageLimit(kind: .weeklyAll, usedPercent: weeklyUsed, resetsAt: now + hours * 3600)], readAt: now)
 }
 
-@Suite struct ExpiryNudgeTests {
+@Suite(.hangLimit) struct ExpiryNudgeTests {
     private func alerts(_ nudge: inout ExpiryNudge, _ accounts: [PoolAccount], forecast: Pace.Forecast? = nil, at date: Date = now) -> [PoolAlert] {
         nudge.alerts(pool: "claude", title: "Claude", accounts: accounts, totalWeight: accounts.reduce(0) { $0 + $1.weight.weekly }, forecast: forecast, now: date, timeZone: utc, locale: english)
     }

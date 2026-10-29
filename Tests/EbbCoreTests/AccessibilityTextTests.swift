@@ -19,7 +19,7 @@ private func label(_ style: MenuBarStyle, _ limit: MenuBarLimit = .fiveHour, _ p
     MenuBarItem(style: style, limit: limit, pool: pool, now: now, locale: locale).accessibilityLabel
 }
 
-@Suite struct MenuBarAccessibilityLabelTests {
+@Suite(.hangLimit) struct MenuBarAccessibilityLabelTests {
     @Test func theItemReadsTheWindowTheLimitPicks() {
         let reading = pool(session: 88, weekly: 45)
         #expect(label(.standard, .fiveHour, reading, locale: english) == "Ebb, 5-hour, 88 percent left")
@@ -65,7 +65,7 @@ private func label(_ style: MenuBarStyle, _ limit: MenuBarLimit = .fiveHour, _ p
     }
 }
 
-@Suite struct MeterAccessibilityTests {
+@Suite(.hangLimit) struct MeterAccessibilityTests {
     @Test func aPoolMeterSaysWhatIsFreeAndWhatComesBack() {
         #expect(AccessibilityText.meter(freePercent: 88, comingBackPercent: 0, locale: english) == "88 percent left")
         #expect(AccessibilityText.meter(freePercent: 88, comingBackPercent: 5, locale: english) == "88 percent left, 5 percent coming back")

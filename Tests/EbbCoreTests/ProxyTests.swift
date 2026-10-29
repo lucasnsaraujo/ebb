@@ -7,7 +7,7 @@ private func listing() throws -> [ProxyAuthFile] {
     return try #require(ProxyAuthFile.parseList(Data(contentsOf: url)))
 }
 
-@Suite struct QuotaSignalTests {
+@Suite(.hangLimit) struct QuotaSignalTests {
     @Test func maxAccountSignalsBecomeSessionAndWeeklyLimits() throws {
         let max = try #require(try listing().first)
         let quota = try #require(max.quota)
@@ -52,7 +52,7 @@ private func listing() throws -> [ProxyAuthFile] {
     }
 }
 
-@Suite struct ReadingChoiceTests {
+@Suite(.hangLimit) struct ReadingChoiceTests {
     private let now = Date(timeIntervalSince1970: 2_000_000)
     private func reading(_ used: Double, minutesAgo: Double) -> DatedLimits {
         DatedLimits(limits: [UsageLimit(kind: .session, usedPercent: used, resetsAt: nil)], date: now.addingTimeInterval(-minutesAgo * 60))
@@ -85,7 +85,7 @@ private func listing() throws -> [ProxyAuthFile] {
     }
 }
 
-@Suite struct PoolMemberTests {
+@Suite(.hangLimit) struct PoolMemberTests {
     private let now = Date(timeIntervalSince1970: 2_000_000)
 
     private func dated(_ limits: [UsageLimit], hoursAgo: Double) -> DatedLimits {
@@ -117,7 +117,7 @@ private func listing() throws -> [ProxyAuthFile] {
     }
 }
 
-@Suite struct ProxyWeightTests {
+@Suite(.hangLimit) struct ProxyWeightTests {
     @Test func weightIsPlanSizeTimesFreePercent() {
         #expect(ProxyWeight.target(planWeight: 20, freePercent: 4) == 80)
         #expect(ProxyWeight.target(planWeight: 5, freePercent: 95) == 475)
@@ -149,7 +149,7 @@ private func listing() throws -> [ProxyAuthFile] {
 
 /// Routing weighs what a login has left in the window that binds, both windows counted in its
 /// provider's base-plan 5-hour windows.
-@Suite struct BindingWindowTests {
+@Suite(.hangLimit) struct BindingWindowTests {
     private let now = UsageLimit.parseTimestamp("2026-10-26T19:34:00+00:00")!
     private let max5x = PlanWeight(session: 5, weekly: 3.5)
     private let max20x = PlanWeight(session: 20, weekly: 7)
@@ -227,7 +227,7 @@ private func listing() throws -> [ProxyAuthFile] {
 }
 
 /// A login's routing weight end to end: the window that binds, then reset urgency, once.
-@Suite struct LoginTargetTests {
+@Suite(.hangLimit) struct LoginTargetTests {
     private let now = UsageLimit.parseTimestamp("2026-10-26T19:34:00+00:00")!
 
     private func hours(_ value: Double) -> Date {
@@ -261,7 +261,7 @@ private func listing() throws -> [ProxyAuthFile] {
     }
 }
 
-@Suite struct ResetUrgencyTests {
+@Suite(.hangLimit) struct ResetUrgencyTests {
     private let now = UsageLimit.parseTimestamp("2026-10-26T19:34:00+00:00")!
 
     private func hours(_ value: Double) -> Date {
@@ -304,7 +304,7 @@ private func listing() throws -> [ProxyAuthFile] {
     }
 }
 
-@Suite struct ResetUrgencyExplanationTests {
+@Suite(.hangLimit) struct ResetUrgencyExplanationTests {
     private let now = UsageLimit.parseTimestamp("2026-10-26T19:34:00+00:00")!
 
     private func login(_ provider: String, factor: Double, free: Double = 50) -> UrgentLogin {
@@ -333,7 +333,7 @@ private func listing() throws -> [ProxyAuthFile] {
     }
 }
 
-@Suite struct WeeklyResetChoiceTests {
+@Suite(.hangLimit) struct WeeklyResetChoiceTests {
     private let now = UsageLimit.parseTimestamp("2026-10-26T19:34:00+00:00")!
 
     @Test func onlyTheWholeWeeklyWindowDrivesUrgency() {

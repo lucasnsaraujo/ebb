@@ -13,7 +13,7 @@ private struct SeededGenerator: RandomNumberGenerator {
     }
 }
 
-@Suite struct PoolNumbersStayOnTheGaugeTests {
+@Suite(.hangLimit) struct PoolNumbersStayOnTheGaugeTests {
     private func randomLimit(_ kind: UsageLimit.Kind, using generator: inout SeededGenerator) -> UsageLimit? {
         guard Int.random(in: 0..<5, using: &generator) != 0 else { return nil }
         let used = [-40.0, -0.01, 0, 33.3, 99.99, 100, 101, 180, 10_000].randomElement(using: &generator)!
@@ -51,7 +51,7 @@ private struct SeededGenerator: RandomNumberGenerator {
     }
 }
 
-@Suite struct StaleCooldownTests {
+@Suite(.hangLimit) struct StaleCooldownTests {
     private func listing(retryAfterDays: Double) throws -> ProxyAuthFile {
         let retry = (t0 + retryAfterDays * 86_400).formatted(.iso8601)
         let observed = t0.formatted(.iso8601)
@@ -85,7 +85,7 @@ private struct SeededGenerator: RandomNumberGenerator {
     }
 }
 
-@Suite struct RefreshTrafficTests {
+@Suite(.hangLimit) struct RefreshTrafficTests {
     /// What the store does on each trigger: one job at most, the account tried longest ago, never closer than `minimumSpacing`.
     /// Triggers come every 20 s, faster than the spacing allows, so the spacing rule has to hold them back.
     @Test func fourIdleAccountsAreReadAtMostOncePerMinuteAndOncePerFiveMinutesEach() {

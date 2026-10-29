@@ -25,7 +25,7 @@ private func startedTracker() -> MembershipTracker {
     return tracker
 }
 
-@Suite struct JoinedAlertTests {
+@Suite(.hangLimit) struct JoinedAlertTests {
     @Test func theFirstListingIsABaselineNotNews() {
         var tracker = startedTracker()
         #expect(tracker.alerts(rosters: [roster(present: ["a", "b"], counted: [("a", "Max 20x"), ("b", "Max 5x")])], locale: english).isEmpty)
@@ -114,7 +114,7 @@ private func startedTracker() -> MembershipTracker {
     }
 }
 
-@Suite struct RetirementAlertTests {
+@Suite(.hangLimit) struct RetirementAlertTests {
     private func retire(_ tracker: inout MembershipTracker, _ account: PoolRoster.Account, accepted: Bool = true, pool: String = "claude", title: String = "Claude", locale: Locale = english) -> PoolAlert? {
         tracker.alert(after: .retire, accepted: accepted, pool: pool, title: title, account: account, now: now, locale: locale)
     }

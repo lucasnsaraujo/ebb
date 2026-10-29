@@ -15,7 +15,7 @@ private func summary(read: Int, weeklyLimited: Int = 0, unread: Int = 0) -> Pool
     )
 }
 
-@Suite struct PluralTests {
+@Suite(.hangLimit) struct PluralTests {
     @Test func accountsAtTheirWeeklyLimitAgreeInBothLanguages() {
         #expect(PoolNotes.lines(summary(read: 4, weeklyLimited: 1), window: .session, now: now, locale: english) == ["1 of 4 accounts at their weekly limit"])
         #expect(PoolNotes.lines(summary(read: 4, weeklyLimited: 2), window: .session, now: now, locale: english) == ["2 of 4 accounts at their weekly limit"])
@@ -48,7 +48,7 @@ private func summary(read: Int, weeklyLimited: Int = 0, unread: Int = 0) -> Pool
     }
 }
 
-@Suite struct DurationTextTests {
+@Suite(.hangLimit) struct DurationTextTests {
     @Test func paceDurationsReadInBothLanguages() {
         #expect(PaceText.duration(130 * 60, locale: english) == "2 h 10 min")
         #expect(PaceText.duration(130 * 60, locale: brazil) == "2 h 10 min")
@@ -125,7 +125,7 @@ private func summary(read: Int, weeklyLimited: Int = 0, unread: Int = 0) -> Pool
     }
 }
 
-@Suite struct AlertTextTests {
+@Suite(.hangLimit) struct AlertTextTests {
     @Test func expiryNudgeMomentsFollowTheLocale() {
         #expect(ExpiryNudge.moment(now + 2 * 3600, now: now, timeZone: utc, locale: english) == "today 9:34\u{202F}PM")
         #expect(ExpiryNudge.moment(now + 2 * 3600, now: now, timeZone: utc, locale: brazil) == "hoje 21:34")
@@ -172,7 +172,7 @@ private func summary(read: Int, weeklyLimited: Int = 0, unread: Int = 0) -> Pool
     }
 }
 
-@Suite struct CatalogTests {
+@Suite(.hangLimit) struct CatalogTests {
     private static let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
     private static let catalogs = [
         "Sources/EbbCore/Resources/EbbCore.xcstrings",
@@ -235,7 +235,7 @@ private func summary(read: Int, weeklyLimited: Int = 0, unread: Int = 0) -> Pool
     }
 }
 
-@Suite struct ClockFormatTests {
+@Suite(.hangLimit) struct ClockFormatTests {
     /// 21:34 UTC, the same evening as `now`.
     private let evening = now + 2 * 3600
     private let weeklyRunOut = Pace.Forecast(outlook: .runsOut(in: 7200), basis: 5 * 86400)
@@ -271,7 +271,7 @@ private func summary(read: Int, weeklyLimited: Int = 0, unread: Int = 0) -> Pool
 
 /// Every literal handed to a localizing call in the sources has a catalog entry, so no string
 /// shows in English for want of one. Literals returned bare from a `switch` aren't seen.
-@Suite struct CatalogCoverageTests {
+@Suite(.hangLimit) struct CatalogCoverageTests {
     private static let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
     /// Calls whose first string literal is a key: SwiftUI's, App Intents' and `String(localized:)`
     /// in the app, `Localization.text` in EbbCore. A ternary condition may sit before the literal.
@@ -368,7 +368,7 @@ private func summary(read: Int, weeklyLimited: Int = 0, unread: Int = 0) -> Pool
 
 /// Which of the shipped languages a user's list gets, by BCP 47 tag. One Portuguese ships, so
 /// every Portuguese reads it; a language not shipped reads the development one, English.
-@Suite struct LanguageChoiceTests {
+@Suite(.hangLimit) struct LanguageChoiceTests {
     private let shipped = ["en", "pt-BR"]
 
     @Test func brazilianPortugueseReadsPortuguese() {
@@ -407,7 +407,7 @@ private func summary(read: Int, weeklyLimited: Int = 0, unread: Int = 0) -> Pool
 
 /// The .lproj folders beside each catalog are what `xcstringstool compile` makes of it, so a
 /// SwiftPM that doesn't compile catalogs itself still ships every language.
-@Suite struct CompiledCatalogTests {
+@Suite(.hangLimit) struct CompiledCatalogTests {
     private static let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
     private static let catalogs = [
         "Sources/EbbCore/Resources/EbbCore.xcstrings",
