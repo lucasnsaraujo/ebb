@@ -18,7 +18,7 @@ private func weeklyBudget(_ accounts: [AccountUsage]) -> WeeklyBudget? {
     WeeklyBudget.of(accounts, totalWeight: accounts.reduce(0) { $0 + $1.weight.weekly }, now: now)
 }
 
-@Suite struct WeeklyBudgetTests {
+@Suite(.hangLimit) struct WeeklyBudgetTests {
     /// 56 + 20 pool points free over the 2.1014 days until the big account resets: 36 a day.
     @Test func theCappedFreeShareIsSpreadOverTheDaysUntilTheSoonestMeaningfulReset() throws {
         let budget = try #require(weeklyBudget([account(weight: 20, weeklyUsed: 30), account(weight: 5, weeklyUsed: 0, resetsAt: now + 5.3 * 86400)]))

@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import EbbCore
 
-@Suite struct ProxyConfigTests {
+@Suite(.hangLimit) struct ProxyConfigTests {
     @Test func currentLayoutIsRead() {
         let yaml = """
         config-version: 8

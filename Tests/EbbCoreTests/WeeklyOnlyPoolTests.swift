@@ -14,7 +14,7 @@ private let both = [
     UsageLimit(kind: .weeklyAll, usedPercent: 60, resetsAt: now + 3 * 86_400),
 ]
 
-@Suite struct WeeklyOnlyPoolTests {
+@Suite(.hangLimit) struct WeeklyOnlyPoolTests {
     private func item(_ style: MenuBarStyle, _ accounts: [[UsageLimit]]) throws -> MenuBarItem {
         let pool = MenuBarPool(summary: try summary(accounts), shortWindow: .fiveHours, accounts: [true], lastReadAt: now, now: now)
         return MenuBarItem(style: style, limit: .fiveHour, pool: pool, now: now)

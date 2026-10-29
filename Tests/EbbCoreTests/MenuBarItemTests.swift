@@ -31,7 +31,7 @@ private func item(_ style: MenuBarStyle, _ pool: MenuBarPool) -> MenuBarItem {
 
 private typealias Run = MenuBarItem.Run
 
-@Suite struct MenuBarStyleTests {
+@Suite(.hangLimit) struct MenuBarStyleTests {
     @Test func defaultIsTheMarkThenTheFiveHourText() {
         let parts = item(.standard, pool(session: 88, weekly: 45)).parts
         #expect(parts == [.mark(percent: 88, state: .normal), .line([Run("5h 88%")])])
@@ -87,7 +87,7 @@ private typealias Run = MenuBarItem.Run
     }
 }
 
-@Suite struct MenuBarLimitTests {
+@Suite(.hangLimit) struct MenuBarLimitTests {
     @Test func fiveHourLimitShowsTheFiveHourWindowEvenWhenWeeklyIsLower() {
         let reading = pool(session: 88, weekly: 45)
         #expect(item(.standard, .fiveHour, reading).parts == [.mark(percent: 88, state: .normal), .line([Run("5h 88%")])])
@@ -119,7 +119,7 @@ private typealias Run = MenuBarItem.Run
     }
 }
 
-@Suite struct LowStateTests {
+@Suite(.hangLimit) struct LowStateTests {
     @Test func thresholdsAreFifteenAndFivePercent() {
         #expect(LowState(percent: 16) == .normal)
         #expect(LowState(percent: 15) == .low)
@@ -174,7 +174,7 @@ private typealias Run = MenuBarItem.Run
     }
 }
 
-@Suite struct RingAccountsTests {
+@Suite(.hangLimit) struct RingAccountsTests {
     @Test func dotsAppearOnlyOnRetinaScreens() {
         #expect(RingAccounts([true, false, true], backingScale: 2) == .dots([true, true, false]))
         #expect(RingAccounts([true, false, true], backingScale: 1) == .hidden)
@@ -191,7 +191,7 @@ private typealias Run = MenuBarItem.Run
     }
 }
 
-@Suite struct RefillTextTests {
+@Suite(.hangLimit) struct RefillTextTests {
     @Test func roundsUpToTheMinuteHourOrDay() {
         #expect(RefillText.until(now + 37.2 * 60, now: now) == "38m")
         #expect(RefillText.until(now + 10, now: now) == "1m")
@@ -203,7 +203,7 @@ private typealias Run = MenuBarItem.Run
 }
 
 @MainActor
-@Suite struct MenuBarSettingsTests {
+@Suite(.hangLimit) struct MenuBarSettingsTests {
     private func freshDefaults() -> UserDefaults {
         let name = "ebb.tests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: name)!

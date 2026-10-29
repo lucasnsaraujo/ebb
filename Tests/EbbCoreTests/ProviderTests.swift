@@ -17,7 +17,7 @@ private func login(_ name: String) throws -> ProxyAuthFile {
 
 private let observed = Date(timeIntervalSince1970: 1_793_040_000)
 
-@Suite struct CodexSignalTests {
+@Suite(.hangLimit) struct CodexSignalTests {
     @Test func primaryAndSecondaryWindowsBecomeSessionAndWeekly() throws {
         let codex = try login("codex-plus@example.com.json")
         #expect(codex.quota?.limits == [
@@ -85,7 +85,7 @@ private let observed = Date(timeIntervalSince1970: 1_793_040_000)
     }
 }
 
-@Suite struct DevinSignalTests {
+@Suite(.hangLimit) struct DevinSignalTests {
     @Test func remainingPercentsBecomeDailyAndWeeklyUsage() throws {
         let devin = try login("devin-dev@example.com.json")
         #expect(devin.quota?.limits == [
@@ -97,7 +97,7 @@ private let observed = Date(timeIntervalSince1970: 1_793_040_000)
     }
 }
 
-@Suite struct AntigravityTests {
+@Suite(.hangLimit) struct AntigravityTests {
     @Test func eachWindowTakesItsTightestModelGroup() throws {
         let reading = try #require(AntigravityProvider().readUsageCall(fixtureData("antigravity-quota-summary")))
         let limits = try #require(reading.limits)
@@ -126,7 +126,7 @@ private let observed = Date(timeIntervalSince1970: 1_793_040_000)
     }
 }
 
-@Suite struct KimiTests {
+@Suite(.hangLimit) struct KimiTests {
     @Test func usagesGiveTheFiveHourWindowWeeklyQuotaAndMembership() throws {
         let reading = try #require(KimiProvider().readUsageCall(fixtureData("kimi-usages")))
         let limits = try #require(reading.limits)
@@ -146,7 +146,7 @@ private let observed = Date(timeIntervalSince1970: 1_793_040_000)
     }
 }
 
-@Suite struct MetaTests {
+@Suite(.hangLimit) struct MetaTests {
     @Test func subscriptionUsageGivesBothWindows() throws {
         let reading = try #require(MetaProvider().readUsageCall(fixtureData("meta-muse-key")))
         #expect(reading.limits == [
@@ -171,7 +171,7 @@ private let observed = Date(timeIntervalSince1970: 1_793_040_000)
     }
 }
 
-@Suite struct MixedListingTests {
+@Suite(.hangLimit) struct MixedListingTests {
     @Test func everyProviderIsListedWithItsHealth() throws {
         let files = try mixedListing()
         #expect(files.map(\.provider) == ["claude", "codex", "codex", "devin", "antigravity", "kimi", "meta", "xai", "gemini"])
@@ -187,7 +187,7 @@ private let observed = Date(timeIntervalSince1970: 1_793_040_000)
     }
 }
 
-@Suite struct APICallTests {
+@Suite(.hangLimit) struct APICallTests {
     private let calling = ["codex-plus@example.com.json", "antigravity-agy@example.com.json", "kimi-moon@example.com.json", "meta-muse@example.com.json"]
 
     @Test func callsNameTheLoginAndLeaveTheTokenToTheProxy() throws {
@@ -224,7 +224,7 @@ private let observed = Date(timeIntervalSince1970: 1_793_040_000)
     }
 }
 
-@Suite struct CallOutcomeTests {
+@Suite(.hangLimit) struct CallOutcomeTests {
     private let now = Date(timeIntervalSince1970: 1_793_040_000)
 
     private func wrapped(_ status: Int, body: String = "", header: [String: [String]] = [:]) -> Data {
@@ -267,7 +267,7 @@ private let observed = Date(timeIntervalSince1970: 1_793_040_000)
     }
 }
 
-@Suite struct ProviderPoolTests {
+@Suite(.hangLimit) struct ProviderPoolTests {
     private let now = Date(timeIntervalSince1970: 1_793_040_000)
 
     private func member(weight: Double, sessionUsed: Double, weeklyUsed: Double? = nil, resetIn hours: Double = 1) -> PoolMember {
@@ -313,7 +313,7 @@ private let observed = Date(timeIntervalSince1970: 1_793_040_000)
     }
 }
 
-@Suite struct PlanWeightTests {
+@Suite(.hangLimit) struct PlanWeightTests {
     @Test func defaultsComeFromTheTable() {
         #expect(PlanWeights.defaultWeight(provider: "codex", plan: "plus") == PlanWeight(1))
         #expect(PlanWeights.defaultWeight(provider: "codex", plan: "pro") == PlanWeight(20))
@@ -398,7 +398,7 @@ private let observed = Date(timeIntervalSince1970: 1_793_040_000)
     }
 }
 
-@Suite struct ClaudeThroughTheProxyTests {
+@Suite(.hangLimit) struct ClaudeThroughTheProxyTests {
     private let profile = #"{"organization":{"rate_limit_tier":"default_claude_max_20x","subscription_status":"active"}}"#
 
     private func claudeLogin() throws -> ProxyAuthFile {

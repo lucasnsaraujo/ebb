@@ -3,7 +3,7 @@ import Testing
 @testable import EbbCore
 
 @MainActor
-@Suite struct DiagnosticsTests {
+@Suite(.hangLimit) struct DiagnosticsTests {
     private let now = Date(timeIntervalSince1970: 1_793_040_000)
     private let email = "jane.doe@gmail.com"
     private let token = "sk-ant-oat01-AbCdEfGhIjKlMnOpQrStUvWxYz0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdef"

@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import EbbCore
 
-@Suite struct ManagementLockoutTests {
+@Suite(.hangLimit) struct ManagementLockoutTests {
     private let t0 = Date(timeIntervalSince1970: 1_793_040_000)
     private let saved = ManagementKey("mgmt-old-0123456789")!
     private let replacement = ManagementKey("mgmt-new-9876543210")!

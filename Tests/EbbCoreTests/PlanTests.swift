@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import EbbCore
 
-@Suite struct ClaudePlanTests {
+@Suite(.hangLimit) struct ClaudePlanTests {
     @Test func maxTiersWeighTheirMultiplierASessionAndTheMeasuredRatioAWeek() {
         #expect(ClaudeProvider.plan(rateLimitTier: "default_claude_max_20x", subscriptionStatus: "active") == .paid(weight: PlanWeight(session: 20, weekly: 7)))
         #expect(ClaudeProvider.plan(rateLimitTier: "default_claude_max_5x", subscriptionStatus: "active") == .paid(weight: PlanWeight(session: 5, weekly: 3.5)))
@@ -70,7 +70,7 @@ import Testing
     }
 }
 
-@Suite struct RetirementTests {
+@Suite(.hangLimit) struct RetirementTests {
     @Test func confirmedInactivePlanRetiresAnEnabledAccount() {
         #expect(Retirement.action(isDisabled: false, isRetiredByUs: false, plan: .inactive, inactiveStreak: 2) == .retire)
     }
@@ -93,7 +93,7 @@ import Testing
     }
 }
 
-@Suite struct RetiredAccountsTests {
+@Suite(.hangLimit) struct RetiredAccountsTests {
     private let list = RetiredAccounts(
         file: FileManager.default.temporaryDirectory.appending(path: "ebb-tests-\(UUID().uuidString)/retired.json")
     )

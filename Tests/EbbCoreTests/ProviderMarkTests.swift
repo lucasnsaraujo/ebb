@@ -2,7 +2,7 @@ import CoreGraphics
 import Testing
 @testable import EbbCore
 
-@Suite struct ProviderMarkTests {
+@Suite(.hangLimit) struct ProviderMarkTests {
     @Test func everyPooledProviderHasALogoOrALetterTile() {
         for provider in Providers.all {
             #expect(ProviderMark.forProvider(named: provider.proxyName) != nil, "\(provider.proxyName)")
@@ -31,7 +31,7 @@ import Testing
     }
 }
 
-@Suite struct SVGPathTests {
+@Suite(.hangLimit) struct SVGPathTests {
     @Test func readsRelativeCommandsAndPackedNumbers() throws {
         // A 2 × 2 square drawn with relative moves, then a curve whose numbers run together.
         let square = try #require(SVGPath.cgPath("m1 1h2v2h-2z"))

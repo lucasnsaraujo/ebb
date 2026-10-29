@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import EbbCore
 
-@Suite struct ManagementURLTests {
+@Suite(.hangLimit) struct ManagementURLTests {
     @Test func httpsIsAlwaysFine() {
         #expect(ManagementURL.validate("https://proxy.example.com:8317") == .ok(URL(string: "https://proxy.example.com:8317")!))
         #expect(ManagementURL.validate("https://203.0.113.9") == .ok(URL(string: "https://203.0.113.9")!))

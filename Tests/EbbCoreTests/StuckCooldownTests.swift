@@ -11,7 +11,7 @@ private func usage(session: Double, weekly: Double, readAt: Date = now - 60) -> 
     ], date: readAt)
 }
 
-@Suite struct StuckCooldownTests {
+@Suite(.hangLimit) struct StuckCooldownTests {
     private let heldForDays = AccountHealth(state: .coolingDown(until: now + 18 * 86400))
     /// The proxy's last response, the one that started the cooldown.
     private let signalsAt = now - 3600

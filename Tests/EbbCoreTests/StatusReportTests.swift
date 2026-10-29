@@ -31,7 +31,7 @@ private let pools = PoolStatus(
     ]
 )
 
-@Suite struct StatuslineTests {
+@Suite(.hangLimit) struct StatuslineTests {
     @Test func showsTheMenuBarPoolsTwoWindowsSideBySide() {
         #expect(StatusReport.statusline(pools, provider: nil, now: at(1)) == "5h 15% · W 63%")
     }
@@ -66,7 +66,7 @@ private let pools = PoolStatus(
     }
 }
 
-@Suite struct StatusTextTests {
+@Suite(.hangLimit) struct StatusTextTests {
     private let english = Locale(identifier: "en_US")
     private let utc = TimeZone(identifier: "UTC")!
 
@@ -103,7 +103,7 @@ private let pools = PoolStatus(
     }
 }
 
-@Suite struct StatusJSONTests {
+@Suite(.hangLimit) struct StatusJSONTests {
     private func object(_ status: PoolStatus, now: Date) throws -> [String: Any] {
         try #require(JSONSerialization.jsonObject(with: StatusReport.json(status, now: now)) as? [String: Any])
     }

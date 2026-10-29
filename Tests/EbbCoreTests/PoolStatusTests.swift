@@ -20,7 +20,7 @@ private func temporaryFile() -> URL {
     FileManager.default.temporaryDirectory.appending(path: "ebb-tests-\(UUID().uuidString)/status.json")
 }
 
-@Suite struct PoolStatusFileTests {
+@Suite(.hangLimit) struct PoolStatusFileTests {
     @Test func whatTheAppWritesTheCommandReadsBack() throws {
         let file = temporaryFile()
         let status = PoolStatus(updatedAt: now, menuBarProvider: "claude", providers: [claude(session: window(88, resets: [(30, 12)]))])
@@ -37,7 +37,7 @@ private func temporaryFile() -> URL {
     }
 }
 
-@Suite struct WindowStatusTests {
+@Suite(.hangLimit) struct WindowStatusTests {
     @Test func resetsThatPassedSinceTheReadingAddTheirCapacityBack() {
         let status = window(60, resets: [(10, 15), (40, 20)])
         #expect(status.free(at: at(5)) == 60)
@@ -61,7 +61,7 @@ private func temporaryFile() -> URL {
     }
 }
 
-@Suite struct PoolStatusFromSummariesTests {
+@Suite(.hangLimit) struct PoolStatusFromSummariesTests {
     private func summary(session: Double, weekly: Double, isPartial: Bool = false) -> PoolSummary {
         PoolSummary(
             session: WindowSummary(freePercent: session, resets: [Restoration(date: at(30), gain: 10)]),
@@ -94,7 +94,7 @@ private func temporaryFile() -> URL {
     }
 }
 
-@Suite struct PoolStatusWriteTests {
+@Suite(.hangLimit) struct PoolStatusWriteTests {
     private func status(at date: Date, session: Double = 88) -> PoolStatus {
         PoolStatus(updatedAt: date, menuBarProvider: "claude", providers: [claude(session: window(session))])
     }

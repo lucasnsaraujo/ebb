@@ -25,7 +25,7 @@ private func expectClose(_ value: Double?, _ expected: Double, sourceLocation: S
     #expect(value.map { abs($0 - expected) < 0.01 } == true, "\(String(describing: value)) ≠ \(expected)", sourceLocation: sourceLocation)
 }
 
-@Suite struct DecodingTests {
+@Suite(.hangLimit) struct DecodingTests {
     @Test func cachedReadingsDecodeWithMicrosecondTimestamps() throws {
         let limits = try fixture("max-weekly-critical")
         #expect(limits.map(\.kind) == [.session, .weeklyAll, .weeklyScoped])
@@ -49,7 +49,7 @@ private func expectClose(_ value: Double?, _ expected: Double, sourceLocation: S
     }
 }
 
-@Suite struct AccountFreeTests {
+@Suite(.hangLimit) struct AccountFreeTests {
     @Test func accountFreeIsBoundByItsTightestWindow() {
         expectClose(Pool.effectiveFree([session(9), weekly(95)], at: now), 5)
         expectClose(Pool.effectiveFree([session(60), weekly(20)], at: now), 40)
@@ -61,7 +61,7 @@ private func expectClose(_ value: Double?, _ expected: Double, sourceLocation: S
     }
 }
 
-@Suite struct WindowFreeTests {
+@Suite(.hangLimit) struct WindowFreeTests {
     @Test func sessionFreeIsWeightedByPlanSizeAndIgnoresTheWeeklyCap() {
         let max20 = AccountUsage(weight: PlanWeight(20), limits: [session(50), weekly(95)])
         let team = AccountUsage(weight: PlanWeight(5), limits: [session(0)])
@@ -97,7 +97,7 @@ private func todaysAccounts() throws -> [AccountUsage] {
     ]
 }
 
-@Suite struct UnreadableAccountTests {
+@Suite(.hangLimit) struct UnreadableAccountTests {
     @Test func unreadableAccountsLeaveTheTotalsAndMarkThemPartial() throws {
         let team = AccountUsage(weight: PlanWeight(5), limits: [session(50)])
         let summary = try #require(Pool.summarize([team, nil], at: now))
@@ -115,7 +115,7 @@ private func todaysAccounts() throws -> [AccountUsage] {
     }
 }
 
-@Suite struct WindowResetTests {
+@Suite(.hangLimit) struct WindowResetTests {
     @Test func sessionResetGivesBackWhatTheAccountUsedEvenUnderAnExhaustedWeek() throws {
         // Per-window math: the 5-hour bucket refills regardless of the weekly one.
         let max20 = AccountUsage(weight: PlanWeight(20), limits: [session(9, resetsIn: 30), weekly(95)])
@@ -171,7 +171,7 @@ private func todaysAccounts() throws -> [AccountUsage] {
     }
 }
 
-@Suite struct GainLineTests {
+@Suite(.hangLimit) struct GainLineTests {
     private func resets(_ gains: [Double]) -> [Restoration] {
         gains.enumerated().map { Restoration(date: at(Double($0.offset + 1) * 20), gain: $0.element) }
     }
@@ -217,7 +217,7 @@ private func todaysAccounts() throws -> [AccountUsage] {
     }
 }
 
-@Suite struct BackoffTests {
+@Suite(.hangLimit) struct BackoffTests {
     @Test func backoffDoublesFromTwoMinutesUpToThirty() {
         #expect((1...6).map { Backoff.delay(afterFailures: $0, retryAfter: nil) } == [120, 240, 480, 960, 1800, 1800])
     }
@@ -230,7 +230,7 @@ private func todaysAccounts() throws -> [AccountUsage] {
     }
 }
 
-@Suite struct RefreshPlanTests {
+@Suite(.hangLimit) struct RefreshPlanTests {
     @Test func picksTheAccountTriedLongestAgo() {
         let states = [
             "a": FetchState(lastAttempt: at(-2)),
@@ -258,7 +258,7 @@ private func todaysAccounts() throws -> [AccountUsage] {
     }
 }
 
-@Suite struct HonestPoolTests {
+@Suite(.hangLimit) struct HonestPoolTests {
     @Test func anAccountAtItsWeeklyLimitCountsNothingInTheFiveHourPool() throws {
         let spent = AccountUsage(weight: PlanWeight(20), limits: [session(10), weekly(99.5)])
         let team = AccountUsage(weight: PlanWeight(5), limits: [session(40)])
@@ -357,7 +357,7 @@ private func todaysAccounts() throws -> [AccountUsage] {
     }
 }
 
-@Suite struct PoolNotesTests {
+@Suite(.hangLimit) struct PoolNotesTests {
     private func summary(read: Int, unread: Int = 0, weeklyLimited: Int = 0, oldest: Date? = nil) -> PoolSummary {
         PoolSummary(
             session: WindowSummary(freePercent: 50, resets: []), weekly: WindowSummary(freePercent: 50, resets: []),
@@ -403,7 +403,7 @@ private func todaysAccounts() throws -> [AccountUsage] {
     }
 }
 
-@Suite struct SpentWeekResetTests {
+@Suite(.hangLimit) struct SpentWeekResetTests {
     @Test func aFiveHourResetAfterTheWeeklyOneStillComesBack() throws {
         let spent = AccountUsage(weight: PlanWeight(20), limits: [session(30, resetsIn: 120), weekly(100, resetsIn: 60)])
         let team = AccountUsage(weight: PlanWeight(5), limits: [session(0)])
@@ -425,7 +425,7 @@ private func todaysAccounts() throws -> [AccountUsage] {
 }
 
 /// A Max 20x weighs four Max 5x's in the 5-hour pool but only two in the weekly one.
-@Suite struct PerWindowWeightTests {
+@Suite(.hangLimit) struct PerWindowWeightTests {
     private let max20 = PlanWeight(session: 20, weekly: 7)
     private let max5 = PlanWeight(session: 5, weekly: 3.5)
 
@@ -469,7 +469,7 @@ private func todaysAccounts() throws -> [AccountUsage] {
     }
 }
 
-@Suite struct PoolNotesInlineTests {
+@Suite(.hangLimit) struct PoolNotesInlineTests {
     @Test func aPoolEmptiedByWeeklyLimitsSaysWhyUnderTheMeter() throws {
         let spent = AccountUsage(weight: PlanWeight(20), limits: [session(0), weekly(100)])
         let summary = try #require(Pool.summarize([spent, AccountUsage(weight: PlanWeight(5), limits: [session(100, resetsIn: 600)])], at: now))

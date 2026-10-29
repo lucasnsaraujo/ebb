@@ -45,7 +45,7 @@ private final class Sandbox {
     }
 }
 
-@Suite struct EbbDataTests {
+@Suite(.hangLimit) struct EbbDataTests {
     @Test func removesEverythingEbbWritesAndNothingElse() throws {
         let box = try Sandbox()
         try box.write("port: 8317", at: box.home.appending(path: ".cli-proxy-api/config.yaml"))
