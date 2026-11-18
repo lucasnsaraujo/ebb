@@ -1,0 +1,23 @@
+{
+  "models": {
+    "claude-opus-4-6-thinking": {
+      "displayName": "Claude Opus 4.6 (Thinking)",
+      "quotaInfo": { "remainingFraction": 0.3, "resetTime": "2026-11-18T07:16:34Z" }
+    },
+    "gemini-3-flash": {
+      "displayName": "Gemini 3 Flash",
+      "quotaInfo": { "remainingFraction": 0.9, "resetTime": "2026-11-18T08:00:00Z" }
+    },
+    "gemini-3.8-flash-tiered": {
+      "quotaInfo": { "remainingFraction": 0.6, "resetTime": "2026-11-18T08:00:00Z" }
+    },
+    "gemini-2.5-flash-lite": {
+      "displayName": "Gemini 2.5 Flash Lite",
+      "quotaInfo": { "remainingFraction": 0.1, "resetTime": "2026-11-18T06:00:00Z" }
+    },
+    "tab_flash_lite_preview": {
+      "quotaInfo": { "remainingFraction": 1 }
+    }
+  },
+  "defaultAgentModelId": "gemini-3-flash"
+}

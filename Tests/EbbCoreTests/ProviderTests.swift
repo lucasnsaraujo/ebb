@@ -124,6 +124,61 @@ private let observed = Date(timeIntervalSince1970: 1_793_040_000)
         let body = #"{"groups":[{"buckets":[{"bucketId":"gemini-5h","window":"5h"}]}]}"#
         #expect(AntigravityProvider().readUsageCall(Data(body.utf8))?.limits == nil)
     }
+
+    @Test func availableModelsGiveTheFiveHourWindowOfTheTightestHeadlineModel() throws {
+        let limits = try #require(AntigravityProvider().readUsageCall(fixtureData("antigravity-available-models"))?.limits)
+        #expect(limits.map(\.kind) == [.session])
+        #expect(abs(limits[0].usedPercent - 70) < 0.001)
+        #expect(limits[0].resetsAt == UsageLimit.parseTimestamp("2026-11-18T07:16:34Z"))
+    }
+
+    @Test func aSpentModelWithoutItsFractionReadsAsFullyUsed() throws {
+        let body = #"""
+        {"models":{
+          "gemini-3-flash":{"quotaInfo":{"remainingFraction":0.8,"resetTime":"2026-11-18T08:00:00Z"}},
+          "claude-opus-4-6-thinking":{"quotaInfo":{"resetTime":"2026-11-18T07:00:00Z"}}
+        }}
+        """#
+        let limits = try #require(AntigravityProvider().readUsageCall(Data(body.utf8))?.limits)
+        #expect(limits == [UsageLimit(kind: .session, usedPercent: 100, resetsAt: UsageLimit.parseTimestamp("2026-11-18T07:00:00Z"))])
+    }
+
+    /// A renamed lineup still reads, from whatever models carry a window.
+    @Test func withoutHeadlineModelsAnyModelWithAWindowCounts() throws {
+        let body = #"""
+        {"models":{
+          "gemini-9-pro":{"quotaInfo":{"remainingFraction":0.25,"resetTime":"2026-11-18T08:00:00Z"}},
+          "tab_preview":{"quotaInfo":{"remainingFraction":0}}
+        }}
+        """#
+        let limits = try #require(AntigravityProvider().readUsageCall(Data(body.utf8))?.limits)
+        #expect(limits == [UsageLimit(kind: .session, usedPercent: 75, resetsAt: UsageLimit.parseTimestamp("2026-11-18T08:00:00Z"))])
+    }
+
+    /// A new Claude model on the account mustn't hide that Claude is spent while Gemini's headline still matches.
+    @Test func aRenamedModelFamilyStillCounts() throws {
+        let body = #"""
+        {"models":{
+          "gemini-3-flash":{"quotaInfo":{"remainingFraction":0.8,"resetTime":"2026-11-18T08:00:00Z"}},
+          "claude-opus-4-7-thinking":{"quotaInfo":{"resetTime":"2026-11-18T07:00:00Z"}}
+        }}
+        """#
+        let limits = try #require(AntigravityProvider().readUsageCall(Data(body.utf8))?.limits)
+        #expect(limits == [UsageLimit(kind: .session, usedPercent: 100, resetsAt: UsageLimit.parseTimestamp("2026-11-18T07:00:00Z"))])
+    }
+
+    @Test func modelsWithoutAnyWindowHaveNoLimits() throws {
+        let body = #"{"models":{"tab_preview":{"quotaInfo":{"remainingFraction":1}},"chat_1":{}}}"#
+        #expect(AntigravityProvider().readUsageCall(Data(body.utf8))?.limits == nil)
+    }
+
+    /// `retrieveUserQuotaSummary` answers 403 "Verify your account" for consumer logins, and
+    /// `fetchAvailableModels` refuses any client but Antigravity's own.
+    @Test func readsTheModelListAsTheAntigravityClient() throws {
+        let call = try #require(AntigravityProvider().usageCall(for: login("antigravity-agy@example.com.json")))
+        #expect(call.url.absoluteString == "https://cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels")
+        #expect(call.header["User-Agent"]?.hasPrefix("antigravity/") == true)
+    }
 }
 
 @Suite(.hangLimit) struct KimiTests {

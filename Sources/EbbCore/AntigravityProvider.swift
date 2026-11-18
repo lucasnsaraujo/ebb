@@ -1,9 +1,14 @@
 import Foundation
 
-/// Google Antigravity. Read from `retrieveUserQuotaSummary`, which groups Gemini models and
-/// Claude + GPT models, each with a 5-hour and a weekly bucket of *remaining* fractions.
+/// Google Antigravity. Read from `fetchAvailableModels`, which gives each model a 5-hour window
+/// as a *remaining* fraction. `retrieveUserQuotaSummary`, with model groups and a weekly bucket,
+/// answers 403 "Verify your account" for consumer logins, so its shape is only still understood.
 public struct AntigravityProvider: Provider {
-    static let summaryEndpoint = URL(string: "https://daily-cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary")!
+    static let modelsEndpoint = URL(string: "https://cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels")!
+    /// Google refuses the model list to any other client.
+    static let userAgent = "antigravity/1.15.8 darwin/arm64"
+    /// The models the pool is used for; the rest of their family shares these windows or doesn't matter.
+    static let headlineModels: Set = ["claude-opus-4-6-thinking", "gemini-3-flash", "gemini-3.8-flash-tiered"]
 
     public init() {}
 
@@ -17,8 +22,8 @@ public struct AntigravityProvider: Provider {
         return ProxyAPICall(
             authIndex: authIndex,
             method: "POST",
-            url: Self.summaryEndpoint,
-            header: ["Authorization": ProxyAPICall.bearer, "Content-Type": "application/json", "User-Agent": "Ebb"],
+            url: Self.modelsEndpoint,
+            header: ["Authorization": ProxyAPICall.bearer, "Content-Type": "application/json", "User-Agent": Self.userAgent],
             data: data ?? "{}"
         )
     }
@@ -27,6 +32,7 @@ public struct AntigravityProvider: Provider {
     /// either model family is. Disabled buckets, and buckets with neither a fraction nor a reset, are skipped.
     public func readUsageCall(_ body: Data) -> UsageCallReading? {
         guard let root = Signals.object(body) else { return nil }
+        if let models = root["models"] as? [String: Any] { return Self.readModels(models) }
         let payload = (root["response"] as? [String: Any]) ?? (root["summary"] as? [String: Any]) ?? root
         guard let groups = payload["groups"] as? [[String: Any]] else { return nil }
         var tightest: [UsageLimit.Kind: UsageLimit] = [:]
@@ -37,6 +43,32 @@ public struct AntigravityProvider: Provider {
         }
         let limits = [tightest[.session], tightest[.weeklyAll]].compactMap { $0 }
         return UsageCallReading(limits: limits.isEmpty ? nil : limits, planName: nil)
+    }
+
+    /// The model families with quotas of their own, by id prefix.
+    static let families = ["claude-", "gemini-"]
+
+    /// The 5-hour window of the tightest model the pool is used for: a spent family leaves the
+    /// account out of that capacity. Each family is read from its headline models, or from all its
+    /// models once a new lineup renames them; with no family at all, from any model with a window.
+    private static func readModels(_ models: [String: Any]) -> UsageCallReading {
+        let windows = models.compactMapValues { model -> UsageLimit? in
+            guard let quota = (model as? [String: Any])?["quotaInfo"] as? [String: Any],
+                  let resetsAt = Signals.date(quota["resetTime"])
+            else { return nil }
+            let remaining = Signals.number(quota["remainingFraction"]).map { min(max($0, 0), 1) } ?? 0
+            return UsageLimit(kind: .session, usedPercent: Signals.percent((1 - remaining) * 100), resetsAt: resetsAt)
+        }
+        let counted = families.flatMap { family in
+            let members = windows.filter { $0.key.hasPrefix(family) }
+            let headline = members.filter { headlineModels.contains($0.key) }
+            return Array((headline.isEmpty ? members : headline).values)
+        }
+        // Ties go to the sooner reset, so the answer doesn't follow the dictionary's order.
+        let tightest = (counted.isEmpty ? Array(windows.values) : counted).max {
+            ($0.usedPercent, $1.resetsAt ?? .distantFuture) < ($1.usedPercent, $0.resetsAt ?? .distantFuture)
+        }
+        return UsageCallReading(limits: tightest.map { [$0] }, planName: nil)
     }
 
     /// The bucket's `window`, else its id or name ("gemini-5h", "claude-gpt-weekly").
