@@ -109,29 +109,31 @@ final class PoolStore {
     /// The pools as last saved for the `ebb` command.
     @ObservationIgnored private var savedStatus: PoolStatus?
     /// Kept across launches, so a relaunch never sends two requests back to back.
-    @ObservationIgnored private var lastProviderRequest = UserDefaults.standard.object(forKey: "lastProviderRequest") as? Date {
-        didSet { UserDefaults.standard.set(lastProviderRequest, forKey: "lastProviderRequest") }
+    @ObservationIgnored private var lastProviderRequest: Date?
+    private static let lastProviderRequestKey = "lastProviderRequest"
+
+    private func noteProviderRequest() {
+        lastProviderRequest = .now
+        UserDefaults.standard.set(lastProviderRequest, forKey: pool.key(Self.lastProviderRequestKey))
     }
     /// The poll in flight, which any poll asked for meanwhile waits on instead of sending its own.
     @ObservationIgnored private var proxyPoll: Task<Void, Never>?
     @ObservationIgnored private var loops: [Task<Void, Never>] = []
+    /// What `setActive` last asked for, kept while there's no address to act on it.
+    @ObservationIgnored private var isWanted = false
     @ObservationIgnored private var ledger = DemandLedger()
-    @ObservationIgnored private var alertTracker = UserDefaults.standard.data(forKey: PoolStore.alertTrackerKey)
-        .flatMap { try? JSONDecoder().decode(AlertTracker.self, from: $0) } ?? AlertTracker()
+    @ObservationIgnored private var alertTracker = AlertTracker()
     /// Made on the first alert, so a snapshot or demo never touches UserNotifications.
     @ObservationIgnored private var alertDelivery: AlertDelivery?
     private static let alertTrackerKey = "alertTracker"
-    @ObservationIgnored private var expiryNudge = UserDefaults.standard.data(forKey: PoolStore.expiryNudgeKey)
-        .flatMap { try? JSONDecoder().decode(ExpiryNudge.self, from: $0) } ?? ExpiryNudge()
+    @ObservationIgnored private var expiryNudge = ExpiryNudge()
     private static let expiryNudgeKey = "expiryNudge"
-    @ObservationIgnored private var membership = UserDefaults.standard.data(forKey: PoolStore.membershipKey)
-        .flatMap { try? JSONDecoder().decode(MembershipTracker.self, from: $0) } ?? MembershipTracker()
+    @ObservationIgnored private var membership = MembershipTracker()
     static let membershipKey = "poolMembership"
     /// Each pool's public status while it has a problem; empty while all is well or unknown.
     private(set) var incidents: [String: ServiceHealth] = [:]
     @ObservationIgnored private var statusPageReads = StatusPageReads()
-    @ObservationIgnored private var incidentTracker = UserDefaults.standard.data(forKey: PoolStore.incidentTrackerKey)
-        .flatMap { try? JSONDecoder().decode(IncidentTracker.self, from: $0) } ?? IncidentTracker()
+    @ObservationIgnored private var incidentTracker = IncidentTracker()
     @ObservationIgnored private var incidentDelivery: AlertDelivery?
     private static let incidentTrackerKey = "incidentTracker"
     @ObservationIgnored private var ledgerSavedAt = Date.now
@@ -149,7 +151,8 @@ final class PoolStore {
         self.isOffline = isOffline
         self.savesStatus = savesStatus && !isOffline
         isFixed = false
-        if let data = try? Data(contentsOf: EbbPaths.demandFile) { ledger = DemandLedger.load(from: data) }
+        loadSavedState()
+        if let data = try? Data(contentsOf: demandFile) { ledger = DemandLedger.load(from: data) }
         reloadAccounts()
         loadCaches()
         recompute()
@@ -166,6 +169,23 @@ final class PoolStore {
         self.proxyFailure = proxyFailure
         self.strongestUrgency = strongestUrgency
         self.incidents = incidents
+        loadSavedState()
+    }
+
+    private var pool: ProxyPool { connection.pool }
+
+    private var demandFile: URL { pool.file(EbbPaths.demandFile) }
+
+    /// Each pool keeps its own pacing, alerts and membership, so two proxies never overwrite each other's.
+    private func loadSavedState() {
+        func saved<Value: Decodable>(_ key: String) -> Value? {
+            UserDefaults.standard.data(forKey: pool.key(key)).flatMap { try? JSONDecoder().decode(Value.self, from: $0) }
+        }
+        lastProviderRequest = UserDefaults.standard.object(forKey: pool.key(Self.lastProviderRequestKey)) as? Date
+        alertTracker = saved(Self.alertTrackerKey) ?? AlertTracker()
+        expiryNudge = saved(Self.expiryNudgeKey) ?? ExpiryNudge()
+        membership = saved(Self.membershipKey) ?? MembershipTracker()
+        incidentTracker = saved(Self.incidentTrackerKey) ?? IncidentTracker()
     }
 
     /// A fixed Claude-only pool.
@@ -190,7 +210,7 @@ final class PoolStore {
 
     /// Ebb's own retirements on the proxy in use; a remote proxy keeps its own list.
     private var retiredAccounts: RetiredAccounts {
-        EbbPaths.retiredAccounts(remoteHost: connection.isRemote ? connection.baseURL.host() : nil)
+        EbbPaths.retiredAccounts(remoteHost: connection.isRemote ? connection.baseURL.host().map(pool.key) : nil)
     }
 
     /// The pool the menu bar shows: the provider chosen in Settings while it has logins, else the default.
@@ -198,13 +218,15 @@ final class PoolStore {
         state.providers.contains(choice) ? choice : state.defaultProvider ?? state.providers.first
     }
 
-    /// Starts or stops all network activity, localhost included.
+    /// Starts or stops all network activity, localhost included. A proxy with no address to ask,
+    /// an Antigravity one not set up yet, stays still until Settings gives it one.
     func setActive(_ isActive: Bool) {
+        isWanted = isActive
         loops.forEach { $0.cancel() }
         loops = []
         if !isActive { saveLedger() }
         recompute()
-        guard isActive, !isOffline, !isFixed else { return }
+        guard isActive, connection.hasAddress, !isOffline, !isFixed else { return }
         loops = [
             Task { await repeatEvery(Self.proxyInterval, named: "proxy poll") { await $0.pollProxy() } },
             Task { await repeatEvery(Self.providerInterval, named: "provider read") { await $0.runNextProviderJob(usageMinimumAge: RefreshPlan.period - 30) } },
@@ -232,7 +254,7 @@ final class PoolStore {
             }
         }
         if statusPageReads.incidents != incidents { incidents = statusPageReads.incidents }
-        UserDefaults.standard.set(try? JSONEncoder().encode(incidentTracker), forKey: Self.incidentTrackerKey)
+        UserDefaults.standard.set(try? JSONEncoder().encode(incidentTracker), forKey: pool.key(Self.incidentTrackerKey))
         await incidentAlerts.deliver(alerts)
     }
 
@@ -312,6 +334,8 @@ final class PoolStore {
         reloadAccounts()
         loadCaches()
         recompute()
+        // The address may have come or gone: the loops start or stop with it, starting with a poll.
+        if loops.isEmpty == (isWanted && connection.hasAddress) { return setActive(isWanted) }
         guard !loops.isEmpty else { return }
         Task { await pollProxy() }
     }
@@ -344,6 +368,19 @@ final class PoolStore {
     /// One read of the proxy's listing, without provider requests or weight changes: `--snapshot --live`.
     func readProxyOnce() async {
         await pollProxy(syncsWeights: false)
+    }
+
+    /// Each login's plan check and `api-call` read once, at the usual spacing: `--snapshot --live`,
+    /// so a remote proxy's Claude logins have a plan to weigh and Antigravity's, whose listing
+    /// carries no quota signals, have a reading.
+    func readCallLoginsOnce() async {
+        for _ in 0..<(callStates.count + callPlanStates.count) {
+            guard let job = nextJob(usageMinimumAge: 0) else { return }
+            switch job {
+            case .call, .planCall: await run(job)
+            case .usage, .profile: return
+            }
+        }
     }
 
     private func pollProxy(syncsWeights: Bool = true) async {
@@ -414,14 +451,14 @@ final class PoolStore {
         guard !isFixed, !isOffline, LaunchOptions.snapshotDirectory == nil else { return }
         ledgerSavedAt = .now
         try? FileManager.default.createDirectory(at: EbbPaths.applicationSupport, withIntermediateDirectories: true)
-        try? ledger.encoded().write(to: EbbPaths.demandFile, options: .atomic)
+        try? ledger.encoded().write(to: demandFile, options: .atomic)
         saveAlertTracker()
     }
 
     private func saveAlertTracker() {
-        UserDefaults.standard.set(try? JSONEncoder().encode(alertTracker), forKey: Self.alertTrackerKey)
-        UserDefaults.standard.set(try? JSONEncoder().encode(expiryNudge), forKey: Self.expiryNudgeKey)
-        UserDefaults.standard.set(try? JSONEncoder().encode(membership), forKey: Self.membershipKey)
+        UserDefaults.standard.set(try? JSONEncoder().encode(alertTracker), forKey: pool.key(Self.alertTrackerKey))
+        UserDefaults.standard.set(try? JSONEncoder().encode(expiryNudge), forKey: pool.key(Self.expiryNudgeKey))
+        UserDefaults.standard.set(try? JSONEncoder().encode(membership), forKey: pool.key(Self.membershipKey))
     }
 
     private var delivery: AlertDelivery {
@@ -602,7 +639,7 @@ final class PoolStore {
         // The proxy may have refreshed the token while we waited, too.
         guard let account = loadAccounts()[email] else { return }
 
-        lastProviderRequest = .now
+        noteProviderRequest()
         usageStates[email, default: FetchState()].lastAttempt = .now
         let result = await accountClient.fetchUsage(account)
         usageStates[email]?.lastOutcome = result.outcome
@@ -624,7 +661,7 @@ final class PoolStore {
         guard RefreshPlan.isStillDue(profileStates[email], chosenAt: chosenAt) else { return }
         guard let account = loadAccounts()[email] else { return }
 
-        lastProviderRequest = .now
+        noteProviderRequest()
         profileStates[email, default: FetchState()].lastAttempt = .now
         profileRequested.remove(email)
         let result = await accountClient.fetchPlan(account)
@@ -656,7 +693,7 @@ final class PoolStore {
               let call = kind == .usage ? provider.usageCall(for: file) : provider.planCall(for: file)
         else { return }
 
-        lastProviderRequest = .now
+        noteProviderRequest()
         self[keyPath: states][name, default: FetchState()].lastAttempt = .now
         let parse = kind == .usage ? provider.readUsageCall : provider.readPlanCall
         let outcome = await proxy.apiCall(call, endpoint)

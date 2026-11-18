@@ -37,6 +37,8 @@ struct SettingsView: View {
     let visibility: Visibility
     let store: PoolStore
     let menuBarSettings: MenuBarSettings
+    /// The second proxy, whose address and key the Connection tab also sets.
+    var antigravity: PoolSource?
 
     @AppStorage(SettingsTab.storageKey) private var tab = SettingsTab.general.rawValue
 
@@ -67,7 +69,7 @@ struct SettingsView: View {
         switch tab {
         case .general: GeneralSettings(store: store)
         case .menuBar: MenuBarSettingsPane(visibility: visibility, store: store, menuBarSettings: menuBarSettings)
-        case .connection: ConnectionSettings(connection: connection, store: store)
+        case .connection: ConnectionPane(claude: PoolSource(connection: connection, store: store), antigravity: antigravity)
         case .routing: RoutingSettingsPane(connection: connection, store: store)
         case .plans: PlanWeightSettings(store: store)
         case .about: AboutSettings()
@@ -323,6 +325,30 @@ private struct AppRow: View {
 
 // MARK: - Connection
 
+/// One proxy's address and key at a time, picked at the top while there are two. The pick is the
+/// panel's too: the proxy being set up is the one worth looking at.
+struct ConnectionPane: View {
+    let claude: PoolSource
+    let antigravity: PoolSource?
+
+    @AppStorage(ProxyPool.selectionKey) private var pool = ProxyPool.claude
+
+    var body: some View {
+        if let antigravity {
+            let source = pool == .antigravity ? antigravity : claude
+            VStack(spacing: 0) {
+                ProxyPoolPicker(selection: $pool)
+                    .padding(.top, 16)
+                // Each proxy's drafts start from its own saved address.
+                ConnectionSettings(connection: source.connection, store: source.store)
+                    .id(pool)
+            }
+        } else {
+            ConnectionSettings(connection: claude.connection, store: claude.store)
+        }
+    }
+}
+
 struct ConnectionSettings: View {
     let connection: ProxyConnection
     let store: PoolStore
@@ -345,27 +371,30 @@ struct ConnectionSettings: View {
 
     var body: some View {
         Form {
-            Section {
-                LabeledContent("Config file") {
-                    Text(connection.configFile.map { abbreviated($0.path) } ?? String(localized: "Not found; using defaults"))
-                        .textSelection(.enabled)
-                        .foregroundStyle(connection.configFile == nil ? .secondary : .primary)
-                }
-                LabeledContent("Address", value: connection.baseURL.absoluteString)
-                LabeledContent("Logins folder") {
-                    Text(connection.localAuthDirectory.map { abbreviated($0.path) } ?? String(localized: "Not read: the proxy is on another machine"))
-                        .foregroundStyle(connection.isRemote ? .secondary : .primary)
-                }
-                HStack {
-                    Button("Open Proxy Panel") { NSWorkspace.shared.open(connection.managementPage) }
-                    Spacer()
-                    if connection.configOverride != nil {
-                        Button("Use Detected") { useConfig(nil) }
+            // This Mac's config file and logins folder serve the Claude pool alone.
+            if connection.pool.followsLocalConfig {
+                Section {
+                    LabeledContent("Config file") {
+                        Text(connection.configFile.map { abbreviated($0.path) } ?? String(localized: "Not found; using defaults"))
+                            .textSelection(.enabled)
+                            .foregroundStyle(connection.configFile == nil ? .secondary : .primary)
                     }
-                    Button("Choose Config…", action: chooseConfig)
+                    LabeledContent("Address", value: connection.baseURL.absoluteString)
+                    LabeledContent("Logins folder") {
+                        Text(connection.localAuthDirectory.map { abbreviated($0.path) } ?? String(localized: "Not read: the proxy is on another machine"))
+                            .foregroundStyle(connection.isRemote ? .secondary : .primary)
+                    }
+                    HStack {
+                        Button("Open Proxy Panel") { NSWorkspace.shared.open(connection.managementPage) }
+                        Spacer()
+                        if connection.configOverride != nil {
+                            Button("Use Detected") { useConfig(nil) }
+                        }
+                        Button("Choose Config…", action: chooseConfig)
+                    }
+                } header: {
+                    Text(verbatim: "CLIProxyAPI")
                 }
-            } header: {
-                Text(verbatim: "CLIProxyAPI")
             }
             Section {
                 TextField("Management URL", text: $draftURL, prompt: Text(verbatim: "https://proxy.example.com:8317"))
@@ -378,7 +407,11 @@ struct ConnectionSettings: View {
                 }
                 HStack {
                     if connection.isRemote {
-                        Button("Use Config File") { setURL(nil) }
+                        if connection.pool.followsLocalConfig {
+                            Button("Use Config File") { setURL(nil) }
+                        } else {
+                            Button("Remove Address", role: .destructive) { setURL(nil) }
+                        }
                     }
                     Spacer()
                     Button("Use URL", action: useURL)
@@ -387,7 +420,9 @@ struct ConnectionSettings: View {
             } header: {
                 Text("Remote Proxy")
             } footer: {
-                Text("For CLIProxyAPI on a server or homelab. Replaces the address from the config file; the management key below is sent there, and every login, Claude's included, is read from the proxy's listing. Plain http is allowed only on a private network.")
+                Text(connection.pool.followsLocalConfig
+                    ? String(localized: "For CLIProxyAPI on a server or homelab. Replaces the address from the config file; the management key below is sent there, and every login, Claude's included, is read from the proxy's listing. Plain http is allowed only on a private network.")
+                    : String(localized: "The address of the CLIProxyAPI that pools your Antigravity logins. The management key below is sent there. Plain http is allowed only on a private network."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -404,12 +439,14 @@ struct ConnectionSettings: View {
                         .disabled(connection.endpoint == nil)
                     Button("Save", action: save)
                         .keyboardShortcut(.defaultAction)
-                        .disabled(draftKey.isEmpty)
+                        .disabled(draftKey.isEmpty || !connection.hasAddress)
                 }
             } header: {
                 Text("Management Key")
             } footer: {
-                Text("The proxy keeps only a hash of this key, so Ebb asks once and stores it in a file only you can read, in Ebb's Application Support folder. A .management-key file in the logins folder is picked up on its own until you forget the key. Without the key, a proxy on this Mac still has its Claude logins read from the logins folder, with routing and auto-retire off; a proxy on another machine can't be read at all.")
+                Text(connection.pool.followsLocalConfig
+                    ? String(localized: "The proxy keeps only a hash of this key, so Ebb asks once and stores it in a file only you can read, in Ebb's Application Support folder. A .management-key file in the logins folder is picked up on its own until you forget the key. Without the key, a proxy on this Mac still has its Claude logins read from the logins folder, with routing and auto-retire off; a proxy on another machine can't be read at all.")
+                    : String(localized: "The proxy keeps only a hash of this key, so Ebb asks once and stores it in a file only you can read, in Ebb's Application Support folder. Without it, the Antigravity proxy can't be read."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

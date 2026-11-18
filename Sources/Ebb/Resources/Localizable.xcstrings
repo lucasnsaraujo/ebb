@@ -1301,6 +1301,16 @@
         }
       }
     },
+    "Proxy" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proxy"
+          }
+        }
+      }
+    },
     "Proxy Routing" : {
       "localizations" : {
         "pt-BR" : {
@@ -1367,6 +1377,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Proxy Remoto"
+          }
+        }
+      }
+    },
+    "Remove Address" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover Endereço"
           }
         }
       }
@@ -1673,6 +1693,16 @@
         }
       }
     },
+    "The address of the CLIProxyAPI that pools your Antigravity logins. The management key below is sent there. Plain http is allowed only on a private network." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O endereço do CLIProxyAPI que reúne seus logins do Antigravity. A chave de gestão abaixo é enviada para lá. HTTP simples só é permitido em rede privada."
+          }
+        }
+      }
+    },
     "The provider refused the proxy's token for its usage, so this login is left out of the pool" : {
       "localizations" : {
         "pt-BR" : {
@@ -1689,6 +1719,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "O proxy guarda só um hash desta chave, então o Ebb pede uma vez e a salva em um arquivo que só você pode ler, na pasta Application Support do Ebb. Um arquivo .management-key na pasta de logins é usado automaticamente até você esquecer a chave. Sem a chave, um proxy neste Mac ainda tem os logins da Claude lidos da pasta de logins, com roteamento e aposentadoria automática desativados; um proxy em outra máquina não pode ser lido."
+          }
+        }
+      }
+    },
+    "The proxy keeps only a hash of this key, so Ebb asks once and stores it in a file only you can read, in Ebb's Application Support folder. Without it, the Antigravity proxy can't be read." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O proxy guarda só um hash desta chave, então o Ebb pede uma vez e a salva em um arquivo que só você pode ler, na pasta Application Support do Ebb. Sem ela, o proxy do Antigravity não pode ser lido."
           }
         }
       }

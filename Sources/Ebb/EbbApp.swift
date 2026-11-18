@@ -8,21 +8,33 @@ struct EbbApp: App {
     @NSApplicationDelegateAdaptor private var appDelegate: AppDelegate
     @State private var model = AppModel.shared
     @AppStorage(ProviderDisplay.menuBarProviderKey) private var menuBarChoice = ""
+    @AppStorage(ProxyPool.selectionKey) private var poolChoice = ProxyPool.claude
 
-    private var menuBarProvider: String? {
-        model.store.menuBarProvider(choice: menuBarChoice)
+    private var shown: PoolSource {
+        model.source(model.shownPool(choice: poolChoice))
+    }
+
+    /// The panel's Claude | Antigravity switch, once the Antigravity proxy has an address.
+    private var poolSwitch: Binding<ProxyPool>? {
+        model.offersPoolSwitch ? Binding(get: { model.shownPool(choice: poolChoice) }, set: { poolChoice = $0 }) : nil
     }
 
     var body: some Scene {
         MenuBarExtra(isInserted: Binding(get: { model.visibility.isVisible && !LaunchOptions.rendersOffscreen }, set: { _ in })) {
-            PoolPanel(store: model.store, connection: model.connection)
+            PoolPanel(store: shown.store, connection: shown.connection, pool: poolSwitch)
         } label: {
-            MenuBarLabel(store: model.store, settings: model.menuBarSettings, provider: menuBarProvider, isShowing: model.visibility.isVisible)
+            MenuBarLabel(
+                store: shown.store, settings: model.menuBarSettings, provider: shown.store.menuBarProvider(choice: menuBarChoice),
+                isShowing: model.visibility.isVisible
+            )
         }
         .menuBarExtraStyle(.window)
 
         Settings {
-            SettingsView(connection: model.connection, visibility: model.visibility, store: model.store, menuBarSettings: model.menuBarSettings)
+            SettingsView(
+                connection: model.connection, visibility: model.visibility, store: model.store, menuBarSettings: model.menuBarSettings,
+                antigravity: model.antigravity
+            )
         }
     }
 }
@@ -36,6 +48,9 @@ final class AppModel {
     private let hasThrowawayHome: Void = Budget.requireThrowawayHome()
     let connection = ProxyConnection(diagnostics: DiagnosticLog())
     let store: PoolStore
+    /// The second proxy, read alongside the first so switching shows numbers at once. Left out
+    /// of demos and fixed snapshots, which draw one pool.
+    let antigravity: PoolSource?
     let visibility = Visibility()
     let menuBarSettings = MenuBarSettings()
     private var wakeObserver: NSObjectProtocol?
@@ -43,6 +58,7 @@ final class AppModel {
 
     private init() {
         if LaunchOptions.isDemo {
+            antigravity = nil
             store = DemoData.store(connection: connection)
             connection.showDemoConnection()
             visibility.showAlwaysForDemo()
@@ -50,20 +66,46 @@ final class AppModel {
             return
         }
         if LaunchOptions.snapshotDirectory != nil {
+            antigravity = LaunchOptions.isLive ? Self.antigravitySource() : nil
             store = LaunchOptions.isLive ? PoolStore(connection: connection, savesStatus: false) : Snapshot.claudeOnly(connection: connection)
             return
         }
         store = PoolStore(connection: connection, isOffline: LaunchOptions.isOffline)
-        visibility.onVisibilityChange = { [weak self, store] isVisible in
-            store.setActive(isVisible)
+        antigravity = Self.antigravitySource()
+        let stores = [store] + [antigravity?.store].compactMap { $0 }
+        visibility.onVisibilityChange = { [weak self] isVisible in
+            stores.forEach { $0.setActive(isVisible) }
             if isVisible { self?.checkConnectionOnce() }
         }
-        store.setActive(visibility.isVisible)
+        stores.forEach { $0.setActive(visibility.isVisible) }
         if visibility.isVisible { checkConnectionOnce() }
-        // Only the store hears about wake; the item's visibility never changes for it.
-        wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [store] _ in
-            MainActor.assumeIsolated { store.didWake() }
+        // Only the stores hear about wake; the item's visibility never changes for it.
+        wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { stores.forEach { $0.didWake() } }
         }
+    }
+
+    /// Only the Claude pool writes what the `ebb` command reads.
+    private static func antigravitySource() -> PoolSource {
+        let connection = ProxyConnection(diagnostics: DiagnosticLog(), pool: .antigravity)
+        return PoolSource(connection: connection, store: PoolStore(connection: connection, isOffline: LaunchOptions.isOffline, savesStatus: false))
+    }
+
+    var offersPoolSwitch: Bool {
+        antigravity?.connection.hasAddress == true
+    }
+
+    /// The pool picked in the panel, or Claude's while there's no other to show.
+    func shownPool(choice: ProxyPool) -> ProxyPool {
+        offersPoolSwitch ? choice : .claude
+    }
+
+    func source(_ pool: ProxyPool) -> PoolSource {
+        pool == .antigravity ? antigravity ?? claude : claude
+    }
+
+    var claude: PoolSource {
+        PoolSource(connection: connection, store: store)
     }
 
     /// Answered before the panel first opens, so its setup steps don't start on a guess. Waits for the
@@ -71,9 +113,10 @@ final class AppModel {
     private func checkConnectionOnce() {
         guard !hasCheckedConnection else { return }
         hasCheckedConnection = true
-        Task { [connection] in
+        Task { [connection, antigravity] in
             await connection.test()
             if !connection.hasSavedKey, !LaunchOptions.isOffline { await connection.lookForProxy() }
+            await antigravity?.connection.test()
         }
     }
 }
@@ -103,6 +146,9 @@ enum LaunchOptions {
     static var rendersOffscreen: Bool { snapshotDirectory != nil || recordDirectory != nil }
     /// With `--snapshot`, renders what the running proxy reports instead of fixed numbers: `--live`.
     static let isLive = CommandLine.arguments.contains("--live")
+    /// With `--snapshot --live`, the pool to read and draw with its switch: `--pool claude|antigravity`.
+    /// The Antigravity address comes from the argument domain: `-antigravity.managementURL <url>`.
+    static let pool = value(after: "--pool").flatMap(ProxyPool.init(rawValue:))
     /// With `--snapshot`, reads the live proxy using the management key in this file: `--key-file <path>`.
     static let snapshotKey: ManagementKey? = value(after: "--key-file")
         .flatMap { try? String(contentsOfFile: $0, encoding: .utf8) }
@@ -136,9 +182,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let model = AppModel.shared
             if LaunchOptions.isLive {
                 Task {
-                    await model.store.readProxyOnce()
-                    Snapshot.write(store: model.store, connection: model.connection, to: directory, prefix: "live")
-                    try? model.store.diagnosticsText().write(to: directory.appending(path: "live-diagnostics.txt"), atomically: true, encoding: .utf8)
+                    let source = model.source(LaunchOptions.pool ?? .claude)
+                    await source.store.readProxyOnce()
+                    if LaunchOptions.pool != nil { await source.store.readCallLoginsOnce() }
+                    let prefix = LaunchOptions.pool.map { "live-\($0.rawValue)" } ?? "live"
+                    Snapshot.write(store: source.store, connection: source.connection, to: directory, prefix: prefix, pool: LaunchOptions.pool)
+                    try? source.store.diagnosticsText().write(to: directory.appending(path: "\(prefix)-diagnostics.txt"), atomically: true, encoding: .utf8)
                     exit(0)
                 }
                 return
@@ -166,6 +215,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         AppModel.shared.store.saveLedger()
+        AppModel.shared.antigravity?.store.saveLedger()
     }
 
     /// Registers once, so turning it off in System Settings sticks.

@@ -7,12 +7,14 @@ import SwiftUI
 /// menu bar style and every Settings tab, then quits. The windows it draws in are never put on screen.
 @MainActor
 enum Snapshot {
-    static func write(store: PoolStore, connection: ProxyConnection, to directory: URL, prefix: String) {
+    /// `pool` draws the panel with its Claude | Antigravity switch set to that pool.
+    static func write(store: PoolStore, connection: ProxyConnection, to directory: URL, prefix: String, pool: ProxyPool? = nil) {
+        let pool = pool.map { Binding.constant($0) }
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         for scheme in [ColorScheme.dark, .light] {
             let appearance = scheme == .dark ? "dark" : "light"
             for isExpanded in [false, true] {
-                let panel = PoolPanel(store: store, connection: connection, showsAccounts: isExpanded)
+                let panel = PoolPanel(store: store, connection: connection, pool: pool, showsAccounts: isExpanded)
                 let name = "\(prefix)-\(appearance)-\(isExpanded ? "expanded" : "collapsed").png"
                 if let data = png(of: panel, scheme: scheme) {
                     try? data.write(to: directory.appending(path: name))
@@ -24,13 +26,13 @@ enum Snapshot {
                 }
             }
             // Increase Contrast, collapsed: the tracks, the faint text and the hatch step up a level.
-            let panel = PoolPanel(store: store, connection: connection, showsAccounts: false)
+            let panel = PoolPanel(store: store, connection: connection, pool: pool, showsAccounts: false)
                 .environment(\._colorSchemeContrast, .increased)
             if let data = png(of: panel, scheme: scheme) {
                 try? data.write(to: directory.appending(path: "\(prefix)-\(appearance)-contrast.png"))
             }
             for (name, material) in [("menu", NSVisualEffectView.Material.menu), ("popover", .popover)] {
-                if let data = png(of: PoolPanel(store: store, connection: connection, showsAccounts: false), scheme: scheme, material: material) {
+                if let data = png(of: PoolPanel(store: store, connection: connection, pool: pool, showsAccounts: false), scheme: scheme, material: material) {
                     try? data.write(to: directory.appending(path: "\(prefix)-\(appearance)-\(name).png"))
                 }
             }

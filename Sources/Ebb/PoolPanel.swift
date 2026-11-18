@@ -6,6 +6,8 @@ import SwiftUI
 struct PoolPanel: View {
     let store: PoolStore
     let connection: ProxyConnection
+    /// The proxy on show, picked by the switch up top; `nil` hides the switch.
+    let proxyPool: Binding<ProxyPool>?
 
     @State private var showsAccounts: Bool
     /// The setup steps to draw instead of working them out: `--snapshot` only.
@@ -20,11 +22,12 @@ struct PoolPanel: View {
     private let playsDisclosureDemo: Bool
 
     init(
-        store: PoolStore, connection: ProxyConnection, showsAccounts: Bool = LaunchOptions.demo == .accounts, setup: ProxySetup? = nil,
-        playsDisclosureDemo: Bool = LaunchOptions.demo == .disclosure
+        store: PoolStore, connection: ProxyConnection, pool: Binding<ProxyPool>? = nil, showsAccounts: Bool = LaunchOptions.demo == .accounts,
+        setup: ProxySetup? = nil, playsDisclosureDemo: Bool = LaunchOptions.demo == .disclosure
     ) {
         self.store = store
         self.connection = connection
+        proxyPool = pool
         _showsAccounts = State(initialValue: showsAccounts)
         fixedSetup = setup
         self.playsDisclosureDemo = playsDisclosureDemo
@@ -54,6 +57,11 @@ struct PoolPanel: View {
         VStack(alignment: .leading, spacing: 0) {
             // No name or mark up top: the item just clicked says which app this is, as Apple's own
             // menu bar extras leave it. With one provider, or during setup, the content comes first.
+            // The proxy switch stays through setup, so a pool still being set up can be left.
+            if let proxyPool {
+                ProxyPoolPicker(selection: proxyPool)
+                    .padding(.bottom, 12)
+            }
             if setup == nil, store.state.providers.count > 1 {
                 providerPicker
                     .padding(.bottom, 12)
@@ -91,6 +99,8 @@ struct PoolPanel: View {
             if playsDisclosureDemo { playDisclosureDemo() }
         }
         .onDisappear { PanelOpener.isPanelOpen = false }
+        // The other pool's store is already polling; this re-reads whatever went stale meanwhile.
+        .onChange(of: proxyPool?.wrappedValue) { store.panelDidOpen() }
     }
 
     /// The pool on show, and its accounts on request.

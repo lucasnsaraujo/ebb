@@ -260,6 +260,8 @@
 	<string>Provedor</string>
 	<key>Provider incidents</key>
 	<string>Incidentes do provedor</string>
+	<key>Proxy</key>
+	<string>Proxy</string>
 	<key>Proxy Routing</key>
 	<string>Roteamento do Proxy</string>
 	<key>Proxy not reachable</key>
@@ -274,6 +276,8 @@
 	<string>Recusada pelo proxy</string>
 	<key>Remote Proxy</key>
 	<string>Proxy Remoto</string>
+	<key>Remove Address</key>
+	<string>Remover Endereço</string>
 	<key>Remove App</key>
 	<string>Remover App</string>
 	<key>Restore Defaults</key>
@@ -334,10 +338,14 @@
 	<string>Estilo</string>
 	<key>Test</key>
 	<string>Testar</string>
+	<key>The address of the CLIProxyAPI that pools your Antigravity logins. The management key below is sent there. Plain http is allowed only on a private network.</key>
+	<string>O endereço do CLIProxyAPI que reúne seus logins do Antigravity. A chave de gestão abaixo é enviada para lá. HTTP simples só é permitido em rede privada.</string>
 	<key>The provider refused the proxy's token for its usage, so this login is left out of the pool</key>
 	<string>O provedor recusou o token do proxy para o uso, então este login fica fora da cota</string>
 	<key>The proxy keeps only a hash of this key, so Ebb asks once and stores it in a file only you can read, in Ebb's Application Support folder. A .management-key file in the logins folder is picked up on its own until you forget the key. Without the key, a proxy on this Mac still has its Claude logins read from the logins folder, with routing and auto-retire off; a proxy on another machine can't be read at all.</key>
 	<string>O proxy guarda só um hash desta chave, então o Ebb pede uma vez e a salva em um arquivo que só você pode ler, na pasta Application Support do Ebb. Um arquivo .management-key na pasta de logins é usado automaticamente até você esquecer a chave. Sem a chave, um proxy neste Mac ainda tem os logins da Claude lidos da pasta de logins, com roteamento e aposentadoria automática desativados; um proxy em outra máquina não pode ser lido.</string>
+	<key>The proxy keeps only a hash of this key, so Ebb asks once and stores it in a file only you can read, in Ebb's Application Support folder. Without it, the Antigravity proxy can't be read.</key>
+	<string>O proxy guarda só um hash desta chave, então o Ebb pede uma vez e a salva em um arquivo que só você pode ler, na pasta Application Support do Ebb. Sem ela, o proxy do Antigravity não pode ser lido.</string>
 	<key>The proxy refused the management key</key>
 	<string>O proxy recusou a chave de gestão</string>
 	<key>The secret-key you set under management in CLIProxyAPI's config file.</key>

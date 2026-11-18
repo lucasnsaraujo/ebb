@@ -4,7 +4,8 @@ import Observation
 
 /// Finds CLIProxyAPI's config and holds the management key. Without a working key, a proxy on
 /// this Mac still has its Claude logins read from the auth folder and asked directly; a proxy
-/// on another machine, reached by a hand-set address, needs the key for everything.
+/// on another machine, reached by a hand-set address, needs the key for everything. One per
+/// `ProxyPool`, each saving its address and key apart from the other's.
 @MainActor
 @Observable
 final class ProxyConnection {
@@ -16,6 +17,8 @@ final class ProxyConnection {
     /// Set by Forget Key, so the logins folder's `.management-key` isn't imported again.
     private static let forgotKeyKey = "forgotManagementKey"
     private static let managementURLKey = "managementURL"
+
+    let pool: ProxyPool
 
     enum StartState: Equatable {
         case idle, starting
@@ -54,16 +57,18 @@ final class ProxyConnection {
     @ObservationIgnored private var refusedImport: ManagementKey?
     @ObservationIgnored private var isTesting = false
     @ObservationIgnored private let client = ProxyClient()
-    @ObservationIgnored private let keyFile = ManagementKeyFile(url: EbbPaths.managementKeyFile)
+    @ObservationIgnored private let keyFile: ManagementKeyFile
 
-    init(diagnostics: DiagnosticLog = DiagnosticLog()) {
+    init(diagnostics: DiagnosticLog = DiagnosticLog(), pool: ProxyPool = .claude) {
         self.diagnostics = diagnostics
+        self.pool = pool
+        keyFile = ManagementKeyFile(url: pool.file(EbbPaths.managementKeyFile))
         discover()
         // Checked again on every launch: a value written behind Settings' back gets no exception.
-        switch UserDefaults.standard.string(forKey: Self.managementURLKey).map({ ManagementURL.validate($0) }) {
+        switch UserDefaults.standard.string(forKey: pool.key(Self.managementURLKey)).map({ ManagementURL.validate($0) }) {
         case let .ok(url), let .unencrypted(url): managementURL = url
         case .refused:
-            UserDefaults.standard.removeObject(forKey: Self.managementURLKey)
+            UserDefaults.standard.removeObject(forKey: pool.key(Self.managementURLKey))
             diagnostics.record("Saved proxy address refused; using the config file")
         case nil: break
         }
@@ -77,7 +82,7 @@ final class ProxyConnection {
     }
 
     private func loadKey() {
-        var loaded = keyFile.load(importingFrom: UserDefaults.standard.bool(forKey: Self.forgotKeyKey) ? nil : localAuthDirectory)
+        var loaded = keyFile.load(importingFrom: UserDefaults.standard.bool(forKey: pool.key(Self.forgotKeyKey)) ? nil : localAuthDirectory)
         if loaded?.origin == .loginsFolder, loaded?.key == refusedImport { loaded = nil }
         key = loaded?.key
         unsavedKey = loaded?.origin == .loginsFolder ? loaded?.key : nil
@@ -99,7 +104,7 @@ final class ProxyConnection {
     }
 
     var configOverride: String? {
-        UserDefaults.standard.string(forKey: Self.configOverrideKey)
+        UserDefaults.standard.string(forKey: pool.key(Self.configOverrideKey))
     }
 
     /// The proxy runs on another machine: its logins folder is out of reach, so every login,
@@ -112,9 +117,14 @@ final class ProxyConnection {
         managementURL ?? config.baseURL
     }
 
+    /// Whether there's a proxy to ask: the config file's address serves only the Claude pool.
+    var hasAddress: Bool {
+        pool.followsLocalConfig || isRemote
+    }
+
     /// CLIProxyAPI's logins folder, read only while the proxy runs on this Mac.
     var localAuthDirectory: URL? {
-        isRemote ? nil : config.authDirectoryURL(home: EbbPaths.home)
+        isRemote || !pool.followsLocalConfig ? nil : config.authDirectoryURL(home: EbbPaths.home)
     }
 
     var managementPage: URL {
@@ -123,7 +133,8 @@ final class ProxyConnection {
 
     /// Present whenever a key is saved; calls fail quietly if the proxy refuses it.
     var endpoint: ProxyEndpoint? {
-        key.map { ProxyEndpoint(baseURL: baseURL, key: $0) }
+        guard hasAddress else { return nil }
+        return key.map { ProxyEndpoint(baseURL: baseURL, key: $0) }
     }
 
     var hasManagementAccess: Bool {
@@ -131,13 +142,13 @@ final class ProxyConnection {
     }
 
     func setConfigOverride(_ path: String?) {
-        UserDefaults.standard.set(path, forKey: Self.configOverrideKey)
+        UserDefaults.standard.set(path, forKey: pool.key(Self.configOverrideKey))
         discover()
     }
 
     /// Already validated by `ManagementURL`; `nil` goes back to the config file's address.
     func setManagementURL(_ url: URL?) {
-        UserDefaults.standard.set(url?.absoluteString, forKey: Self.managementURLKey)
+        UserDefaults.standard.set(url?.absoluteString, forKey: pool.key(Self.managementURLKey))
         managementURL = url
         diagnostics.record(url == nil ? "Proxy address: from the config file" : "Proxy address: set by hand")
         proxyVersion = nil
@@ -185,7 +196,7 @@ final class ProxyConnection {
 
     /// Checks the key against the live proxy and keeps it only if accepted.
     func save(key newKey: String) async {
-        guard let newKey = ManagementKey(newKey) else { return }
+        guard hasAddress, let newKey = ManagementKey(newKey) else { return }
         keyState = .checking
         let result = await client.check(ProxyEndpoint(baseURL: baseURL, key: newKey))
         noteProxyVersion(result.version)
@@ -196,7 +207,7 @@ final class ProxyConnection {
             key = (try? keyFile.save(newKey)) == nil ? nil : newKey
             keyState = key == nil ? .missing : .valid
             unsavedKey = nil
-            UserDefaults.standard.removeObject(forKey: Self.forgotKeyKey)
+            UserDefaults.standard.removeObject(forKey: pool.key(Self.forgotKeyKey))
             await refreshRoutingStrategy()
         case .rejected:
             keyState = .rejected
@@ -212,7 +223,7 @@ final class ProxyConnection {
 
     func forgetKey() {
         keyFile.delete()
-        UserDefaults.standard.set(true, forKey: Self.forgotKeyKey)
+        UserDefaults.standard.set(true, forKey: pool.key(Self.forgotKeyKey))
         key = nil
         unsavedKey = nil
         keyState = .missing
